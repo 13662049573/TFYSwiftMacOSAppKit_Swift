@@ -3,20 +3,34 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
+
+/* Begin PBXBuildFile section */
+		3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F73E2CDA0E13009493BF /* AppDelegate.swift */; };
+		3D04F7462CDA0E13009493BF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7432CDA0E13009493BF /* ViewController.swift */; };
+		3D04F7472CDA0E13009493BF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3D04F73F2CDA0E13009493BF /* Assets.xcassets */; };
+		3D04F7482CDA0E13009493BF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3D04F7412CDA0E13009493BF /* Main.storyboard */; };
+		3D04F7522CDA1020009493BF /* TFYSwiftTextFieldCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7512CDA1020009493BF /* TFYSwiftTextFieldCell.swift */; };
+		3D04F7542CDA1275009493BF /* TFYSwiftSecureTextFieldCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7532CDA1275009493BF /* TFYSwiftSecureTextFieldCell.swift */; };
+		3D04F7562CDA131D009493BF /* TFYSwiftTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7552CDA131D009493BF /* TFYSwiftTextField.swift */; };
+		3D04F7582CDA251A009493BF /* TFYSwiftSecureTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7572CDA2519009493BF /* TFYSwiftSecureTextField.swift */; };
+		3D04F75A2CDA27B4009493BF /* TFYSwiftOpenPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7592CDA27B4009493BF /* TFYSwiftOpenPanel.swift */; };
+/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		3D04F72C2CDA0E09009493BF /* TFYSwiftMacOSAppKit_Swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TFYSwiftMacOSAppKit_Swift.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D04F73E2CDA0E13009493BF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		3D04F73F2CDA0E13009493BF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3D04F7402CDA0E13009493BF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		3D04F7422CDA0E13009493BF /* TFYSwiftMacOSAppKit_Swift.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TFYSwiftMacOSAppKit_Swift.entitlements; sourceTree = "<group>"; };
+		3D04F7432CDA0E13009493BF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		3D04F7512CDA1020009493BF /* TFYSwiftTextFieldCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftTextFieldCell.swift; sourceTree = "<group>"; };
+		3D04F7532CDA1275009493BF /* TFYSwiftSecureTextFieldCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftSecureTextFieldCell.swift; sourceTree = "<group>"; };
+		3D04F7552CDA131D009493BF /* TFYSwiftTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftTextField.swift; sourceTree = "<group>"; };
+		3D04F7572CDA2519009493BF /* TFYSwiftSecureTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftSecureTextField.swift; sourceTree = "<group>"; };
+		3D04F7592CDA27B4009493BF /* TFYSwiftOpenPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftOpenPanel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		3D04F72E2CDA0E09009493BF /* TFYSwiftMacOSAppKit_Swift */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = TFYSwiftMacOSAppKit_Swift;
-			sourceTree = "<group>";
-		};
-/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		3D04F7292CDA0E09009493BF /* Frameworks */ = {
@@ -32,7 +46,7 @@
 		3D04F7232CDA0E09009493BF = {
 			isa = PBXGroup;
 			children = (
-				3D04F72E2CDA0E09009493BF /* TFYSwiftMacOSAppKit_Swift */,
+				3D04F7442CDA0E13009493BF /* TFYSwiftMacOSAppKit_Swift */,
 				3D04F72D2CDA0E09009493BF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,6 +57,87 @@
 				3D04F72C2CDA0E09009493BF /* TFYSwiftMacOSAppKit_Swift.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		3D04F7442CDA0E13009493BF /* TFYSwiftMacOSAppKit_Swift */ = {
+			isa = PBXGroup;
+			children = (
+				3D04F7492CDA0E2B009493BF /* TFYSwiftMacOSAppKit */,
+				3D04F73E2CDA0E13009493BF /* AppDelegate.swift */,
+				3D04F73F2CDA0E13009493BF /* Assets.xcassets */,
+				3D04F7412CDA0E13009493BF /* Main.storyboard */,
+				3D04F7422CDA0E13009493BF /* TFYSwiftMacOSAppKit_Swift.entitlements */,
+				3D04F7432CDA0E13009493BF /* ViewController.swift */,
+			);
+			path = TFYSwiftMacOSAppKit_Swift;
+			sourceTree = "<group>";
+		};
+		3D04F7492CDA0E2B009493BF /* TFYSwiftMacOSAppKit */ = {
+			isa = PBXGroup;
+			children = (
+				3D04F74A2CDA0FAA009493BF /* macOScategory */,
+				3D04F74B2CDA0FAA009493BF /* macOSchain */,
+				3D04F74F2CDA0FAA009493BF /* macOScontainer */,
+				3D04F7502CDA0FAA009493BF /* macOSfoundation */,
+			);
+			path = TFYSwiftMacOSAppKit;
+			sourceTree = "<group>";
+		};
+		3D04F74A2CDA0FAA009493BF /* macOScategory */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = macOScategory;
+			sourceTree = "<group>";
+		};
+		3D04F74B2CDA0FAA009493BF /* macOSchain */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = macOSchain;
+			sourceTree = "<group>";
+		};
+		3D04F74C2CDA0FAA009493BF /* macOSGcd */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = macOSGcd;
+			sourceTree = "<group>";
+		};
+		3D04F74D2CDA0FAA009493BF /* macOSStatusItem */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = macOSStatusItem;
+			sourceTree = "<group>";
+		};
+		3D04F74E2CDA0FAA009493BF /* macOSUtils */ = {
+			isa = PBXGroup;
+			children = (
+				3D04F7512CDA1020009493BF /* TFYSwiftTextFieldCell.swift */,
+				3D04F7532CDA1275009493BF /* TFYSwiftSecureTextFieldCell.swift */,
+				3D04F7552CDA131D009493BF /* TFYSwiftTextField.swift */,
+				3D04F7572CDA2519009493BF /* TFYSwiftSecureTextField.swift */,
+				3D04F7592CDA27B4009493BF /* TFYSwiftOpenPanel.swift */,
+			);
+			path = macOSUtils;
+			sourceTree = "<group>";
+		};
+		3D04F74F2CDA0FAA009493BF /* macOScontainer */ = {
+			isa = PBXGroup;
+			children = (
+				3D04F74C2CDA0FAA009493BF /* macOSGcd */,
+				3D04F74D2CDA0FAA009493BF /* macOSStatusItem */,
+				3D04F74E2CDA0FAA009493BF /* macOSUtils */,
+			);
+			path = macOScontainer;
+			sourceTree = "<group>";
+		};
+		3D04F7502CDA0FAA009493BF /* macOSfoundation */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = macOSfoundation;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -60,9 +155,6 @@
 			);
 			dependencies = (
 			);
-			fileSystemSynchronizedGroups = (
-				3D04F72E2CDA0E09009493BF /* TFYSwiftMacOSAppKit_Swift */,
-			);
 			name = TFYSwiftMacOSAppKit_Swift;
 			packageProductDependencies = (
 			);
@@ -77,8 +169,10 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
+				CLASSPREFIX = TFYSwift;
 				LastSwiftUpdateCheck = 1610;
 				LastUpgradeCheck = 1610;
+				ORGANIZATIONNAME = TFYSwift;
 				TargetAttributes = {
 					3D04F72B2CDA0E09009493BF = {
 						CreatedOnToolsVersion = 16.1;
@@ -86,6 +180,7 @@
 				};
 			};
 			buildConfigurationList = 3D04F7272CDA0E09009493BF /* Build configuration list for PBXProject "TFYSwiftMacOSAppKit_Swift" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -94,7 +189,6 @@
 			);
 			mainGroup = 3D04F7232CDA0E09009493BF;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			productRefGroup = 3D04F72D2CDA0E09009493BF /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -109,6 +203,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3D04F7472CDA0E13009493BF /* Assets.xcassets in Resources */,
+				3D04F7482CDA0E13009493BF /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,10 +215,28 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3D04F7542CDA1275009493BF /* TFYSwiftSecureTextFieldCell.swift in Sources */,
+				3D04F7562CDA131D009493BF /* TFYSwiftTextField.swift in Sources */,
+				3D04F7582CDA251A009493BF /* TFYSwiftSecureTextField.swift in Sources */,
+				3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */,
+				3D04F7522CDA1020009493BF /* TFYSwiftTextFieldCell.swift in Sources */,
+				3D04F75A2CDA27B4009493BF /* TFYSwiftOpenPanel.swift in Sources */,
+				3D04F7462CDA0E13009493BF /* ViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		3D04F7412CDA0E13009493BF /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3D04F7402CDA0E13009493BF /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		3D04F7392CDA0E0A009493BF /* Debug */ = {
@@ -251,10 +365,11 @@
 				CODE_SIGN_ENTITLEMENTS = TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit_Swift.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 1.0.0;
 				DEVELOPMENT_TEAM = QH95759TSS;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "swift链接";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -262,7 +377,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.5;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.TFYSwiftMacOSAppKit-Swift";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -278,10 +394,11 @@
 				CODE_SIGN_ENTITLEMENTS = TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit_Swift.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 1.0.0;
 				DEVELOPMENT_TEAM = QH95759TSS;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "swift链接";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -289,7 +406,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.5;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.TFYSwiftMacOSAppKit-Swift";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

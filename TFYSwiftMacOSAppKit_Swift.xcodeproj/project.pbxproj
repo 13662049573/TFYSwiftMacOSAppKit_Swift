@@ -14,6 +14,9 @@
 		36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsynce.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsynce.swift */; };
 		36EC0CAD2CDA6513003EBAD5 /* TFYSwiftGCD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAC2CDA6513003EBAD5 /* TFYSwiftGCD.swift */; };
 		36EC0CAF2CDA6600003EBAD5 /* TFYSwiftTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAE2CDA6600003EBAD5 /* TFYSwiftTimer.swift */; };
+		36EC0CB12CDB8E70003EBAD5 /* TFYSwiftHasText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CB02CDB8E70003EBAD5 /* TFYSwiftHasText.swift */; };
+		36EC0CB42CDB92E3003EBAD5 /* NSTextView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CB32CDB92E3003EBAD5 /* NSTextView+Dejal.swift */; };
+		36EC0CB62CDB9EA4003EBAD5 /* NSView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */; };
 		3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F73E2CDA0E13009493BF /* AppDelegate.swift */; };
 		3D04F7462CDA0E13009493BF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7432CDA0E13009493BF /* ViewController.swift */; };
 		3D04F7472CDA0E13009493BF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3D04F73F2CDA0E13009493BF /* Assets.xcassets */; };
@@ -45,6 +48,9 @@
 		36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsynce.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftAsynce.swift; sourceTree = "<group>"; };
 		36EC0CAC2CDA6513003EBAD5 /* TFYSwiftGCD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftGCD.swift; sourceTree = "<group>"; };
 		36EC0CAE2CDA6600003EBAD5 /* TFYSwiftTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftTimer.swift; sourceTree = "<group>"; };
+		36EC0CB02CDB8E70003EBAD5 /* TFYSwiftHasText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftHasText.swift; sourceTree = "<group>"; };
+		36EC0CB32CDB92E3003EBAD5 /* NSTextView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSTextView+Dejal.swift"; sourceTree = "<group>"; };
+		36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSView+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F72C2CDA0E09009493BF /* TFYSwiftMacOSAppKit_Swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TFYSwiftMacOSAppKit_Swift.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D04F73E2CDA0E13009493BF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3D04F73F2CDA0E13009493BF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -90,6 +96,15 @@
 			path = macOSGcd;
 			sourceTree = "<group>";
 		};
+		36EC0CB22CDB9284003EBAD5 /* macOScategory */ = {
+			isa = PBXGroup;
+			children = (
+				36EC0CB32CDB92E3003EBAD5 /* NSTextView+Dejal.swift */,
+				36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */,
+			);
+			path = macOScategory;
+			sourceTree = "<group>";
+		};
 		3D04F7232CDA0E09009493BF = {
 			isa = PBXGroup;
 			children = (
@@ -122,8 +137,8 @@
 		3D04F7492CDA0E2B009493BF /* TFYSwiftMacOSAppKit */ = {
 			isa = PBXGroup;
 			children = (
+				36EC0CB22CDB9284003EBAD5 /* macOScategory */,
 				3D04F7722CDB74FE009493BF /* macOSchain */,
-				3D04F7712CDB74E8009493BF /* macOScategory */,
 				3D04F76A2CDB675E009493BF /* macOSfoundation */,
 				3D04F74F2CDA0FAA009493BF /* macOScontainer */,
 			);
@@ -181,18 +196,12 @@
 			path = macOSfoundation;
 			sourceTree = "<group>";
 		};
-		3D04F7712CDB74E8009493BF /* macOScategory */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = macOScategory;
-			sourceTree = "<group>";
-		};
 		3D04F7722CDB74FE009493BF /* macOSchain */ = {
 			isa = PBXGroup;
 			children = (
 				3D04F7732CDB7576009493BF /* TFYSwiftChain.swift */,
 				3D04F7752CDB779F009493BF /* TFYSwiftHasFont.swift */,
+				36EC0CB02CDB8E70003EBAD5 /* TFYSwiftHasText.swift */,
 			);
 			path = macOSchain;
 			sourceTree = "<group>";
@@ -273,10 +282,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				3D04F7542CDA1275009493BF /* TFYSwiftSecureTextFieldCell.swift in Sources */,
+				36EC0CB62CDB9EA4003EBAD5 /* NSView+Dejal.swift in Sources */,
 				3D04F7562CDA131D009493BF /* TFYSwiftTextField.swift in Sources */,
 				3D04F76E2CDB6D9F009493BF /* NSFileManager+Dejal.swift in Sources */,
 				3D04F76C2CDB67DB009493BF /* NSObject+Dejal.swift in Sources */,
 				3D04F7582CDA251A009493BF /* TFYSwiftSecureTextField.swift in Sources */,
+				36EC0CB42CDB92E3003EBAD5 /* NSTextView+Dejal.swift in Sources */,
 				3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */,
 				3D04F7522CDA1020009493BF /* TFYSwiftTextFieldCell.swift in Sources */,
 				36EC0CA02CDA4AE3003EBAD5 /* TFYSwiftButton.swift in Sources */,
@@ -295,6 +306,7 @@
 				3D04F7462CDA0E13009493BF /* ViewController.swift in Sources */,
 				3D04F7742CDB7576009493BF /* TFYSwiftChain.swift in Sources */,
 				36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsynce.swift in Sources */,
+				36EC0CB12CDB8E70003EBAD5 /* TFYSwiftHasText.swift in Sources */,
 				36EC0CA92CDA62D4003EBAD5 /* TFYSwiftJsonUtils.swift in Sources */,
 				3D04F75F2CDAF1EE009493BF /* TFYSwiftStatusItemBackgroundView.swift in Sources */,
 				3D04F7612CDAFBDF009493BF /* TFYSwiftStatusItem.swift in Sources */,

@@ -91,7 +91,6 @@ extension TFYSwiftButton {
     
     //MARK:设置按钮的字体颜色
     var titleTextColor : NSColor {
-        
         get {
             let attrTitle = self.attributedTitle
             return attrTitle.attribute(NSAttributedString.Key.foregroundColor, at: 0, effectiveRange: nil) as! NSColor

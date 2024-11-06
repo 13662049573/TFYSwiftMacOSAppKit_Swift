@@ -65,8 +65,8 @@ public class TFYSwiftSecureTextField: NSSecureTextField {
         didSet {
             let placeholderString = self.placeholderString
             if (placeholderString != nil) {
-                var attributedString:NSMutableAttributedString = NSMutableAttributedString(string: placeholderString!)
-                var style:NSMutableParagraphStyle = (NSParagraphStyle.default as! NSMutableParagraphStyle)
+                let attributedString:NSMutableAttributedString = NSMutableAttributedString(string: placeholderString!)
+                let style:NSMutableParagraphStyle = (NSParagraphStyle.default as! NSMutableParagraphStyle)
                 style.alignment = alignment
                 attributedString.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSMakeRange(0, placeholderString!.utf16.count))
                 placeholderAttributedString = attributedString

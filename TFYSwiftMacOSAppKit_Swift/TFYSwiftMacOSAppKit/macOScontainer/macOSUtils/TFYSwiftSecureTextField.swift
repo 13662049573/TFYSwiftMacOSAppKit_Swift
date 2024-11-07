@@ -55,7 +55,7 @@ public class TFYSwiftSecureTextField: NSSecureTextField {
     public override func becomeFirstResponder() -> Bool {
         let success = super.becomeFirstResponder()
         if success {
-            var textView:NSTextView = self.currentEditor() as! NSTextView
+            let textView:NSTextView = self.currentEditor() as! NSTextView
             textView.insertionPointColor = textColor
         }
         return success

@@ -7,7 +7,6 @@
 //
 
 import Cocoa
-import Foundation
 
 public let themeChangedNotification = Notification.Name("AppleInterfaceThemeChangedNotification")
 public let TFYStatusItemWindowWillShowNotification = Notification.Name("TFYStatusItemWindowWillShowNotification")

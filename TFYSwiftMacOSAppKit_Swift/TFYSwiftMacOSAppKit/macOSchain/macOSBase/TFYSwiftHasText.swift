@@ -18,8 +18,7 @@ public protocol TFYSwiftHasText {
     func set(color: NSColor?)
     
     func set(alignment: NSTextAlignment)
-    
-    func set(backgroundColor: NSColor)
+
 }
 
 extension NSTextField: TFYSwiftHasText {
@@ -39,11 +38,7 @@ extension NSTextField: TFYSwiftHasText {
     public func set(alignment: NSTextAlignment) {
         self.alignment = alignment
     }
-    
-    public func set(backgroundColor: NSColor) {
-        self.wantsLayer = true
-        self.backgroundColor = backgroundColor
-    }
+
 }
 
 extension NSTextView: TFYSwiftHasText {
@@ -64,10 +59,6 @@ extension NSTextView: TFYSwiftHasText {
         self.alignment = alignment
     }
     
-    public func set(backgroundColor: NSColor) {
-        self.wantsLayer = true
-        self.backgroundColor = backgroundColor
-    }
 }
 
 extension NSButton: TFYSwiftHasText {
@@ -88,13 +79,8 @@ extension NSButton: TFYSwiftHasText {
         self.alignment = alignment
     }
     
-    public func set(backgroundColor: NSColor) {
-        self.wantsLayer = true
-        self.layer?.backgroundColor = backgroundColor.cgColor
-    }
-    
     func tfy_setTextColor(_ textColor: NSColor?) {
-        var attrTitle = NSMutableAttributedString(attributedString: attributedTitle)
+        let attrTitle = NSMutableAttributedString(attributedString: attributedTitle)
         let range = NSRange(location: 0, length: attrTitle.length)
         if let color = textColor {
             attrTitle.addAttribute(.foregroundColor, value: color, range: range)
@@ -132,10 +118,5 @@ public extension Chain where Base: TFYSwiftHasText {
         base.set(alignment: textAlignment)
         return self
     }
-    
-    @discardableResult
-    func backgroundColor(_ color:NSColor) -> Chain {
-        base.set(backgroundColor: color)
-        return self
-    }
+
 }

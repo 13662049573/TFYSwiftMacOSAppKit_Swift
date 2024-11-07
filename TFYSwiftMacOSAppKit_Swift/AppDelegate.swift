@@ -10,11 +10,13 @@ import Cocoa
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
 
-    
-
-
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
+        
+        let showVc:TFYSwiftHomeController = TFYSwiftHomeController()
+        showVc.preferredContentSize = NSSize(width: 400, height: 600)
+        
+        TFYSwiftStatusItem.sharedInstance.presentStatusItemWithImage(itemImage: NSImage(named: "mood_day_17")!, contentViewController: showVc)
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {

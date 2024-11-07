@@ -7,8 +7,6 @@
 //
 
 import Cocoa
-import AppKit
-import Foundation
 
 public class TFYSwiftOpenPanel: NSObject {
 

@@ -7,7 +7,6 @@
 //
 
 import Cocoa
-import Foundation
 
 public class TFYSwiftButton: NSButton {
 

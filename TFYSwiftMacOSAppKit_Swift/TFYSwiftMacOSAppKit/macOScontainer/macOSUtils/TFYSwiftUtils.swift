@@ -7,7 +7,6 @@
 //
 
 import Cocoa
-import Foundation
 import System
 import CoreWLAN
 import SystemConfiguration

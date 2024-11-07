@@ -16,7 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let showVc:TFYSwiftHomeController = TFYSwiftHomeController()
         showVc.preferredContentSize = NSSize(width: 400, height: 600)
         
-        TFYSwiftStatusItem.sharedInstance.presentStatusItemWithImage(itemImage: NSImage(named: "mood_day_17")!, contentViewController: showVc)
+        TFYStatusItem.sharedInstance.presentStatusItemWithImage(itemImage: NSImage(named: "mood_day_17")!, contentViewController: showVc)
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {

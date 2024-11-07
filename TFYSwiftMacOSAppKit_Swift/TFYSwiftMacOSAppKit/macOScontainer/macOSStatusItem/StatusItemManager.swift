@@ -34,8 +34,11 @@ public typealias StatusItemShouldShowHandler = (_ statusItemManager: StatusItemM
 public class StatusItemManager: NSObject {
 
     // 单例实例
-    public static let shared = StatusItemManager()
-
+    public static var shared: StatusItemManager = {
+        let ssss = StatusItemManager().initSingleton()
+        return ssss
+    }()
+    
     // 状态项
     public var statusItem: NSStatusItem?
     // 拖拽处理方法
@@ -80,7 +83,7 @@ public class StatusItemManager: NSObject {
     // 状态项窗口是否可见
     public var isStatusItemWindowVisible: Bool? {
         get {
-            return (statusItemWindowController != nil) ? (statusItemWindowController?.windowIsOpen) : false
+            return (statusItemWindowController != nil) ? (statusItemWindowController?.isWindowOpen) : false
         }
         set {}
     }
@@ -157,8 +160,8 @@ public class StatusItemManager: NSObject {
         addObserver(self, forKeyPath: STATUS_ITEM_FRAME_KEY_PATH, options:.new, context: nil)
         addObserver(self, forKeyPath: STATUS_ITEM_WINDOW_CONFIGURATION_PINNED_PATH, options: [.new,.old,.prior], context: nil)
 
-        DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name("themeChangedNotification"), object: nil, queue: nil) { note in
-            NotificationCenter.default.post(name: NSNotification.Name("TFYSystemInterfaceThemeChangedNotification"), object: nil)
+        DistributedNotificationCenter.default().addObserver(forName: statusItemthemeChangedNotification, object: nil, queue: nil) { note in
+            NotificationCenter.default.post(name: systemInterfaceThemeChangedNotification, object: nil)
         }
 
         return self
@@ -266,10 +269,10 @@ public class StatusItemManager: NSObject {
 
     // 处理状态项按钮动作
     @objc private func handleStatusItemButtonAction() {
-        guard let shouldShow = shouldShowHandler else { return }
+        guard shouldShowHandler != nil else { return }
         if isStatusItemWindowVisible! {
             dismissStatusItemWindow()
-        } else if shouldShow(self) {
+        } else {
             showStatusItemWindow()
         }
     }
@@ -345,7 +348,7 @@ public class StatusItemManager: NSObject {
 
     // 观察值变化
     public override class func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        guard let sharedInstance = StatusItemManager.shared else { return }
+        let sharedInstance = StatusItemManager.shared
         if keyPath == STATUS_ITEM_FRAME_KEY_PATH {
             sharedInstance.configureProximityDragCollisionArea()
         } else if keyPath == STATUS_ITEM_WINDOW_CONFIGURATION_PINNED_PATH {

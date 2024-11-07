@@ -9,7 +9,7 @@
 import Cocoa
 
 // 定义通知名称
-public let themeChangedNotification = Notification.Name("AppleInterfaceThemeChangedNotification")
+public let statusItemthemeChangedNotification = Notification.Name("AppleInterfaceThemeChangedNotification")
 public let statusItemWindowWillShowNotification = Notification.Name("StatusItemWindowWillShowNotification")
 public let statusItemWindowDidShowNotification = Notification.Name("StatusItemWindowDidShowNotification")
 public let statusItemWindowWillDismissNotification = Notification.Name("StatusItemWindowWillDismissNotification")
@@ -59,7 +59,7 @@ public class StatusItemWindowController: NSWindowController {
 
         NotificationCenter.default.addObserver(self, selector: #selector(handleWindowDidResignKeyNotification(note:)), name: NSWindow.didResignKeyNotification, object: nil)
 
-        DistributedNotificationCenter.default().addObserver(self, selector: #selector(handleAppleInterfaceThemeChangedNotification(note:)), name: themeChangedNotification, object: nil)
+        DistributedNotificationCenter.default().addObserver(self, selector: #selector(handleAppleInterfaceThemeChangedNotification(note:)), name: statusItemthemeChangedNotification, object: nil)
     }
 
     // 初始化方法

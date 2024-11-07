@@ -41,7 +41,7 @@ public class StatusItemManager: NSObject {
     // 拖拽处理方法
     public var dropHandler: StatusItemDropHandler? {
         didSet {
-            if dropHandler!= nil {
+            if dropHandler != nil {
                 configureDropView()
             }
         }
@@ -53,7 +53,7 @@ public class StatusItemManager: NSObject {
         set {}
         get {
             guard let dict = UserDefaults.standard.persistentDomain(forName: UserDefaults.globalDomain) else { return false }
-            let style: String = dict?["AppleInterfaceStyle"] as! String
+            let style: String = dict["AppleInterfaceStyle"] as! String
             return style.isEmpty && style.lowercased() == "dark"
         }
     }
@@ -88,7 +88,8 @@ public class StatusItemManager: NSObject {
     public var proximityDragDetectionEnabled: Bool? {
         didSet {
             guard let proximityDraggingDetectionEnabled = proximityDragDetectionEnabled else { return }
-            if proximityDraggingDetectionEnabled &&!(windowConfiguration?.pinned ?? false) {
+            
+            if proximityDraggingDetectionEnabled && !(windowConfiguration?.pinned ?? false) {
                 configureProximityDragCollisionArea()
                 enableDragEventMonitor()
             } else {

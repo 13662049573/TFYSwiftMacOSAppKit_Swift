@@ -12,9 +12,9 @@ import Cocoa
 public class StatusItemDragDropView: NSView {
 
     // 状态项实例
-    public var statusItem: TFYSwiftStatusItem?
+    public var statusItem: StatusItemManager?
     // 拖拽处理方法
-    public var dropHandler: TFYStatusItemDropHandler?
+    public var dropHandler: StatusItemDropHandler?
     // 可拖拽类型
     public var dropTypes: [NSPasteboard.PasteboardType] {
         set {

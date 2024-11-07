@@ -14,7 +14,6 @@
 		36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsynce.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsynce.swift */; };
 		36EC0CAD2CDA6513003EBAD5 /* TFYSwiftGCD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAC2CDA6513003EBAD5 /* TFYSwiftGCD.swift */; };
 		36EC0CAF2CDA6600003EBAD5 /* TFYSwiftTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAE2CDA6600003EBAD5 /* TFYSwiftTimer.swift */; };
-		36EC0CB12CDB8E70003EBAD5 /* TFYSwiftHasText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CB02CDB8E70003EBAD5 /* TFYSwiftHasText.swift */; };
 		36EC0CB42CDB92E3003EBAD5 /* NSTextView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CB32CDB92E3003EBAD5 /* NSTextView+Dejal.swift */; };
 		36EC0CB62CDB9EA4003EBAD5 /* NSView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */; };
 		3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F73E2CDA0E13009493BF /* AppDelegate.swift */; };
@@ -36,8 +35,75 @@
 		3D04F76C2CDB67DB009493BF /* NSObject+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F76B2CDB67DB009493BF /* NSObject+Dejal.swift */; };
 		3D04F76E2CDB6D9F009493BF /* NSFileManager+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F76D2CDB6D9F009493BF /* NSFileManager+Dejal.swift */; };
 		3D04F7702CDB6DED009493BF /* NSString+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F76F2CDB6DED009493BF /* NSString+Dejal.swift */; };
-		3D04F7742CDB7576009493BF /* TFYSwiftChain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7732CDB7576009493BF /* TFYSwiftChain.swift */; };
-		3D04F7762CDB779F009493BF /* TFYSwiftHasFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7752CDB779F009493BF /* TFYSwiftHasFont.swift */; };
+		3D04F7B42CDC8D2F009493BF /* NSTextField+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7B32CDC8D2F009493BF /* NSTextField+Dejal.swift */; };
+		3D04F8002CDCA31F009493BF /* TFYSwiftChain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7D12CDCA31F009493BF /* TFYSwiftChain.swift */; };
+		3D04F8012CDCA31F009493BF /* TFYSwiftNSScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7EA2CDCA31F009493BF /* TFYSwiftNSScrollView.swift */; };
+		3D04F8022CDCA31F009493BF /* TFYSwiftNSComboBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7DA2CDCA31F009493BF /* TFYSwiftNSComboBox.swift */; };
+		3D04F8032CDCA31F009493BF /* TFYSwiftNSTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7F72CDCA31F009493BF /* TFYSwiftNSTableView.swift */; };
+		3D04F8042CDCA31F009493BF /* TFYSwiftHasFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7D22CDCA31F009493BF /* TFYSwiftHasFont.swift */; };
+		3D04F8052CDCA31F009493BF /* TFYSwiftNSOutlineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7E32CDCA31F009493BF /* TFYSwiftNSOutlineView.swift */; };
+		3D04F8062CDCA31F009493BF /* TFYSwiftNSSegmentedControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7EE2CDCA31F009493BF /* TFYSwiftNSSegmentedControl.swift */; };
+		3D04F8072CDCA31F009493BF /* TFYSwiftNSPopUpButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7E52CDCA31F009493BF /* TFYSwiftNSPopUpButton.swift */; };
+		3D04F8082CDCA31F009493BF /* TFYSwiftNSBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7D52CDCA31F009493BF /* TFYSwiftNSBrowser.swift */; };
+		3D04F8092CDCA31F009493BF /* TFYSwiftNSDatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7DD2CDCA31F009493BF /* TFYSwiftNSDatePicker.swift */; };
+		3D04F80A2CDCA31F009493BF /* TFYSwiftNSPathControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7E42CDCA31F009493BF /* TFYSwiftNSPathControl.swift */; };
+		3D04F80B2CDCA31F009493BF /* TFYSwiftNSStepper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7F32CDCA31F009493BF /* TFYSwiftNSStepper.swift */; };
+		3D04F80C2CDCA31F009493BF /* TFYSwiftNSSplitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7F02CDCA31F009493BF /* TFYSwiftNSSplitView.swift */; };
+		3D04F80D2CDCA31F009493BF /* TFYSwiftNSSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7EF2CDCA31F009493BF /* TFYSwiftNSSlider.swift */; };
+		3D04F80E2CDCA31F009493BF /* TFYSwiftNSView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7FD2CDCA31F009493BF /* TFYSwiftNSView.swift */; };
+		3D04F80F2CDCA31F009493BF /* TFYSwiftNSTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7FA2CDCA31F009493BF /* TFYSwiftNSTextField.swift */; };
+		3D04F8102CDCA31F009493BF /* TFYSwiftNSColorWell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7D92CDCA31F009493BF /* TFYSwiftNSColorWell.swift */; };
+		3D04F8112CDCA31F009493BF /* TFYSwiftNSStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7F12CDCA31F009493BF /* TFYSwiftNSStackView.swift */; };
+		3D04F8122CDCA31F009493BF /* TFYSwiftNSRulerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7E82CDCA31F009493BF /* TFYSwiftNSRulerView.swift */; };
+		3D04F8132CDCA31F009493BF /* TFYSwiftNSLevelIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7E12CDCA31F009493BF /* TFYSwiftNSLevelIndicator.swift */; };
+		3D04F8142CDCA31F009493BF /* TFYSwiftNSControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7DC2CDCA31F009493BF /* TFYSwiftNSControl.swift */; };
+		3D04F8152CDCA31F009493BF /* TFYSwiftNSText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7F92CDCA31F009493BF /* TFYSwiftNSText.swift */; };
+		3D04F8162CDCA31F009493BF /* TFYSwiftNSRuleEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7E72CDCA31F009493BF /* TFYSwiftNSRuleEditor.swift */; };
+		3D04F8172CDCA31F009493BF /* TFYSwiftNSBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7D42CDCA31F009493BF /* TFYSwiftNSBox.swift */; };
+		3D04F8182CDCA31F009493BF /* TFYSwiftNSTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7F82CDCA31F009493BF /* TFYSwiftNSTabView.swift */; };
+		3D04F8192CDCA31F009493BF /* TFYSwiftNSTableRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7F62CDCA31F009493BF /* TFYSwiftNSTableRowView.swift */; };
+		3D04F81A2CDCA31F009493BF /* TFYSwiftNSProgressIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7E62CDCA31F009493BF /* TFYSwiftNSProgressIndicator.swift */; };
+		3D04F81B2CDCA31F009493BF /* TFYSwiftNSSearchField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7EC2CDCA31F009493BF /* TFYSwiftNSSearchField.swift */; };
+		3D04F81C2CDCA31F009493BF /* TFYSwiftNSComboButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7DB2CDCA31F009493BF /* TFYSwiftNSComboButton.swift */; };
+		3D04F81D2CDCA31F009493BF /* TFYSwiftNSTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7FB2CDCA31F009493BF /* TFYSwiftNSTextView.swift */; };
+		3D04F81E2CDCA31F009493BF /* TFYSwiftNSCollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7D82CDCA31F009493BF /* TFYSwiftNSCollectionView.swift */; };
+		3D04F81F2CDCA31F009493BF /* TFYSwiftNSImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7DF2CDCA31F009493BF /* TFYSwiftNSImageView.swift */; };
+		3D04F8202CDCA31F009493BF /* TFYSwiftNSButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7D62CDCA31F009493BF /* TFYSwiftNSButton.swift */; };
+		3D04F8212CDCA31F009493BF /* TFYSwiftNSLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7E02CDCA31F009493BF /* TFYSwiftNSLabel.swift */; };
+		3D04F8222CDCA31F009493BF /* TFYSwiftNSTokenField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7FC2CDCA31F009493BF /* TFYSwiftNSTokenField.swift */; };
+		3D04F8232CDCA31F009493BF /* TFYSwiftNSMatrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7E22CDCA31F009493BF /* TFYSwiftNSMatrix.swift */; };
+		3D04F8242CDCA31F009493BF /* TFYSwiftNSScroller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7E92CDCA31F009493BF /* TFYSwiftNSScroller.swift */; };
+		3D04F8252CDCA31F009493BF /* TFYSwiftHasText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7D32CDCA31F009493BF /* TFYSwiftHasText.swift */; };
+		3D04F8262CDCA31F009493BF /* TFYSwiftNSTableCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7F52CDCA31F009493BF /* TFYSwiftNSTableCellView.swift */; };
+		3D04F8272CDCA31F009493BF /* TFYSwiftNSGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7DE2CDCA31F009493BF /* TFYSwiftNSGridView.swift */; };
+		3D04F8282CDCA31F009493BF /* TFYSwiftNSScrubber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7EB2CDCA31F009493BF /* TFYSwiftNSScrubber.swift */; };
+		3D04F8292CDCA31F009493BF /* TFYSwiftNSSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7F42CDCA31F009493BF /* TFYSwiftNSSwitch.swift */; };
+		3D04F82A2CDCA31F009493BF /* TFYSwiftNSVisualEffectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7FE2CDCA31F009493BF /* TFYSwiftNSVisualEffectView.swift */; };
+		3D04F82B2CDCA31F009493BF /* TFYSwiftNSSecureTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7ED2CDCA31F009493BF /* TFYSwiftNSSecureTextField.swift */; };
+		3D04F82C2CDCA31F009493BF /* TFYSwiftNSClipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7D72CDCA31F009493BF /* TFYSwiftNSClipView.swift */; };
+		3D04F82D2CDCA31F009493BF /* TFYSwiftNSStatusBarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7F22CDCA31F009493BF /* TFYSwiftNSStatusBarButton.swift */; };
+		3D04F8312CDCA3A0009493BF /* TFYSwiftNSGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8302CDCA3A0009493BF /* TFYSwiftNSGestureRecognizer.swift */; };
+		3D04F8342CDCA5C9009493BF /* TFYSwiftNSPressGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8332CDCA5C9009493BF /* TFYSwiftNSPressGestureRecognizer.swift */; };
+		3D04F8362CDCA65A009493BF /* TFYSwiftNSPanGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8352CDCA65A009493BF /* TFYSwiftNSPanGestureRecognizer.swift */; };
+		3D04F8382CDCA6F6009493BF /* TFYSwiftNSRotationGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8372CDCA6F6009493BF /* TFYSwiftNSRotationGestureRecognizer.swift */; };
+		3D04F83A2CDCA744009493BF /* TFYSwiftNSClickGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8392CDCA744009493BF /* TFYSwiftNSClickGestureRecognizer.swift */; };
+		3D04F83C2CDCA788009493BF /* TFYSwiftNSMagnificationGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F83B2CDCA788009493BF /* TFYSwiftNSMagnificationGestureRecognizer.swift */; };
+		3D04F83E2CDCA803009493BF /* TFYSwiftCALayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F83D2CDCA803009493BF /* TFYSwiftCALayer.swift */; };
+		3D04F8402CDCADF9009493BF /* TFYSwiftCAEmitterLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F83F2CDCADF9009493BF /* TFYSwiftCAEmitterLayer.swift */; };
+		3D04F8422CDCAF21009493BF /* TFYSwiftCAGradientLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8412CDCAF21009493BF /* TFYSwiftCAGradientLayer.swift */; };
+		3D04F8442CDCAF92009493BF /* TFYSwiftCAReplicatorLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8432CDCAF92009493BF /* TFYSwiftCAReplicatorLayer.swift */; };
+		3D04F8462CDCB048009493BF /* TFYSwiftCAScrollLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8452CDCB048009493BF /* TFYSwiftCAScrollLayer.swift */; };
+		3D04F8482CDCB135009493BF /* TFYSwiftCAShapeLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8472CDCB135009493BF /* TFYSwiftCAShapeLayer.swift */; };
+		3D04F84A2CDCB269009493BF /* TFYSwiftCATextLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8492CDCB269009493BF /* TFYSwiftCATextLayer.swift */; };
+		3D04F84C2CDCB324009493BF /* TFYSwiftCATiledLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F84B2CDCB324009493BF /* TFYSwiftCATiledLayer.swift */; };
+		3D04F8512CDCB66B009493BF /* TFYSwiftHomeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8502CDCB66B009493BF /* TFYSwiftHomeController.swift */; };
+		3D04F8552CDCC720009493BF /* StatusItemConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8542CDCC720009493BF /* StatusItemConfig.swift */; };
+		3D04F8572CDCC793009493BF /* StatusItemContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8562CDCC793009493BF /* StatusItemContainerView.swift */; };
+		3D04F8592CDCC86D009493BF /* StatusItemWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8582CDCC86D009493BF /* StatusItemWindow.swift */; };
+		3D04F85B2CDCC946009493BF /* StatusItemBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F85A2CDCC946009493BF /* StatusItemBackgroundView.swift */; };
+		3D04F85D2CDCC9A2009493BF /* StatusItemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F85C2CDCC9A2009493BF /* StatusItemManager.swift */; };
+		3D04F85F2CDCCA04009493BF /* StatusItemDragDropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F85E2CDCCA04009493BF /* StatusItemDragDropView.swift */; };
+		3D04F8612CDCCA5D009493BF /* StatusItemWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8602CDCCA5D009493BF /* StatusItemWindowController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,7 +114,6 @@
 		36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsynce.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftAsynce.swift; sourceTree = "<group>"; };
 		36EC0CAC2CDA6513003EBAD5 /* TFYSwiftGCD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftGCD.swift; sourceTree = "<group>"; };
 		36EC0CAE2CDA6600003EBAD5 /* TFYSwiftTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftTimer.swift; sourceTree = "<group>"; };
-		36EC0CB02CDB8E70003EBAD5 /* TFYSwiftHasText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftHasText.swift; sourceTree = "<group>"; };
 		36EC0CB32CDB92E3003EBAD5 /* NSTextView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSTextView+Dejal.swift"; sourceTree = "<group>"; };
 		36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSView+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F72C2CDA0E09009493BF /* TFYSwiftMacOSAppKit_Swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TFYSwiftMacOSAppKit_Swift.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -72,8 +137,75 @@
 		3D04F76B2CDB67DB009493BF /* NSObject+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSObject+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F76D2CDB6D9F009493BF /* NSFileManager+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSFileManager+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F76F2CDB6DED009493BF /* NSString+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSString+Dejal.swift"; sourceTree = "<group>"; };
-		3D04F7732CDB7576009493BF /* TFYSwiftChain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftChain.swift; sourceTree = "<group>"; };
-		3D04F7752CDB779F009493BF /* TFYSwiftHasFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftHasFont.swift; sourceTree = "<group>"; };
+		3D04F7B32CDC8D2F009493BF /* NSTextField+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSTextField+Dejal.swift"; sourceTree = "<group>"; };
+		3D04F7D12CDCA31F009493BF /* TFYSwiftChain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftChain.swift; sourceTree = "<group>"; };
+		3D04F7D22CDCA31F009493BF /* TFYSwiftHasFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftHasFont.swift; sourceTree = "<group>"; };
+		3D04F7D32CDCA31F009493BF /* TFYSwiftHasText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftHasText.swift; sourceTree = "<group>"; };
+		3D04F7D42CDCA31F009493BF /* TFYSwiftNSBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSBox.swift; sourceTree = "<group>"; };
+		3D04F7D52CDCA31F009493BF /* TFYSwiftNSBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSBrowser.swift; sourceTree = "<group>"; };
+		3D04F7D62CDCA31F009493BF /* TFYSwiftNSButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSButton.swift; sourceTree = "<group>"; };
+		3D04F7D72CDCA31F009493BF /* TFYSwiftNSClipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSClipView.swift; sourceTree = "<group>"; };
+		3D04F7D82CDCA31F009493BF /* TFYSwiftNSCollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSCollectionView.swift; sourceTree = "<group>"; };
+		3D04F7D92CDCA31F009493BF /* TFYSwiftNSColorWell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSColorWell.swift; sourceTree = "<group>"; };
+		3D04F7DA2CDCA31F009493BF /* TFYSwiftNSComboBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSComboBox.swift; sourceTree = "<group>"; };
+		3D04F7DB2CDCA31F009493BF /* TFYSwiftNSComboButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSComboButton.swift; sourceTree = "<group>"; };
+		3D04F7DC2CDCA31F009493BF /* TFYSwiftNSControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSControl.swift; sourceTree = "<group>"; };
+		3D04F7DD2CDCA31F009493BF /* TFYSwiftNSDatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSDatePicker.swift; sourceTree = "<group>"; };
+		3D04F7DE2CDCA31F009493BF /* TFYSwiftNSGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSGridView.swift; sourceTree = "<group>"; };
+		3D04F7DF2CDCA31F009493BF /* TFYSwiftNSImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSImageView.swift; sourceTree = "<group>"; };
+		3D04F7E02CDCA31F009493BF /* TFYSwiftNSLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSLabel.swift; sourceTree = "<group>"; };
+		3D04F7E12CDCA31F009493BF /* TFYSwiftNSLevelIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSLevelIndicator.swift; sourceTree = "<group>"; };
+		3D04F7E22CDCA31F009493BF /* TFYSwiftNSMatrix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSMatrix.swift; sourceTree = "<group>"; };
+		3D04F7E32CDCA31F009493BF /* TFYSwiftNSOutlineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSOutlineView.swift; sourceTree = "<group>"; };
+		3D04F7E42CDCA31F009493BF /* TFYSwiftNSPathControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSPathControl.swift; sourceTree = "<group>"; };
+		3D04F7E52CDCA31F009493BF /* TFYSwiftNSPopUpButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSPopUpButton.swift; sourceTree = "<group>"; };
+		3D04F7E62CDCA31F009493BF /* TFYSwiftNSProgressIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSProgressIndicator.swift; sourceTree = "<group>"; };
+		3D04F7E72CDCA31F009493BF /* TFYSwiftNSRuleEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSRuleEditor.swift; sourceTree = "<group>"; };
+		3D04F7E82CDCA31F009493BF /* TFYSwiftNSRulerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSRulerView.swift; sourceTree = "<group>"; };
+		3D04F7E92CDCA31F009493BF /* TFYSwiftNSScroller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSScroller.swift; sourceTree = "<group>"; };
+		3D04F7EA2CDCA31F009493BF /* TFYSwiftNSScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSScrollView.swift; sourceTree = "<group>"; };
+		3D04F7EB2CDCA31F009493BF /* TFYSwiftNSScrubber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSScrubber.swift; sourceTree = "<group>"; };
+		3D04F7EC2CDCA31F009493BF /* TFYSwiftNSSearchField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSSearchField.swift; sourceTree = "<group>"; };
+		3D04F7ED2CDCA31F009493BF /* TFYSwiftNSSecureTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSSecureTextField.swift; sourceTree = "<group>"; };
+		3D04F7EE2CDCA31F009493BF /* TFYSwiftNSSegmentedControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSSegmentedControl.swift; sourceTree = "<group>"; };
+		3D04F7EF2CDCA31F009493BF /* TFYSwiftNSSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSSlider.swift; sourceTree = "<group>"; };
+		3D04F7F02CDCA31F009493BF /* TFYSwiftNSSplitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSSplitView.swift; sourceTree = "<group>"; };
+		3D04F7F12CDCA31F009493BF /* TFYSwiftNSStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSStackView.swift; sourceTree = "<group>"; };
+		3D04F7F22CDCA31F009493BF /* TFYSwiftNSStatusBarButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSStatusBarButton.swift; sourceTree = "<group>"; };
+		3D04F7F32CDCA31F009493BF /* TFYSwiftNSStepper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSStepper.swift; sourceTree = "<group>"; };
+		3D04F7F42CDCA31F009493BF /* TFYSwiftNSSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSSwitch.swift; sourceTree = "<group>"; };
+		3D04F7F52CDCA31F009493BF /* TFYSwiftNSTableCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSTableCellView.swift; sourceTree = "<group>"; };
+		3D04F7F62CDCA31F009493BF /* TFYSwiftNSTableRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSTableRowView.swift; sourceTree = "<group>"; };
+		3D04F7F72CDCA31F009493BF /* TFYSwiftNSTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSTableView.swift; sourceTree = "<group>"; };
+		3D04F7F82CDCA31F009493BF /* TFYSwiftNSTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSTabView.swift; sourceTree = "<group>"; };
+		3D04F7F92CDCA31F009493BF /* TFYSwiftNSText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSText.swift; sourceTree = "<group>"; };
+		3D04F7FA2CDCA31F009493BF /* TFYSwiftNSTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSTextField.swift; sourceTree = "<group>"; };
+		3D04F7FB2CDCA31F009493BF /* TFYSwiftNSTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSTextView.swift; sourceTree = "<group>"; };
+		3D04F7FC2CDCA31F009493BF /* TFYSwiftNSTokenField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSTokenField.swift; sourceTree = "<group>"; };
+		3D04F7FD2CDCA31F009493BF /* TFYSwiftNSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSView.swift; sourceTree = "<group>"; };
+		3D04F7FE2CDCA31F009493BF /* TFYSwiftNSVisualEffectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSVisualEffectView.swift; sourceTree = "<group>"; };
+		3D04F8302CDCA3A0009493BF /* TFYSwiftNSGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSGestureRecognizer.swift; sourceTree = "<group>"; };
+		3D04F8332CDCA5C9009493BF /* TFYSwiftNSPressGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSPressGestureRecognizer.swift; sourceTree = "<group>"; };
+		3D04F8352CDCA65A009493BF /* TFYSwiftNSPanGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSPanGestureRecognizer.swift; sourceTree = "<group>"; };
+		3D04F8372CDCA6F6009493BF /* TFYSwiftNSRotationGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSRotationGestureRecognizer.swift; sourceTree = "<group>"; };
+		3D04F8392CDCA744009493BF /* TFYSwiftNSClickGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSClickGestureRecognizer.swift; sourceTree = "<group>"; };
+		3D04F83B2CDCA788009493BF /* TFYSwiftNSMagnificationGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNSMagnificationGestureRecognizer.swift; sourceTree = "<group>"; };
+		3D04F83D2CDCA803009493BF /* TFYSwiftCALayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCALayer.swift; sourceTree = "<group>"; };
+		3D04F83F2CDCADF9009493BF /* TFYSwiftCAEmitterLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCAEmitterLayer.swift; sourceTree = "<group>"; };
+		3D04F8412CDCAF21009493BF /* TFYSwiftCAGradientLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCAGradientLayer.swift; sourceTree = "<group>"; };
+		3D04F8432CDCAF92009493BF /* TFYSwiftCAReplicatorLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCAReplicatorLayer.swift; sourceTree = "<group>"; };
+		3D04F8452CDCB048009493BF /* TFYSwiftCAScrollLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCAScrollLayer.swift; sourceTree = "<group>"; };
+		3D04F8472CDCB135009493BF /* TFYSwiftCAShapeLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCAShapeLayer.swift; sourceTree = "<group>"; };
+		3D04F8492CDCB269009493BF /* TFYSwiftCATextLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCATextLayer.swift; sourceTree = "<group>"; };
+		3D04F84B2CDCB324009493BF /* TFYSwiftCATiledLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCATiledLayer.swift; sourceTree = "<group>"; };
+		3D04F8502CDCB66B009493BF /* TFYSwiftHomeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftHomeController.swift; sourceTree = "<group>"; };
+		3D04F8542CDCC720009493BF /* StatusItemConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemConfig.swift; sourceTree = "<group>"; };
+		3D04F8562CDCC793009493BF /* StatusItemContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemContainerView.swift; sourceTree = "<group>"; };
+		3D04F8582CDCC86D009493BF /* StatusItemWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemWindow.swift; sourceTree = "<group>"; };
+		3D04F85A2CDCC946009493BF /* StatusItemBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemBackgroundView.swift; sourceTree = "<group>"; };
+		3D04F85C2CDCC9A2009493BF /* StatusItemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemManager.swift; sourceTree = "<group>"; };
+		3D04F85E2CDCCA04009493BF /* StatusItemDragDropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemDragDropView.swift; sourceTree = "<group>"; };
+		3D04F8602CDCCA5D009493BF /* StatusItemWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemWindowController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +233,7 @@
 			children = (
 				36EC0CB32CDB92E3003EBAD5 /* NSTextView+Dejal.swift */,
 				36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */,
+				3D04F7B32CDC8D2F009493BF /* NSTextField+Dejal.swift */,
 			);
 			path = macOScategory;
 			sourceTree = "<group>";
@@ -130,6 +263,7 @@
 				3D04F7412CDA0E13009493BF /* Main.storyboard */,
 				3D04F7422CDA0E13009493BF /* TFYSwiftMacOSAppKit_Swift.entitlements */,
 				3D04F7432CDA0E13009493BF /* ViewController.swift */,
+				3D04F8502CDCB66B009493BF /* TFYSwiftHomeController.swift */,
 			);
 			path = TFYSwiftMacOSAppKit_Swift;
 			sourceTree = "<group>";
@@ -182,6 +316,13 @@
 				3D04F7642CDB08E5009493BF /* TFYSwiftStatusItemWindowController.swift */,
 				3D04F7662CDB0C0B009493BF /* TFYSwiftStatusItemWindow.swift */,
 				3D04F7682CDB3470009493BF /* TFYSwiftStatusItemContainerView.swift */,
+				3D04F8542CDCC720009493BF /* StatusItemConfig.swift */,
+				3D04F8562CDCC793009493BF /* StatusItemContainerView.swift */,
+				3D04F8582CDCC86D009493BF /* StatusItemWindow.swift */,
+				3D04F85A2CDCC946009493BF /* StatusItemBackgroundView.swift */,
+				3D04F85C2CDCC9A2009493BF /* StatusItemManager.swift */,
+				3D04F85E2CDCCA04009493BF /* StatusItemDragDropView.swift */,
+				3D04F8602CDCCA5D009493BF /* StatusItemWindowController.swift */,
 			);
 			path = macOSStatusItem;
 			sourceTree = "<group>";
@@ -199,11 +340,100 @@
 		3D04F7722CDB74FE009493BF /* macOSchain */ = {
 			isa = PBXGroup;
 			children = (
-				3D04F7732CDB7576009493BF /* TFYSwiftChain.swift */,
-				3D04F7752CDB779F009493BF /* TFYSwiftHasFont.swift */,
-				36EC0CB02CDB8E70003EBAD5 /* TFYSwiftHasText.swift */,
+				3D04F8322CDCA3F4009493BF /* macOSBase */,
+				3D04F82E2CDCA36E009493BF /* macOSCALayer */,
+				3D04F82F2CDCA36E009493BF /* macOSGesture */,
+				3D04F7FF2CDCA31F009493BF /* macOSView */,
 			);
 			path = macOSchain;
+			sourceTree = "<group>";
+		};
+		3D04F7FF2CDCA31F009493BF /* macOSView */ = {
+			isa = PBXGroup;
+			children = (
+				3D04F7D42CDCA31F009493BF /* TFYSwiftNSBox.swift */,
+				3D04F7D52CDCA31F009493BF /* TFYSwiftNSBrowser.swift */,
+				3D04F7D62CDCA31F009493BF /* TFYSwiftNSButton.swift */,
+				3D04F7D72CDCA31F009493BF /* TFYSwiftNSClipView.swift */,
+				3D04F7D82CDCA31F009493BF /* TFYSwiftNSCollectionView.swift */,
+				3D04F7D92CDCA31F009493BF /* TFYSwiftNSColorWell.swift */,
+				3D04F7DA2CDCA31F009493BF /* TFYSwiftNSComboBox.swift */,
+				3D04F7DB2CDCA31F009493BF /* TFYSwiftNSComboButton.swift */,
+				3D04F7DC2CDCA31F009493BF /* TFYSwiftNSControl.swift */,
+				3D04F7DD2CDCA31F009493BF /* TFYSwiftNSDatePicker.swift */,
+				3D04F7DE2CDCA31F009493BF /* TFYSwiftNSGridView.swift */,
+				3D04F7DF2CDCA31F009493BF /* TFYSwiftNSImageView.swift */,
+				3D04F7E02CDCA31F009493BF /* TFYSwiftNSLabel.swift */,
+				3D04F7E12CDCA31F009493BF /* TFYSwiftNSLevelIndicator.swift */,
+				3D04F7E22CDCA31F009493BF /* TFYSwiftNSMatrix.swift */,
+				3D04F7E32CDCA31F009493BF /* TFYSwiftNSOutlineView.swift */,
+				3D04F7E42CDCA31F009493BF /* TFYSwiftNSPathControl.swift */,
+				3D04F7E52CDCA31F009493BF /* TFYSwiftNSPopUpButton.swift */,
+				3D04F7E62CDCA31F009493BF /* TFYSwiftNSProgressIndicator.swift */,
+				3D04F7E72CDCA31F009493BF /* TFYSwiftNSRuleEditor.swift */,
+				3D04F7E82CDCA31F009493BF /* TFYSwiftNSRulerView.swift */,
+				3D04F7E92CDCA31F009493BF /* TFYSwiftNSScroller.swift */,
+				3D04F7EA2CDCA31F009493BF /* TFYSwiftNSScrollView.swift */,
+				3D04F7EB2CDCA31F009493BF /* TFYSwiftNSScrubber.swift */,
+				3D04F7EC2CDCA31F009493BF /* TFYSwiftNSSearchField.swift */,
+				3D04F7ED2CDCA31F009493BF /* TFYSwiftNSSecureTextField.swift */,
+				3D04F7EE2CDCA31F009493BF /* TFYSwiftNSSegmentedControl.swift */,
+				3D04F7EF2CDCA31F009493BF /* TFYSwiftNSSlider.swift */,
+				3D04F7F02CDCA31F009493BF /* TFYSwiftNSSplitView.swift */,
+				3D04F7F12CDCA31F009493BF /* TFYSwiftNSStackView.swift */,
+				3D04F7F22CDCA31F009493BF /* TFYSwiftNSStatusBarButton.swift */,
+				3D04F7F32CDCA31F009493BF /* TFYSwiftNSStepper.swift */,
+				3D04F7F42CDCA31F009493BF /* TFYSwiftNSSwitch.swift */,
+				3D04F7F52CDCA31F009493BF /* TFYSwiftNSTableCellView.swift */,
+				3D04F7F62CDCA31F009493BF /* TFYSwiftNSTableRowView.swift */,
+				3D04F7F72CDCA31F009493BF /* TFYSwiftNSTableView.swift */,
+				3D04F7F82CDCA31F009493BF /* TFYSwiftNSTabView.swift */,
+				3D04F7F92CDCA31F009493BF /* TFYSwiftNSText.swift */,
+				3D04F7FA2CDCA31F009493BF /* TFYSwiftNSTextField.swift */,
+				3D04F7FB2CDCA31F009493BF /* TFYSwiftNSTextView.swift */,
+				3D04F7FC2CDCA31F009493BF /* TFYSwiftNSTokenField.swift */,
+				3D04F7FD2CDCA31F009493BF /* TFYSwiftNSView.swift */,
+				3D04F7FE2CDCA31F009493BF /* TFYSwiftNSVisualEffectView.swift */,
+			);
+			path = macOSView;
+			sourceTree = "<group>";
+		};
+		3D04F82E2CDCA36E009493BF /* macOSCALayer */ = {
+			isa = PBXGroup;
+			children = (
+				3D04F83D2CDCA803009493BF /* TFYSwiftCALayer.swift */,
+				3D04F83F2CDCADF9009493BF /* TFYSwiftCAEmitterLayer.swift */,
+				3D04F8412CDCAF21009493BF /* TFYSwiftCAGradientLayer.swift */,
+				3D04F8432CDCAF92009493BF /* TFYSwiftCAReplicatorLayer.swift */,
+				3D04F8452CDCB048009493BF /* TFYSwiftCAScrollLayer.swift */,
+				3D04F8472CDCB135009493BF /* TFYSwiftCAShapeLayer.swift */,
+				3D04F8492CDCB269009493BF /* TFYSwiftCATextLayer.swift */,
+				3D04F84B2CDCB324009493BF /* TFYSwiftCATiledLayer.swift */,
+			);
+			path = macOSCALayer;
+			sourceTree = "<group>";
+		};
+		3D04F82F2CDCA36E009493BF /* macOSGesture */ = {
+			isa = PBXGroup;
+			children = (
+				3D04F8302CDCA3A0009493BF /* TFYSwiftNSGestureRecognizer.swift */,
+				3D04F8332CDCA5C9009493BF /* TFYSwiftNSPressGestureRecognizer.swift */,
+				3D04F8352CDCA65A009493BF /* TFYSwiftNSPanGestureRecognizer.swift */,
+				3D04F8372CDCA6F6009493BF /* TFYSwiftNSRotationGestureRecognizer.swift */,
+				3D04F8392CDCA744009493BF /* TFYSwiftNSClickGestureRecognizer.swift */,
+				3D04F83B2CDCA788009493BF /* TFYSwiftNSMagnificationGestureRecognizer.swift */,
+			);
+			path = macOSGesture;
+			sourceTree = "<group>";
+		};
+		3D04F8322CDCA3F4009493BF /* macOSBase */ = {
+			isa = PBXGroup;
+			children = (
+				3D04F7D12CDCA31F009493BF /* TFYSwiftChain.swift */,
+				3D04F7D22CDCA31F009493BF /* TFYSwiftHasFont.swift */,
+				3D04F7D32CDCA31F009493BF /* TFYSwiftHasText.swift */,
+			);
+			path = macOSBase;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -281,32 +511,98 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3D04F8442CDCAF92009493BF /* TFYSwiftCAReplicatorLayer.swift in Sources */,
 				3D04F7542CDA1275009493BF /* TFYSwiftSecureTextFieldCell.swift in Sources */,
+				3D04F83E2CDCA803009493BF /* TFYSwiftCALayer.swift in Sources */,
 				36EC0CB62CDB9EA4003EBAD5 /* NSView+Dejal.swift in Sources */,
 				3D04F7562CDA131D009493BF /* TFYSwiftTextField.swift in Sources */,
 				3D04F76E2CDB6D9F009493BF /* NSFileManager+Dejal.swift in Sources */,
+				3D04F85F2CDCCA04009493BF /* StatusItemDragDropView.swift in Sources */,
 				3D04F76C2CDB67DB009493BF /* NSObject+Dejal.swift in Sources */,
+				3D04F8002CDCA31F009493BF /* TFYSwiftChain.swift in Sources */,
+				3D04F8012CDCA31F009493BF /* TFYSwiftNSScrollView.swift in Sources */,
+				3D04F8022CDCA31F009493BF /* TFYSwiftNSComboBox.swift in Sources */,
+				3D04F8402CDCADF9009493BF /* TFYSwiftCAEmitterLayer.swift in Sources */,
+				3D04F8032CDCA31F009493BF /* TFYSwiftNSTableView.swift in Sources */,
+				3D04F8042CDCA31F009493BF /* TFYSwiftHasFont.swift in Sources */,
+				3D04F8052CDCA31F009493BF /* TFYSwiftNSOutlineView.swift in Sources */,
+				3D04F8612CDCCA5D009493BF /* StatusItemWindowController.swift in Sources */,
+				3D04F8062CDCA31F009493BF /* TFYSwiftNSSegmentedControl.swift in Sources */,
+				3D04F8072CDCA31F009493BF /* TFYSwiftNSPopUpButton.swift in Sources */,
+				3D04F8082CDCA31F009493BF /* TFYSwiftNSBrowser.swift in Sources */,
+				3D04F8342CDCA5C9009493BF /* TFYSwiftNSPressGestureRecognizer.swift in Sources */,
+				3D04F8092CDCA31F009493BF /* TFYSwiftNSDatePicker.swift in Sources */,
+				3D04F80A2CDCA31F009493BF /* TFYSwiftNSPathControl.swift in Sources */,
+				3D04F80B2CDCA31F009493BF /* TFYSwiftNSStepper.swift in Sources */,
+				3D04F80C2CDCA31F009493BF /* TFYSwiftNSSplitView.swift in Sources */,
+				3D04F80D2CDCA31F009493BF /* TFYSwiftNSSlider.swift in Sources */,
+				3D04F80E2CDCA31F009493BF /* TFYSwiftNSView.swift in Sources */,
+				3D04F84A2CDCB269009493BF /* TFYSwiftCATextLayer.swift in Sources */,
+				3D04F80F2CDCA31F009493BF /* TFYSwiftNSTextField.swift in Sources */,
+				3D04F8102CDCA31F009493BF /* TFYSwiftNSColorWell.swift in Sources */,
+				3D04F8112CDCA31F009493BF /* TFYSwiftNSStackView.swift in Sources */,
+				3D04F8122CDCA31F009493BF /* TFYSwiftNSRulerView.swift in Sources */,
+				3D04F8132CDCA31F009493BF /* TFYSwiftNSLevelIndicator.swift in Sources */,
+				3D04F8592CDCC86D009493BF /* StatusItemWindow.swift in Sources */,
+				3D04F8142CDCA31F009493BF /* TFYSwiftNSControl.swift in Sources */,
+				3D04F8152CDCA31F009493BF /* TFYSwiftNSText.swift in Sources */,
+				3D04F8162CDCA31F009493BF /* TFYSwiftNSRuleEditor.swift in Sources */,
+				3D04F8172CDCA31F009493BF /* TFYSwiftNSBox.swift in Sources */,
+				3D04F8182CDCA31F009493BF /* TFYSwiftNSTabView.swift in Sources */,
+				3D04F8312CDCA3A0009493BF /* TFYSwiftNSGestureRecognizer.swift in Sources */,
+				3D04F8192CDCA31F009493BF /* TFYSwiftNSTableRowView.swift in Sources */,
+				3D04F81A2CDCA31F009493BF /* TFYSwiftNSProgressIndicator.swift in Sources */,
+				3D04F85D2CDCC9A2009493BF /* StatusItemManager.swift in Sources */,
+				3D04F81B2CDCA31F009493BF /* TFYSwiftNSSearchField.swift in Sources */,
+				3D04F81C2CDCA31F009493BF /* TFYSwiftNSComboButton.swift in Sources */,
+				3D04F81D2CDCA31F009493BF /* TFYSwiftNSTextView.swift in Sources */,
+				3D04F83C2CDCA788009493BF /* TFYSwiftNSMagnificationGestureRecognizer.swift in Sources */,
+				3D04F83A2CDCA744009493BF /* TFYSwiftNSClickGestureRecognizer.swift in Sources */,
+				3D04F84C2CDCB324009493BF /* TFYSwiftCATiledLayer.swift in Sources */,
+				3D04F81E2CDCA31F009493BF /* TFYSwiftNSCollectionView.swift in Sources */,
+				3D04F81F2CDCA31F009493BF /* TFYSwiftNSImageView.swift in Sources */,
+				3D04F8482CDCB135009493BF /* TFYSwiftCAShapeLayer.swift in Sources */,
+				3D04F8202CDCA31F009493BF /* TFYSwiftNSButton.swift in Sources */,
+				3D04F8212CDCA31F009493BF /* TFYSwiftNSLabel.swift in Sources */,
+				3D04F8222CDCA31F009493BF /* TFYSwiftNSTokenField.swift in Sources */,
+				3D04F8232CDCA31F009493BF /* TFYSwiftNSMatrix.swift in Sources */,
+				3D04F8242CDCA31F009493BF /* TFYSwiftNSScroller.swift in Sources */,
+				3D04F8252CDCA31F009493BF /* TFYSwiftHasText.swift in Sources */,
+				3D04F8552CDCC720009493BF /* StatusItemConfig.swift in Sources */,
+				3D04F8422CDCAF21009493BF /* TFYSwiftCAGradientLayer.swift in Sources */,
+				3D04F8262CDCA31F009493BF /* TFYSwiftNSTableCellView.swift in Sources */,
+				3D04F8272CDCA31F009493BF /* TFYSwiftNSGridView.swift in Sources */,
+				3D04F8282CDCA31F009493BF /* TFYSwiftNSScrubber.swift in Sources */,
+				3D04F85B2CDCC946009493BF /* StatusItemBackgroundView.swift in Sources */,
+				3D04F8292CDCA31F009493BF /* TFYSwiftNSSwitch.swift in Sources */,
+				3D04F82A2CDCA31F009493BF /* TFYSwiftNSVisualEffectView.swift in Sources */,
+				3D04F8362CDCA65A009493BF /* TFYSwiftNSPanGestureRecognizer.swift in Sources */,
+				3D04F82B2CDCA31F009493BF /* TFYSwiftNSSecureTextField.swift in Sources */,
+				3D04F82C2CDCA31F009493BF /* TFYSwiftNSClipView.swift in Sources */,
+				3D04F82D2CDCA31F009493BF /* TFYSwiftNSStatusBarButton.swift in Sources */,
+				3D04F8382CDCA6F6009493BF /* TFYSwiftNSRotationGestureRecognizer.swift in Sources */,
 				3D04F7582CDA251A009493BF /* TFYSwiftSecureTextField.swift in Sources */,
 				36EC0CB42CDB92E3003EBAD5 /* NSTextView+Dejal.swift in Sources */,
 				3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */,
 				3D04F7522CDA1020009493BF /* TFYSwiftTextFieldCell.swift in Sources */,
 				36EC0CA02CDA4AE3003EBAD5 /* TFYSwiftButton.swift in Sources */,
 				36EC0CAD2CDA6513003EBAD5 /* TFYSwiftGCD.swift in Sources */,
+				3D04F7B42CDC8D2F009493BF /* NSTextField+Dejal.swift in Sources */,
 				36EC0CAF2CDA6600003EBAD5 /* TFYSwiftTimer.swift in Sources */,
 				3D04F7702CDB6DED009493BF /* NSString+Dejal.swift in Sources */,
 				3D04F7692CDB3470009493BF /* TFYSwiftStatusItemContainerView.swift in Sources */,
 				3D04F7672CDB0C0B009493BF /* TFYSwiftStatusItemWindow.swift in Sources */,
-				3D04F7762CDB779F009493BF /* TFYSwiftHasFont.swift in Sources */,
 				3D04F7632CDB0183009493BF /* TFYSwiftStatusItemDropView.swift in Sources */,
+				3D04F8572CDCC793009493BF /* StatusItemContainerView.swift in Sources */,
+				3D04F8512CDCB66B009493BF /* TFYSwiftHomeController.swift in Sources */,
 				3D04F7652CDB08E5009493BF /* TFYSwiftStatusItemWindowController.swift in Sources */,
 				3D04F75A2CDA27B4009493BF /* TFYSwiftOpenPanel.swift in Sources */,
 				3D04F75D2CDAEAB4009493BF /* TFYSwiftStatusItemConfiguration.swift in Sources */,
 				36EC0CA72CDA5812003EBAD5 /* TFYSwiftUtils.swift in Sources */,
 				36EC0C9E2CDA4627003EBAD5 /* TFYSwiftLabel.swift in Sources */,
+				3D04F8462CDCB048009493BF /* TFYSwiftCAScrollLayer.swift in Sources */,
 				3D04F7462CDA0E13009493BF /* ViewController.swift in Sources */,
-				3D04F7742CDB7576009493BF /* TFYSwiftChain.swift in Sources */,
 				36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsynce.swift in Sources */,
-				36EC0CB12CDB8E70003EBAD5 /* TFYSwiftHasText.swift in Sources */,
 				36EC0CA92CDA62D4003EBAD5 /* TFYSwiftJsonUtils.swift in Sources */,
 				3D04F75F2CDAF1EE009493BF /* TFYSwiftStatusItemBackgroundView.swift in Sources */,
 				3D04F7612CDAFBDF009493BF /* TFYSwiftStatusItem.swift in Sources */,

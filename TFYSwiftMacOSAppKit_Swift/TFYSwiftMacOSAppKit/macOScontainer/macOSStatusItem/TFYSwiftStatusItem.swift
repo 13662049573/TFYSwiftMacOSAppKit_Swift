@@ -7,7 +7,6 @@
 //
 
 import Cocoa
-import Foundation
 
 private let TFYStatusItemFrameKeyPath:String = "statusItem.button.window.frame"
 private let TFYStatusItemWindowConfigurationPinnedPath:String = "windowConfiguration.pinned"
@@ -27,14 +26,23 @@ public typealias TFYStatusItemDropHandler = ((_ sharedItem:TFYSwiftStatusItem,_ 
 public typealias TFYStatusItemProximityDragDetectionHandler = (_ sharedItem:TFYSwiftStatusItem,_ eventLocation:NSPoint,_ proxymityDragStatus:TFYStatusItemProximityDragStatus) -> Void
 public typealias TFYStatusItemShouldShowHandler = (_ sharedItem:TFYSwiftStatusItem) -> Void
 
+
 public class TFYSwiftStatusItem: NSObject {
 
-    static let sharedInstance = TFYSwiftStatusItem()
+    static let sharedInstance: TFYSwiftStatusItem = {
+        let instance = TFYSwiftStatusItem().initSingleton()
+        return instance
+    }()
+
+    private override init() {
+        let exceptionMessage = "You must NOT init '\(String(describing: type(of: self)))' manually! Use class method 'sharedInstance' instead."
+        fatalError(exceptionMessage)
+    }
     
     public var statusItem:NSStatusItem?
     public var dropHandler:TFYStatusItemDropHandler? {
         didSet {
-            if let dropHandler = dropHandler {
+            if dropHandler != nil {
                 self.configureDropView()
             }
         }
@@ -89,7 +97,7 @@ public class TFYSwiftStatusItem: NSObject {
     }
     public var proximityDragZoneDistance:CGFloat? {
         didSet {
-            if let proximityDragZoneDistance = proximityDragZoneDistance {
+            if proximityDragZoneDistance != nil {
                 self.configureProximityDragCollisionArea()
             }
         }
@@ -113,13 +121,9 @@ public class TFYSwiftStatusItem: NSObject {
     private var presentationMode:TFYStatusItemPresentationMode?
     private var dropView:TFYSwiftStatusItemDropView?
     private var statusItemWindowController:TFYSwiftStatusItemWindowController?
+
     
-    public override init() {
-        super.init()
-        self.initSingleton()
-    }
-    
-    private func initSingleton() {
+    private func initSingleton() -> TFYSwiftStatusItem {
         self.globalDragEventMonitor = nil
         self.proximityDragCollisionHandled = nil
         self.pbChangeCount = NSPasteboard.general.changeCount
@@ -145,6 +149,8 @@ public class TFYSwiftStatusItem: NSObject {
         DistributedNotificationCenter.default().addObserver(forName: themeChangedNotification, object: nil, queue: nil) { note in
             NotificationCenter.default.post(name: TFYSystemInterfaceThemeChangedNotification, object: nil)
         }
+        
+        return self
     }
     
     deinit {
@@ -342,8 +348,4 @@ public class TFYSwiftStatusItem: NSObject {
             super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
         }
     }
-}
-
-extension NSStatusBarButton {
-    func rightMouseDown(theEvent:NSEvent) {}
 }

@@ -6,28 +6,20 @@
 //  Copyright © 2024 TFYSwift. All rights reserved.
 //
 
-import Foundation
-import AppKit
+import Cocoa
 
 public protocol TFYSwiftHasFont: AnyObject {
     func set(font:NSFont)
 }
 
-extension NSButton: TFYSwiftHasFont {
-    
-    public func set(font: NSFont) {
-        self.font = font
-    }
-}
-
-extension NSTextField: TFYSwiftHasFont {
-    
-    public func set(font: NSFont) {
-        self.font = font
-    }
-}
-
 extension NSTextView: TFYSwiftHasFont {
+    
+    public func set(font: NSFont) {
+        self.font = font
+    }
+}
+
+extension NSControl: TFYSwiftHasFont {
     
     public func set(font: NSFont) {
         self.font = font

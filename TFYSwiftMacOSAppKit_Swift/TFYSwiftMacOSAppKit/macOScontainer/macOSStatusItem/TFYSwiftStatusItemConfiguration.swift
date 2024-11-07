@@ -7,7 +7,6 @@
 //
 
 import Cocoa
-import Foundation
 
 public enum TTFYSwiftTransition : Int {
     case TFYSwiftTransitionNone = 0

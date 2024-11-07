@@ -10,6 +10,7 @@ import Foundation
 import AppKit
 
 public protocol TFYCompatible {}
+extension NSObject: TFYCompatible {}
 
 internal protocol TFYSwiftPropertyCompatible {
     associatedtype T

@@ -7,53 +7,54 @@
 //
 
 import Cocoa
-import Foundation
 
-public typealias actionContainerBlock = (_ view:TFYSwiftStatusItemContainerView) -> Void
+public class TFYSwiftStatusItemContainerView: NSView {
+    
+    weak var target: AnyObject?
+        var action: Selector?
+        var backgroundDefaultColor: NSColor? = .clear
+        var backgroundHighlightColor: NSColor? = .selectedContentBackgroundColor
+        var highlighted = false
 
-public class TFYSwiftStatusItemContainerView: NSControl {
-
-    var backgroundDefaultColor:NSColor?
-    var backgroundHighlightColor:NSColor?
-
-    public override init(frame frameRect: NSRect) {
-        super.init(frame: frameRect)
-        self.backgroundDefaultColor = .clear
-        self.backgroundHighlightColor = .selectedContentBackgroundColor
-        
-        self.target = nil
-        self.action = nil
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    deinit {
-        self.target = nil
-        self.action = nil
-        self.backgroundDefaultColor = nil
-        self.backgroundHighlightColor = nil
-    }
-    
-    public override func draw(_ dirtyRect: NSRect) {
-        let bgPath:NSBezierPath = NSBezierPath(rect: self.bounds)
-        (self.isHighlighted ? self.backgroundHighlightColor : self.backgroundDefaultColor)!.setFill()
-        bgPath.fill()
-    }
-    
-    public override func moveDown(_ sender: Any?) {
-        self.isHighlighted = true
-        self.needsDisplay = true
-        if (self.target != nil) && (self.action != nil) {
-            self.target?.perform(self.action!, with: self, afterDelay: 0)
+        override init(frame: NSRect) {
+            super.init(frame: frame)
+            self.highlighted = false
+            self.backgroundDefaultColor = .clear
+            self.backgroundHighlightColor = .selectedContentBackgroundColor
+            self.target = nil
+            self.action = nil
         }
-    }
-    
-    public override func moveUp(_ sender: Any?) {
-        self.isHighlighted = false
+
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+
+        deinit {
+            target = nil
+            action = nil
+            backgroundDefaultColor = nil
+            backgroundHighlightColor = nil
+        }
+
+    public override func draw(_ dirtyRect: NSRect) {
+            let bgPath = NSBezierPath(rect: self.bounds)
+        (highlighted ? backgroundHighlightColor : backgroundDefaultColor)!.setFill()
+            bgPath.fill()
+        }
+
+    public override func mouseDown(with theEvent: NSEvent) {
+            highlighted = true
+             self.needsDisplay = true
+            
+            if let target = target, let action = action {
+                target.perform(action, with: self)
+            }
+        }
+
+    public override func mouseUp(with theEvent: NSEvent) {
+            highlighted = false
         self.needsDisplay = true
-        super.moveUp(sender)
-    }
+            super.mouseUp(with: theEvent)
+        }
 }
 

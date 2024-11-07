@@ -80,7 +80,7 @@ public class StatusItemManager: NSObject {
     // 状态项窗口是否可见
     public var isStatusItemWindowVisible: Bool? {
         get {
-            return statusItemWindowController!= nil? statusItemWindowController?.windowIsOpen : false
+            return (statusItemWindowController != nil) ? (statusItemWindowController?.windowIsOpen) : false
         }
         set {}
     }
@@ -88,7 +88,7 @@ public class StatusItemManager: NSObject {
     public var proximityDragDetectionEnabled: Bool? {
         didSet {
             guard let proximityDraggingDetectionEnabled = proximityDragDetectionEnabled else { return }
-            if proximityDraggingDetectionEnabled &&!(windowConfiguration?.pinned?? false) {
+            if proximityDraggingDetectionEnabled &&!(windowConfiguration?.pinned ?? false) {
                 configureProximityDragCollisionArea()
                 enableDragEventMonitor()
             } else {
@@ -108,7 +108,7 @@ public class StatusItemManager: NSObject {
     // 可拖拽类型
     public var dropTypes: [NSPasteboard.PasteboardType]?
     // 窗口配置
-    public var windowConfiguration: StatusItemConfiguration? {
+    public var windowConfiguration: StatusItemConfig? {
         didSet {
             guard let configuration = windowConfiguration else { return }
             statusItem?.button?.toolTip = configuration.toolTip
@@ -123,7 +123,7 @@ public class StatusItemManager: NSObject {
     private var customViewContainer: StatusItemContainerView?
     private var customView: NSView?
     private var presentationMode: StatusItemPresentationMode?
-    private var dropView: StatusItemDropView?
+    private var dropView: StatusItemDragDropView?
     private var statusItemWindowController: StatusItemWindowController?
 
     // 禁止外部初始化
@@ -140,10 +140,10 @@ public class StatusItemManager: NSObject {
         customViewContainer = nil
         statusItem = nil
         customView = nil
-        presentationMode =.undefined
+        presentationMode = .undefined
         isStatusItemWindowVisible = false
         statusItemWindowController = nil
-        windowConfiguration = StatusItemConfiguration.defaultConfiguration
+        windowConfiguration = StatusItemConfig.defaultConfig
         appearsDisabled = false
         enabled = true
 
@@ -183,12 +183,12 @@ public class StatusItemManager: NSObject {
     }
 
     public func presentStatusItemWithImage(itemImage: NSImage, contentViewController: NSViewController, dropHandler: StatusItemDropHandler) {
-        guard presentationMode ==.undefined else { return }
+        guard presentationMode == .undefined else { return }
         configureWithImage(itemImage: itemImage)
         configureProximityDragCollisionArea()
 
         self.dropHandler = dropHandler
-        presentationMode =.image
+        presentationMode = .image
 
         let window = StatusItemWindowController(statusItem: self, contentViewController: contentViewController, windowConfiguration: windowConfiguration!)
         statusItemWindowController = window
@@ -200,12 +200,12 @@ public class StatusItemManager: NSObject {
     }
 
     public func presentStatusItemWithView(itemView: NSView, contentViewController: NSViewController, dropHandler: StatusItemDropHandler) {
-        guard presentationMode ==.undefined else { return }
+        guard presentationMode == .undefined else { return }
         configureWithView(itemView: itemView)
         configureProximityDragCollisionArea()
 
         self.dropHandler = dropHandler
-        presentationMode =.customView
+        presentationMode = .customView
 
         let window = StatusItemWindowController(statusItem: self, contentViewController: contentViewController, windowConfiguration: windowConfiguration!)
         statusItemWindowController = window
@@ -221,7 +221,7 @@ public class StatusItemManager: NSObject {
         guard let statusItem = statusItem else { return }
         NSStatusBar.system.removeStatusItem(statusItem)
         self.statusItem = nil
-        presentationMode =.undefined
+        presentationMode = .undefined
         isStatusItemWindowVisible = false
         statusItemWindowController = nil
     }
@@ -304,7 +304,7 @@ public class StatusItemManager: NSObject {
         guard let button = statusItem?.button else { return }
         let buttonWindowFrame = button.window!.frame
         let statusItemFrame = NSMakeRect(0.0, 0.0, NSWidth(buttonWindowFrame), NSHeight(buttonWindowFrame))
-        dropView = StatusItemDropView(frame: statusItemFrame)
+        dropView = StatusItemDragDropView(frame: statusItemFrame)
         dropView?.statusItem = self
         dropView?.dropTypes = dropTypes!
         dropView?.dropHandler = dropHandler
@@ -324,7 +324,7 @@ public class StatusItemManager: NSObject {
                     return
                 }
                 if !self.proximityDragCollisionHandled! {
-                    if self.proximityDragDetectionHandler!= nil {
+                    if self.proximityDragDetectionHandler != nil {
                         self.proximityDragDetectionHandler!(self, eventLocation,.entered)
                         self.proximityDragCollisionHandled! = true
                         self.pbChangeCount = currentChangeCount
@@ -332,7 +332,7 @@ public class StatusItemManager: NSObject {
                 }
             } else {
                 if self.proximityDragCollisionHandled! {
-                    if self.proximityDragDetectionHandler!= nil {
+                    if self.proximityDragDetectionHandler != nil {
                         self.proximityDragDetectionHandler!(self, eventLocation,.exited)
                         self.proximityDragCollisionHandled! = false
                         self.pbChangeCount! -= 1

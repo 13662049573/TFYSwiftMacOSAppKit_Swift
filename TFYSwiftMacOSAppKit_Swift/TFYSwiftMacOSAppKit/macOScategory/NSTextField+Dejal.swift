@@ -8,19 +8,19 @@
 
 import Cocoa
 
-extension NSTextField {
+public extension NSTextField {
     
-    private struct AssociateKeys {
-        static var placeholderColorName  = "textColor" + "funcName"
+    private struct AssociatedKeys {
+        static var placeholderColorName:UnsafeRawPointer = UnsafeRawPointer(bitPattern: "textColor".hashValue)!
     }
     
     var placeholderStringColor:NSColor {
         set {
-            objc_setAssociatedObject(self, (AssociateKeys.placeholderColorName),newValue, .OBJC_ASSOCIATION_COPY)
+            objc_setAssociatedObject(self, AssociatedKeys.placeholderColorName,newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
             msSetPlaceholder(placeholder: self.placeholderString, color: newValue)
         }
         get {
-            return (objc_getAssociatedObject(self, (AssociateKeys.placeholderColorName)) as? NSColor)!
+            return (objc_getAssociatedObject(self, AssociatedKeys.placeholderColorName) as? NSColor)!
         }
     }
     

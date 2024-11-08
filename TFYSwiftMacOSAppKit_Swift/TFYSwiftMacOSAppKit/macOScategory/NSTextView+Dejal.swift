@@ -9,7 +9,7 @@
 import Foundation
 import Cocoa
 
-extension NSTextView {
+public extension NSTextView {
     
     
     

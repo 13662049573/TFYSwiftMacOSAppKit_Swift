@@ -7,80 +7,94 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "F9BA1325-B23A-449F-8184-F70513345B38"
+            uuid = "407CA65A-CCB7-4A81-919E-EDEDCAEFDBE5"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/TFYStatusItem.swift"
+            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScategory/tttttt.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "80"
-            endingLineNumber = "80"
-            landmarkName = "init()"
+            startingLineNumber = "108"
+            endingLineNumber = "108"
+            landmarkName = "mouseDown(with:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "04390FE7-B3B6-4DEB-AC06-998B31D0A7EF"
+            uuid = "23F87DD5-590D-45A0-95E8-7F6C4ADA77C6"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/TFYStatusItemDropView.swift"
+            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScategory/tttttt.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "49"
-            endingLineNumber = "49"
-            landmarkName = "performDragOperation(_:)"
+            startingLineNumber = "145"
+            endingLineNumber = "145"
+            landmarkName = "hitTest(_:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "23F87DD5-590D-45A0-95E8-7F6C4ADA77C6 - 6a2238d3835eed9c"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "__C.NSControl.hitTest(__C.CGPoint) -&gt; Swift.Optional&lt;__C.NSView&gt;"
+                  moduleName = "TFYSwiftMacOSAppKit_Swift.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/mini/Desktop/mylibrary/TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScategory/tttttt.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "145"
+                  endingLineNumber = "145">
+               </Location>
+               <Location
+                  uuid = "23F87DD5-590D-45A0-95E8-7F6C4ADA77C6 - d54d539f0c365e52"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (Swift.String, __C._NSRange, Swift.Int) -&gt; () in __C.NSControl.hitTest(__C.CGPoint) -&gt; Swift.Optional&lt;__C.NSView&gt;"
+                  moduleName = "TFYSwiftMacOSAppKit_Swift.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/mini/Desktop/mylibrary/TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScategory/tttttt.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "145"
+                  endingLineNumber = "145">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "CDD76061-C50A-4E95-BC1A-A5B80BE33B09"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScategory/tttttt.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "137"
+            endingLineNumber = "137"
+            landmarkName = "mouseDragged(with:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "CA0CC15A-08CC-4443-959B-E0AFA2A47B84"
+            uuid = "F424B831-159E-4C29-9C4F-5AF24B929F66"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/TFYStatusItemDropView.swift"
+            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScategory/tttttt.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "38"
-            endingLineNumber = "38"
-            landmarkName = "draggingEntered(_:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "8E894744-D33B-4866-BE1B-0A7C10780095"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/TFYStatusItemDropView.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "29"
-            endingLineNumber = "29"
-            landmarkName = "dropTypeInPasteboardTypes(pasteboardTypes:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "AB5F70CF-CB0C-4207-9D15-3A50DF39B4AE"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/TFYStatusItem.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "87"
-            endingLineNumber = "87"
-            landmarkName = "init()"
+            startingLineNumber = "128"
+            endingLineNumber = "128"
+            landmarkName = "mouseUp(with:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

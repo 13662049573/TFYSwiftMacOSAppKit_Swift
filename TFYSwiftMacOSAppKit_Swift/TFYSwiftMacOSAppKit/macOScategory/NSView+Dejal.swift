@@ -8,7 +8,7 @@
 
 import Cocoa
 
-extension NSView {
+public extension NSView {
     
     var macos_origin:CGPoint {
         set {
@@ -121,125 +121,122 @@ extension NSView {
     }
 }
 
-private let timeIndex:TimeInterval = 60.0
-private let ButtonTitleFormat:String = "剩余%ld秒"
-private let RetainTitle:String = "重新获取"
+private let defaultTimeInterval: TimeInterval = 60.0
+private let buttonTitleFormat: String = "剩余%ld 秒"
+private let retainButtonTitle: String = "重新获取"
 
 public extension NSView {
     
-    private struct AssociateKeys {
-        static var timeName   = "time" + "funcName"
-        static var formatName    = "time" + "format"
-        static var stopTimeName    = "time" + "time"
-        static var timeTimeName    = "time" + "gcd"
-        static var userTimeName    = "time" + "userTimeName"
+    private struct AssociatedObjectKeys {
+        static var timeKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "timeKey".hashValue)!
+        static var formatKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "formatKey".hashValue)!
+        static var stopTimeKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "stopTimeKey".hashValue)!
+        static var timerKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "timerKey".hashValue)!
+        static var userTimeKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "userTimeKey".hashValue)!
     }
 
-    func tfy_removeAllSubViews() {
+    func removeAllSubviews() {
         while subviews.count > 0 {
             subviews.first?.removeFromSuperview()
         }
     }
 
-    func tfy_viewController() -> NSViewController? {
-        var nextResponder = self.nextResponder
-        var view = self
-        while !(nextResponder is NSViewController) {
-            view = view.superview!
-            nextResponder = view.nextResponder
+    func viewController() -> NSViewController? {
+        // 更简洁的获取视图控制器的方式
+        if let window = window {
+            if let delegate = window.delegate as? NSViewController {
+                return delegate
+            }
         }
-        return nextResponder as? NSViewController
+        return nil
     }
-    
-    var tfy_time:TimeInterval {
+
+    var timeInterval: TimeInterval {
         set {
-            objc_setAssociatedObject(self, (AssociateKeys.timeName), NSNumber(value: newValue), .OBJC_ASSOCIATION_ASSIGN)
+            objc_setAssociatedObject(self, AssociatedObjectKeys.timeKey, NSNumber(value: newValue),.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            let number:NSNumber = objc_getAssociatedObject(self, (AssociateKeys.timeName)) as! NSNumber
+            let number: NSNumber = objc_getAssociatedObject(self, AssociatedObjectKeys.timeKey) as! NSNumber
             return number.doubleValue
         }
     }
-    
-    private var tfy_userTime:TimeInterval {
+
+    private var userTimeInterval: TimeInterval {
         set {
-            objc_setAssociatedObject(self, (AssociateKeys.userTimeName), NSNumber(value: newValue), .OBJC_ASSOCIATION_ASSIGN)
+            objc_setAssociatedObject(self, AssociatedObjectKeys.userTimeKey, NSNumber(value: newValue),.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            let number:NSNumber = objc_getAssociatedObject(self, (AssociateKeys.userTimeName)) as! NSNumber
+            let number: NSNumber = objc_getAssociatedObject(self, AssociatedObjectKeys.userTimeKey) as! NSNumber
             return number.doubleValue
         }
     }
-    
-    var tfy_format:String? {
+
+    var titleFormat: String? {
         set {
-            objc_setAssociatedObject(self, (AssociateKeys.formatName),newValue, .OBJC_ASSOCIATION_COPY)
+            objc_setAssociatedObject(self, AssociatedObjectKeys.formatKey, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            return objc_getAssociatedObject(self, (AssociateKeys.formatName)) as? String
+            return objc_getAssociatedObject(self, AssociatedObjectKeys.formatKey) as? String
         }
     }
-    
-    private var stopTime:Int {
+
+    private var stopTime: Int {
         set {
-            objc_setAssociatedObject(self, (AssociateKeys.stopTimeName), NSNumber(integerLiteral: newValue), .OBJC_ASSOCIATION_ASSIGN)
+            objc_setAssociatedObject(self, AssociatedObjectKeys.stopTimeKey, NSNumber(integerLiteral: newValue),.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            let number:NSNumber = objc_getAssociatedObject(self, (AssociateKeys.stopTimeName)) as! NSNumber
+            let number: NSNumber = objc_getAssociatedObject(self, AssociatedObjectKeys.stopTimeKey) as! NSNumber
             return number.intValue
         }
     }
-    
-    private var timer:DispatchSourceTimer? {
+
+    private var timer: DispatchSourceTimer? {
         set {
-            objc_setAssociatedObject(self, (AssociateKeys.timeTimeName),newValue, .OBJC_ASSOCIATION_COPY)
+            objc_setAssociatedObject(self, AssociatedObjectKeys.timerKey, newValue,.OBJC_ASSOCIATION_COPY)
         }
         get {
-            return objc_getAssociatedObject(self, (AssociateKeys.timeTimeName)) as? DispatchSourceTimer
+            return objc_getAssociatedObject(self, AssociatedObjectKeys.timerKey) as? DispatchSourceTimer
         }
     }
-    
-    func tfy_startTimer(block: @escaping (String, Int) -> Void) {
-        if stopTime == 0 {
-            if tfy_time == 0 {
-                tfy_time = timeIndex
+
+    func startOrStopTimer(start: Bool, block: @escaping (String, Int) -> Void) {
+        if start {
+            if timeInterval == 0 {
+                timeInterval = defaultTimeInterval
             }
-            if tfy_format == nil {
-                tfy_format = ButtonTitleFormat
+            if titleFormat == nil {
+                titleFormat = buttonTitleFormat
             }
             let globalQueue = DispatchQueue.global(qos:.default)
             timer = DispatchSource.makeTimerSource(queue: globalQueue)
             timer?.schedule(deadline:.now(), repeating: 1.0 * Double(NSEC_PER_SEC), leeway:.nanoseconds(0))
             timer?.setEventHandler { [self] in
-                if tfy_time <= 1 {
+                if timeInterval <= 1 {
                     timer?.cancel()
                 } else {
-                    tfy_time -= 1
+                    timeInterval -= 1
                     DispatchQueue.main.async {
                         self.stopTime = 1
-                        block(String(format: self.tfy_format!, self.tfy_time), 0)
+                        block(String(format: self.titleFormat!, self.timeInterval), 0)
                     }
                 }
             }
             timer?.setCancelHandler {
                 DispatchQueue.main.async {
                     self.stopTime = 0
-                    block(RetainTitle, 1)
-                    if self.tfy_userTime > 0 {
-                        self.tfy_time = self.tfy_userTime
+                    block(retainButtonTitle, 1)
+                    if self.userTimeInterval > 0 {
+                        self.timeInterval = self.userTimeInterval
                     } else {
-                        self.tfy_time = timeIndex
+                        self.timeInterval = defaultTimeInterval
                     }
                 }
             }
             timer?.resume()
-        }
-    }
-
-    func tfy_endTimer() {
-        if let timer = timer {
-            timer.cancel()
+        } else {
+            if let timer = timer {
+                timer.cancel()
+            }
         }
     }
 }
-

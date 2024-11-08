@@ -72,3 +72,4 @@ public class TFYSwiftTextField: NSTextField {
         }
     }
 }
+

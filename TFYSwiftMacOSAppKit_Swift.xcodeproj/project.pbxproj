@@ -33,7 +33,6 @@
 		3D04F7582CDA251A009493BF /* TFYSwiftSecureTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7572CDA2519009493BF /* TFYSwiftSecureTextField.swift */; };
 		3D04F75A2CDA27B4009493BF /* TFYSwiftOpenPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7592CDA27B4009493BF /* TFYSwiftOpenPanel.swift */; };
 		3D04F76C2CDB67DB009493BF /* NSObject+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F76B2CDB67DB009493BF /* NSObject+Dejal.swift */; };
-		3D04F76E2CDB6D9F009493BF /* NSFileManager+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F76D2CDB6D9F009493BF /* NSFileManager+Dejal.swift */; };
 		3D04F7702CDB6DED009493BF /* NSString+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F76F2CDB6DED009493BF /* NSString+Dejal.swift */; };
 		3D04F7B42CDC8D2F009493BF /* NSTextField+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7B32CDC8D2F009493BF /* NSTextField+Dejal.swift */; };
 		3D04F8002CDCA31F009493BF /* TFYSwiftChain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7D12CDCA31F009493BF /* TFYSwiftChain.swift */; };
@@ -97,6 +96,9 @@
 		3D04F84A2CDCB269009493BF /* TFYSwiftCATextLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8492CDCB269009493BF /* TFYSwiftCATextLayer.swift */; };
 		3D04F84C2CDCB324009493BF /* TFYSwiftCATiledLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F84B2CDCB324009493BF /* TFYSwiftCATiledLayer.swift */; };
 		3D04F8512CDCB66B009493BF /* TFYSwiftHomeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8502CDCB66B009493BF /* TFYSwiftHomeController.swift */; };
+		3D04F8632CDDAE09009493BF /* NSControl+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8622CDDAE09009493BF /* NSControl+Dejal.swift */; };
+		3D04F8692CDDF747009493BF /* TFYSwiftLabel+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8682CDDF747009493BF /* TFYSwiftLabel+Dejal.swift */; };
+		3D04F86B2CDE1AD5009493BF /* NSColor+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F86A2CDE1AD5009493BF /* NSColor+Dejal.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -128,7 +130,6 @@
 		3D04F7572CDA2519009493BF /* TFYSwiftSecureTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftSecureTextField.swift; sourceTree = "<group>"; };
 		3D04F7592CDA27B4009493BF /* TFYSwiftOpenPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftOpenPanel.swift; sourceTree = "<group>"; };
 		3D04F76B2CDB67DB009493BF /* NSObject+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSObject+Dejal.swift"; sourceTree = "<group>"; };
-		3D04F76D2CDB6D9F009493BF /* NSFileManager+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSFileManager+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F76F2CDB6DED009493BF /* NSString+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSString+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F7B32CDC8D2F009493BF /* NSTextField+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSTextField+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F7D12CDCA31F009493BF /* TFYSwiftChain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftChain.swift; sourceTree = "<group>"; };
@@ -192,6 +193,9 @@
 		3D04F8492CDCB269009493BF /* TFYSwiftCATextLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCATextLayer.swift; sourceTree = "<group>"; };
 		3D04F84B2CDCB324009493BF /* TFYSwiftCATiledLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCATiledLayer.swift; sourceTree = "<group>"; };
 		3D04F8502CDCB66B009493BF /* TFYSwiftHomeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftHomeController.swift; sourceTree = "<group>"; };
+		3D04F8622CDDAE09009493BF /* NSControl+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSControl+Dejal.swift"; sourceTree = "<group>"; };
+		3D04F8682CDDF747009493BF /* TFYSwiftLabel+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TFYSwiftLabel+Dejal.swift"; sourceTree = "<group>"; };
+		3D04F86A2CDE1AD5009493BF /* NSColor+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSColor+Dejal.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -220,6 +224,8 @@
 				36EC0CB32CDB92E3003EBAD5 /* NSTextView+Dejal.swift */,
 				36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */,
 				3D04F7B32CDC8D2F009493BF /* NSTextField+Dejal.swift */,
+				3D04F8622CDDAE09009493BF /* NSControl+Dejal.swift */,
+				3D04F8682CDDF747009493BF /* TFYSwiftLabel+Dejal.swift */,
 			);
 			path = macOScategory;
 			sourceTree = "<group>";
@@ -310,8 +316,8 @@
 			isa = PBXGroup;
 			children = (
 				3D04F76B2CDB67DB009493BF /* NSObject+Dejal.swift */,
-				3D04F76D2CDB6D9F009493BF /* NSFileManager+Dejal.swift */,
 				3D04F76F2CDB6DED009493BF /* NSString+Dejal.swift */,
+				3D04F86A2CDE1AD5009493BF /* NSColor+Dejal.swift */,
 			);
 			path = macOSfoundation;
 			sourceTree = "<group>";
@@ -495,7 +501,6 @@
 				3D04F83E2CDCA803009493BF /* TFYSwiftCALayer.swift in Sources */,
 				36EC0CB62CDB9EA4003EBAD5 /* NSView+Dejal.swift in Sources */,
 				3D04F7562CDA131D009493BF /* TFYSwiftTextField.swift in Sources */,
-				3D04F76E2CDB6D9F009493BF /* NSFileManager+Dejal.swift in Sources */,
 				3D04F76C2CDB67DB009493BF /* NSObject+Dejal.swift in Sources */,
 				3D04F8002CDCA31F009493BF /* TFYSwiftChain.swift in Sources */,
 				3D04F8012CDCA31F009493BF /* TFYSwiftNSScrollView.swift in Sources */,
@@ -519,6 +524,7 @@
 				3D04F8102CDCA31F009493BF /* TFYSwiftNSColorWell.swift in Sources */,
 				3D04F8112CDCA31F009493BF /* TFYSwiftNSStackView.swift in Sources */,
 				3D04F8122CDCA31F009493BF /* TFYSwiftNSRulerView.swift in Sources */,
+				3D04F8692CDDF747009493BF /* TFYSwiftLabel+Dejal.swift in Sources */,
 				3D04F8132CDCA31F009493BF /* TFYSwiftNSLevelIndicator.swift in Sources */,
 				3D04F8142CDCA31F009493BF /* TFYSwiftNSControl.swift in Sources */,
 				3D04F8152CDCA31F009493BF /* TFYSwiftNSText.swift in Sources */,
@@ -531,6 +537,7 @@
 				36EC0CBF2CDCF032003EBAD5 /* TFYStatusItemWindow.swift in Sources */,
 				3D04F81B2CDCA31F009493BF /* TFYSwiftNSSearchField.swift in Sources */,
 				3D04F81C2CDCA31F009493BF /* TFYSwiftNSComboButton.swift in Sources */,
+				3D04F86B2CDE1AD5009493BF /* NSColor+Dejal.swift in Sources */,
 				3D04F81D2CDCA31F009493BF /* TFYSwiftNSTextView.swift in Sources */,
 				3D04F83C2CDCA788009493BF /* TFYSwiftNSMagnificationGestureRecognizer.swift in Sources */,
 				3D04F83A2CDCA744009493BF /* TFYSwiftNSClickGestureRecognizer.swift in Sources */,
@@ -560,6 +567,7 @@
 				3D04F82D2CDCA31F009493BF /* TFYSwiftNSStatusBarButton.swift in Sources */,
 				3D04F8382CDCA6F6009493BF /* TFYSwiftNSRotationGestureRecognizer.swift in Sources */,
 				3D04F7582CDA251A009493BF /* TFYSwiftSecureTextField.swift in Sources */,
+				3D04F8632CDDAE09009493BF /* NSControl+Dejal.swift in Sources */,
 				36EC0CC52CDCF457003EBAD5 /* TFYStatusItem.swift in Sources */,
 				36EC0CB42CDB92E3003EBAD5 /* NSTextView+Dejal.swift in Sources */,
 				3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */,

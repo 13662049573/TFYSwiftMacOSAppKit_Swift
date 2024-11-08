@@ -13,15 +13,13 @@ public extension NSColor {
     
     // 从给定字符串中提取特定位置和长度的颜色分量值
     static func colorComponent(from string: String, start: Int, length: Int) -> CGFloat {
-        // 使用切片下标获取指定范围内的子字符串
-        let substring = string[string.index(string.startIndex, offsetBy: start)...string.index(string.startIndex, offsetBy: start + length - 1)]
+        // 获取指定范围内的子字符串
+        let substring = string.substring(with: string.index(string.startIndex, offsetBy: start)..<string.index(string.startIndex, offsetBy: start + length))
         // 如果长度为 2，则直接使用子字符串，否则重复子字符串
         let fullHex = length == 2 ? substring : substring + substring
         var hexComponent: UInt32 = 0
-        // 使用 Foundation 的另一种方式扫描十六进制整数
-        let scanner = Scanner(string: String(fullHex))
-        scanner.scanHexInt32(nil)
-        scanner.scanHexInt32(&hexComponent)
+        // 使用 Scanner 扫描十六进制整数
+        Scanner(string: fullHex).scanHexInt32(&hexComponent)
         // 返回标准化后的颜色分量值
         return CGFloat(hexComponent) / 255.0
     }
@@ -63,6 +61,7 @@ public extension NSColor {
             // 如果十六进制字符串格式不正确，返回 nil
             return .clear
         }
+
         // 创建并返回颜色对象
         return NSColor(red: red, green: green, blue: blue, alpha: alpha)
     }

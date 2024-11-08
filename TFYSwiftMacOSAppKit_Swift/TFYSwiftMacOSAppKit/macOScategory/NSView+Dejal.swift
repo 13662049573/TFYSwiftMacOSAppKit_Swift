@@ -208,7 +208,6 @@ public extension NSView {
                 tfy_format = ButtonTitleFormat
             }
             let globalQueue = DispatchQueue.global(qos:.default)
-            let mainQueue = DispatchQueue.main
             timer = DispatchSource.makeTimerSource(queue: globalQueue)
             timer?.schedule(deadline:.now(), repeating: 1.0 * Double(NSEC_PER_SEC), leeway:.nanoseconds(0))
             timer?.setEventHandler { [self] in

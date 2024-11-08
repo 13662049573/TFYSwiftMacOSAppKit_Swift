@@ -28,6 +28,8 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     static let sharedInstance = TFYStatusItem()
 
     var statusItem: NSStatusItem?
+    var observerStatusItemFrame: NSKeyValueObservation?
+    var observerisPinned: NSKeyValueObservation?
     // 私有变量
     private var globalDragEventMonitor: Any?
     private var proximityDragCollisionHandled: Bool?
@@ -47,8 +49,6 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     public var dropTypes: [NSPasteboard.PasteboardType]?
     // 邻近拖拽检测处理方法
     public var proximityDragDetectionHandler: TFYStatusItemProximityDragDetectionHandler?
-    private let TFYStatusItemFrameKeyPath = "statusItem.button.window.frame"
-    private let TFYStatusItemWindowConfigurationPinnedPath = "windowConfiguration.isPinned"
     
     private override init() {
         super.init()
@@ -72,8 +72,28 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
         proximityDragZoneDistance = 23
         proximityDragDetectionHandler = nil
         
-        addObserver(self, forKeyPath: TFYStatusItemFrameKeyPath, options: [.new], context: nil)
-        addObserver(self, forKeyPath: TFYStatusItemWindowConfigurationPinnedPath, options: [.prior,.new,.old], context: nil)
+    
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        if let button = statusItem?.button, let _ = button.window {
+            observerStatusItemFrame = button.window?.observe(\.frame, options: [.new]) { window, change in
+                // 在这里处理窗口框架变化
+                print("Window frame changed: \(window.frame)")
+                self.configureProximityDragCollisionArea()
+            }
+        }
+        
+        observerisPinned = windowConfiguration?.observe(\.isPinned, options: [.prior,.new,.old]) { [self] config, change in
+            // 在这里处理 isPinned 属性变化
+            print("isPinned changed to: \(config.isPinned)")
+            if let oldValue = change.oldValue, oldValue == false {
+                dismissStatusItemWindow()
+            } else {
+                dismissStatusItemWindow()
+                if proximityDragDetectionEnabled! {
+                    enableDragEventMonitor()
+                }
+            }
+        }
         
         DistributedNotificationCenter.default().addObserver(forName: TFYStatusItemThemeChangedNotification, object: nil, queue: nil) { note in
             NotificationCenter.default.post(name: TFYSystemInterfaceThemeChangedNotification, object: nil)
@@ -82,8 +102,8 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     }
 
     deinit {
-        removeObserver(self, forKeyPath: TFYStatusItemFrameKeyPath)
-        removeObserver(self, forKeyPath: TFYStatusItemWindowConfigurationPinnedPath)
+        observerStatusItemFrame?.invalidate()
+        observerisPinned?.invalidate()
         statusItem = nil
         customView = nil
         statusItemWindowController = nil
@@ -93,8 +113,6 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
         proximityDragCollisionArea = nil
         customViewContainer = nil
     }
-
-    
 
     func configureWithImage(itemImage: NSImage) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -232,7 +250,8 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     // 状态项窗口是否可见
     public var isStatusItemWindowVisible: Bool {
         get {
-            return (((statusItemWindowController != nil) ? (statusItemWindowController?.isWindowOpen) : false) != nil)
+            let isWindowOpen = statusItemWindowController != nil && statusItemWindowController!.isWindowOpen
+            return isWindowOpen
         }
         set {}
     }
@@ -300,23 +319,6 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
 
     @objc func dismissStatusItemWindow() {
         statusItemWindowController?.dismissStatusItemWindow()
-    }
-
-    public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if keyPath == TFYStatusItemFrameKeyPath {
-            configureProximityDragCollisionArea()
-        } else if keyPath == TFYStatusItemWindowConfigurationPinnedPath {
-            if let oldValue = change?[.oldKey] as? Int, oldValue == 0 {
-                disableDragEventMonitor()
-            } else {
-                dismissStatusItemWindow()
-                if proximityDragDetectionEnabled! {
-                    enableDragEventMonitor()
-                }
-            }
-        } else {
-            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
-        }
     }
 }
 

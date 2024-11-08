@@ -86,19 +86,28 @@ public extension NSObject {
         }
     }
     
-    func tfy_exchangeInstanceMethod(_ anClass: AnyClass, method1Sel: Selector, method2Sel: Selector) {
-       let originalMethod = class_getInstanceMethod(anClass, method1Sel)
-       let swizzledMethod = class_getInstanceMethod(anClass, method2Sel)
-
-       var didAddMethod = false
-       if let original = originalMethod, let swizzled = swizzledMethod {
-           didAddMethod = class_addMethod(anClass, method1Sel, method_getImplementation(swizzled), method_getTypeEncoding(swizzled))
-       }
-
-       if didAddMethod {
-           class_replaceMethod(anClass, method2Sel, method_getImplementation(originalMethod!), method_getTypeEncoding(originalMethod!))
-       } else {
-           method_exchangeImplementations(originalMethod!, swizzledMethod!)
-       }
+    func exchangeInstanceMethodsForClass(_ targetClass: AnyClass, originalSelector: Selector, swizzledSelector: Selector) {
+        
+        guard let originalMethod = class_getInstanceMethod(targetClass, originalSelector),
+              let swizzledMethod = class_getInstanceMethod(targetClass, swizzledSelector) else {
+            return
+        }
+        
+        var didAddMethod = false
+        let swizzledImp = method_getImplementation(swizzledMethod)
+        let swizzledEncoding = method_getTypeEncoding(swizzledMethod)
+        if swizzledEncoding != nil {
+            didAddMethod = class_addMethod(targetClass, originalSelector, swizzledImp, swizzledEncoding!)
+        }
+        
+        if didAddMethod {
+            let originalImp = method_getImplementation(originalMethod)
+            let originalEncoding = method_getTypeEncoding(originalMethod)
+            if originalEncoding != nil {
+                class_replaceMethod(targetClass, swizzledSelector, originalImp, originalEncoding!)
+            }
+        } else {
+            method_exchangeImplementations(originalMethod, swizzledMethod)
+        }
     }
 }

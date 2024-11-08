@@ -41,7 +41,7 @@ extension String {
         var isHaveSubString = false
         for subString in strings {
             if result.hasSuffix(subString) {
-                result = result.substring(to: result.index(result.endIndex, offsetBy: -subString.count))
+                result = String(result[..<result.index(result.endIndex, offsetBy: -subString.count)])
                 isHaveSubString = true
             }
         }

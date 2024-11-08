@@ -97,13 +97,6 @@
 		3D04F84A2CDCB269009493BF /* TFYSwiftCATextLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8492CDCB269009493BF /* TFYSwiftCATextLayer.swift */; };
 		3D04F84C2CDCB324009493BF /* TFYSwiftCATiledLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F84B2CDCB324009493BF /* TFYSwiftCATiledLayer.swift */; };
 		3D04F8512CDCB66B009493BF /* TFYSwiftHomeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8502CDCB66B009493BF /* TFYSwiftHomeController.swift */; };
-		3D04F8552CDCC720009493BF /* StatusItemConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8542CDCC720009493BF /* StatusItemConfig.swift */; };
-		3D04F8572CDCC793009493BF /* StatusItemContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8562CDCC793009493BF /* StatusItemContainerView.swift */; };
-		3D04F8592CDCC86D009493BF /* StatusItemWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8582CDCC86D009493BF /* StatusItemWindow.swift */; };
-		3D04F85B2CDCC946009493BF /* StatusItemBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F85A2CDCC946009493BF /* StatusItemBackgroundView.swift */; };
-		3D04F85D2CDCC9A2009493BF /* StatusItemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F85C2CDCC9A2009493BF /* StatusItemManager.swift */; };
-		3D04F85F2CDCCA04009493BF /* StatusItemDragDropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F85E2CDCCA04009493BF /* StatusItemDragDropView.swift */; };
-		3D04F8612CDCCA5D009493BF /* StatusItemWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8602CDCCA5D009493BF /* StatusItemWindowController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -199,13 +192,6 @@
 		3D04F8492CDCB269009493BF /* TFYSwiftCATextLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCATextLayer.swift; sourceTree = "<group>"; };
 		3D04F84B2CDCB324009493BF /* TFYSwiftCATiledLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCATiledLayer.swift; sourceTree = "<group>"; };
 		3D04F8502CDCB66B009493BF /* TFYSwiftHomeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftHomeController.swift; sourceTree = "<group>"; };
-		3D04F8542CDCC720009493BF /* StatusItemConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemConfig.swift; sourceTree = "<group>"; };
-		3D04F8562CDCC793009493BF /* StatusItemContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemContainerView.swift; sourceTree = "<group>"; };
-		3D04F8582CDCC86D009493BF /* StatusItemWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemWindow.swift; sourceTree = "<group>"; };
-		3D04F85A2CDCC946009493BF /* StatusItemBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemBackgroundView.swift; sourceTree = "<group>"; };
-		3D04F85C2CDCC9A2009493BF /* StatusItemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemManager.swift; sourceTree = "<group>"; };
-		3D04F85E2CDCCA04009493BF /* StatusItemDragDropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemDragDropView.swift; sourceTree = "<group>"; };
-		3D04F8602CDCCA5D009493BF /* StatusItemWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemWindowController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -316,13 +302,6 @@
 				36EC0CC02CDCF2D2003EBAD5 /* TFYStatusItemDropView.swift */,
 				36EC0CC22CDCF3B5003EBAD5 /* TFYStatusItemWindowController.swift */,
 				36EC0CC42CDCF457003EBAD5 /* TFYStatusItem.swift */,
-				3D04F8542CDCC720009493BF /* StatusItemConfig.swift */,
-				3D04F8562CDCC793009493BF /* StatusItemContainerView.swift */,
-				3D04F8582CDCC86D009493BF /* StatusItemWindow.swift */,
-				3D04F85A2CDCC946009493BF /* StatusItemBackgroundView.swift */,
-				3D04F85C2CDCC9A2009493BF /* StatusItemManager.swift */,
-				3D04F85E2CDCCA04009493BF /* StatusItemDragDropView.swift */,
-				3D04F8602CDCCA5D009493BF /* StatusItemWindowController.swift */,
 			);
 			path = macOSStatusItem;
 			sourceTree = "<group>";
@@ -517,7 +496,6 @@
 				36EC0CB62CDB9EA4003EBAD5 /* NSView+Dejal.swift in Sources */,
 				3D04F7562CDA131D009493BF /* TFYSwiftTextField.swift in Sources */,
 				3D04F76E2CDB6D9F009493BF /* NSFileManager+Dejal.swift in Sources */,
-				3D04F85F2CDCCA04009493BF /* StatusItemDragDropView.swift in Sources */,
 				3D04F76C2CDB67DB009493BF /* NSObject+Dejal.swift in Sources */,
 				3D04F8002CDCA31F009493BF /* TFYSwiftChain.swift in Sources */,
 				3D04F8012CDCA31F009493BF /* TFYSwiftNSScrollView.swift in Sources */,
@@ -526,7 +504,6 @@
 				3D04F8032CDCA31F009493BF /* TFYSwiftNSTableView.swift in Sources */,
 				3D04F8042CDCA31F009493BF /* TFYSwiftHasFont.swift in Sources */,
 				3D04F8052CDCA31F009493BF /* TFYSwiftNSOutlineView.swift in Sources */,
-				3D04F8612CDCCA5D009493BF /* StatusItemWindowController.swift in Sources */,
 				3D04F8062CDCA31F009493BF /* TFYSwiftNSSegmentedControl.swift in Sources */,
 				3D04F8072CDCA31F009493BF /* TFYSwiftNSPopUpButton.swift in Sources */,
 				3D04F8082CDCA31F009493BF /* TFYSwiftNSBrowser.swift in Sources */,
@@ -543,7 +520,6 @@
 				3D04F8112CDCA31F009493BF /* TFYSwiftNSStackView.swift in Sources */,
 				3D04F8122CDCA31F009493BF /* TFYSwiftNSRulerView.swift in Sources */,
 				3D04F8132CDCA31F009493BF /* TFYSwiftNSLevelIndicator.swift in Sources */,
-				3D04F8592CDCC86D009493BF /* StatusItemWindow.swift in Sources */,
 				3D04F8142CDCA31F009493BF /* TFYSwiftNSControl.swift in Sources */,
 				3D04F8152CDCA31F009493BF /* TFYSwiftNSText.swift in Sources */,
 				3D04F8162CDCA31F009493BF /* TFYSwiftNSRuleEditor.swift in Sources */,
@@ -552,7 +528,6 @@
 				3D04F8312CDCA3A0009493BF /* TFYSwiftNSGestureRecognizer.swift in Sources */,
 				3D04F8192CDCA31F009493BF /* TFYSwiftNSTableRowView.swift in Sources */,
 				3D04F81A2CDCA31F009493BF /* TFYSwiftNSProgressIndicator.swift in Sources */,
-				3D04F85D2CDCC9A2009493BF /* StatusItemManager.swift in Sources */,
 				36EC0CBF2CDCF032003EBAD5 /* TFYStatusItemWindow.swift in Sources */,
 				3D04F81B2CDCA31F009493BF /* TFYSwiftNSSearchField.swift in Sources */,
 				3D04F81C2CDCA31F009493BF /* TFYSwiftNSComboButton.swift in Sources */,
@@ -572,13 +547,11 @@
 				3D04F8242CDCA31F009493BF /* TFYSwiftNSScroller.swift in Sources */,
 				3D04F8252CDCA31F009493BF /* TFYSwiftHasText.swift in Sources */,
 				36EC0CBB2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift in Sources */,
-				3D04F8552CDCC720009493BF /* StatusItemConfig.swift in Sources */,
 				36EC0CC32CDCF3B5003EBAD5 /* TFYStatusItemWindowController.swift in Sources */,
 				3D04F8422CDCAF21009493BF /* TFYSwiftCAGradientLayer.swift in Sources */,
 				3D04F8262CDCA31F009493BF /* TFYSwiftNSTableCellView.swift in Sources */,
 				3D04F8272CDCA31F009493BF /* TFYSwiftNSGridView.swift in Sources */,
 				3D04F8282CDCA31F009493BF /* TFYSwiftNSScrubber.swift in Sources */,
-				3D04F85B2CDCC946009493BF /* StatusItemBackgroundView.swift in Sources */,
 				3D04F8292CDCA31F009493BF /* TFYSwiftNSSwitch.swift in Sources */,
 				3D04F82A2CDCA31F009493BF /* TFYSwiftNSVisualEffectView.swift in Sources */,
 				3D04F8362CDCA65A009493BF /* TFYSwiftNSPanGestureRecognizer.swift in Sources */,
@@ -597,7 +570,6 @@
 				36EC0CB92CDCEAF0003EBAD5 /* TFYStatusItemContainerView.swift in Sources */,
 				36EC0CAF2CDA6600003EBAD5 /* TFYSwiftTimer.swift in Sources */,
 				3D04F7702CDB6DED009493BF /* NSString+Dejal.swift in Sources */,
-				3D04F8572CDCC793009493BF /* StatusItemContainerView.swift in Sources */,
 				3D04F8512CDCB66B009493BF /* TFYSwiftHomeController.swift in Sources */,
 				3D04F75A2CDA27B4009493BF /* TFYSwiftOpenPanel.swift in Sources */,
 				36EC0CA72CDA5812003EBAD5 /* TFYSwiftUtils.swift in Sources */,
@@ -750,7 +722,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.0.0;
-				DEVELOPMENT_TEAM = QXKDSVRNVW;
+				DEVELOPMENT_TEAM = QH95759TSS;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "swift链接";
@@ -779,7 +751,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.0.0;
-				DEVELOPMENT_TEAM = QXKDSVRNVW;
+				DEVELOPMENT_TEAM = QH95759TSS;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "swift链接";

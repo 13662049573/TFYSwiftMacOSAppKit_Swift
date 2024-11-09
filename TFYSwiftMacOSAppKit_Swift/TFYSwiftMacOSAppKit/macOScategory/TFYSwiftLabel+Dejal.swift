@@ -170,7 +170,6 @@ public extension TFYSwiftLabel {
             } else {
                 m_font = NSFont.systemFont(ofSize: 17)
             }
-
             let lineHeight = floor(NSHeight(bounds) - (m_font.ascender + m_font.descender))
             path = CGMutablePath()
             path.addRect(CGRect(x: 0, y: 0, width: bounds.size.width, height: lineHeight), transform: CGAffineTransform.identity)

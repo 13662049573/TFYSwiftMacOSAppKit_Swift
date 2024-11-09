@@ -99,6 +99,10 @@
 		3D04F8632CDDAE09009493BF /* NSControl+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8622CDDAE09009493BF /* NSControl+Dejal.swift */; };
 		3D04F8692CDDF747009493BF /* TFYSwiftLabel+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8682CDDF747009493BF /* TFYSwiftLabel+Dejal.swift */; };
 		3D04F86B2CDE1AD5009493BF /* NSColor+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F86A2CDE1AD5009493BF /* NSColor+Dejal.swift */; };
+		3D04F8A02CDEE720009493BF /* CAGradientLayer+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F89F2CDEE720009493BF /* CAGradientLayer+Dejal.swift */; };
+		3D04F8A22CDEE89D009493BF /* NSImage+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8A12CDEE89D009493BF /* NSImage+Dejal.swift */; };
+		3D04F8A42CDEEA40009493BF /* NSMenu+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8A32CDEEA40009493BF /* NSMenu+Dejal.swift */; };
+		3D04F8A62CDEEF4E009493BF /* NSSplitView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8A52CDEEF4E009493BF /* NSSplitView+Dejal.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -196,6 +200,10 @@
 		3D04F8622CDDAE09009493BF /* NSControl+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSControl+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F8682CDDF747009493BF /* TFYSwiftLabel+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TFYSwiftLabel+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F86A2CDE1AD5009493BF /* NSColor+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSColor+Dejal.swift"; sourceTree = "<group>"; };
+		3D04F89F2CDEE720009493BF /* CAGradientLayer+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CAGradientLayer+Dejal.swift"; sourceTree = "<group>"; };
+		3D04F8A12CDEE89D009493BF /* NSImage+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImage+Dejal.swift"; sourceTree = "<group>"; };
+		3D04F8A32CDEEA40009493BF /* NSMenu+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSMenu+Dejal.swift"; sourceTree = "<group>"; };
+		3D04F8A52CDEEF4E009493BF /* NSSplitView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSSplitView+Dejal.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -318,6 +326,10 @@
 				3D04F76B2CDB67DB009493BF /* NSObject+Dejal.swift */,
 				3D04F76F2CDB6DED009493BF /* NSString+Dejal.swift */,
 				3D04F86A2CDE1AD5009493BF /* NSColor+Dejal.swift */,
+				3D04F89F2CDEE720009493BF /* CAGradientLayer+Dejal.swift */,
+				3D04F8A12CDEE89D009493BF /* NSImage+Dejal.swift */,
+				3D04F8A32CDEEA40009493BF /* NSMenu+Dejal.swift */,
+				3D04F8A52CDEEF4E009493BF /* NSSplitView+Dejal.swift */,
 			);
 			path = macOSfoundation;
 			sourceTree = "<group>";
@@ -513,12 +525,14 @@
 				3D04F8072CDCA31F009493BF /* TFYSwiftNSPopUpButton.swift in Sources */,
 				3D04F8082CDCA31F009493BF /* TFYSwiftNSBrowser.swift in Sources */,
 				3D04F8342CDCA5C9009493BF /* TFYSwiftNSPressGestureRecognizer.swift in Sources */,
+				3D04F8A22CDEE89D009493BF /* NSImage+Dejal.swift in Sources */,
 				3D04F8092CDCA31F009493BF /* TFYSwiftNSDatePicker.swift in Sources */,
 				3D04F80A2CDCA31F009493BF /* TFYSwiftNSPathControl.swift in Sources */,
 				3D04F80B2CDCA31F009493BF /* TFYSwiftNSStepper.swift in Sources */,
 				3D04F80C2CDCA31F009493BF /* TFYSwiftNSSplitView.swift in Sources */,
 				3D04F80D2CDCA31F009493BF /* TFYSwiftNSSlider.swift in Sources */,
 				3D04F80E2CDCA31F009493BF /* TFYSwiftNSView.swift in Sources */,
+				3D04F8A42CDEEA40009493BF /* NSMenu+Dejal.swift in Sources */,
 				3D04F84A2CDCB269009493BF /* TFYSwiftCATextLayer.swift in Sources */,
 				3D04F80F2CDCA31F009493BF /* TFYSwiftNSTextField.swift in Sources */,
 				3D04F8102CDCA31F009493BF /* TFYSwiftNSColorWell.swift in Sources */,
@@ -565,6 +579,7 @@
 				3D04F82B2CDCA31F009493BF /* TFYSwiftNSSecureTextField.swift in Sources */,
 				3D04F82C2CDCA31F009493BF /* TFYSwiftNSClipView.swift in Sources */,
 				3D04F82D2CDCA31F009493BF /* TFYSwiftNSStatusBarButton.swift in Sources */,
+				3D04F8A02CDEE720009493BF /* CAGradientLayer+Dejal.swift in Sources */,
 				3D04F8382CDCA6F6009493BF /* TFYSwiftNSRotationGestureRecognizer.swift in Sources */,
 				3D04F7582CDA251A009493BF /* TFYSwiftSecureTextField.swift in Sources */,
 				3D04F8632CDDAE09009493BF /* NSControl+Dejal.swift in Sources */,
@@ -586,6 +601,7 @@
 				3D04F7462CDA0E13009493BF /* ViewController.swift in Sources */,
 				36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsynce.swift in Sources */,
 				36EC0CA92CDA62D4003EBAD5 /* TFYSwiftJsonUtils.swift in Sources */,
+				3D04F8A62CDEEF4E009493BF /* NSSplitView+Dejal.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

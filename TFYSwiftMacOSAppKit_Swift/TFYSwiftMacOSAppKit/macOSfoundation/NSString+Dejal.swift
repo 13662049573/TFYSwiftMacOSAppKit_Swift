@@ -42,4 +42,11 @@ public extension String {
         }
         return currentStr
     }
+    
+    internal var hexValue: Int {
+        let string = self.hasPrefix("0x")
+            ? self.dropFirst(2)
+            : self[...]
+        return Int(string, radix: 16) ?? 0
+    }
 }

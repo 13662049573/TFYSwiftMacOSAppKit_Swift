@@ -22,9 +22,25 @@ class ViewController: NSViewController {
         return labe
     }()
     
+    lazy var button: NSButton = {
+        let btn = NSButton(frame: NSRect(x: 200, y: 300, width: 400, height: 160))
+        btn.chain
+            .font(.systemFont(ofSize: 16, weight: .bold))
+            .textColor(.red)
+            .borderColor(.white)
+            .cornerRadius(80)
+            .focusRingType(.none)
+            .borderColor(.blue)
+            .borderWidth(2)
+            .addTarget(self, action: #selector(onClick));
+        return btn
+    }()
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
+        view.addSubview(button)
         view.addSubview(lablel)
         
         let color = NSColor(hexString: "F46734")

@@ -15,4 +15,10 @@ public extension Chain where Base: TFYSwiftLabel {
         base.mouseDownBlock = block
         return self
     }
+    
+    @discardableResult
+    func fitFontSize(_ size:NSSize) -> Self {
+        base.fitFontSize(maxSize: size)
+        return self
+    }
 }

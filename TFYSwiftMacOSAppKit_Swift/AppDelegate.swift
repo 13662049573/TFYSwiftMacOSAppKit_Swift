@@ -12,11 +12,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
-        
         let showVc:TFYSwiftHomeController = TFYSwiftHomeController()
         showVc.preferredContentSize = NSSize(width: 400, height: 600)
         
-        TFYStatusItem.sharedInstance.presentStatusItemWithImage(itemImage: NSImage(named: "mood_day_17")!, contentViewController: showVc)
+        let view:NSView = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 30))
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor.orange.cgColor
+        TFYStatusItem.sharedInstance.presentStatusItemWithView(itemView: view, contentViewController: showVc) { item, title, data in
+            TFYLog(item, title, data)
+        }
+        
+//        TFYStatusItem.sharedInstance.presentStatusItemWithImage(itemImage: NSImage(named: "mood_analysis_select_5")!, contentViewController: showVc)
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {

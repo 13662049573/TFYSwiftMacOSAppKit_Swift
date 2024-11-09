@@ -31,13 +31,13 @@ public class TFYStatusItemWindowController: NSWindowController {
     public  var animationIsRunning = false
 
     public init(connectedStatusItem statusItem: TFYStatusItem, contentViewController: NSViewController, windowConfiguration: TFYStatusItemWindowConfiguration) {
-        // 调用指定初始化方法
-        super.init(window: TFYStatusItemWindow.statusItemWindowWithConfiguration(configuration: windowConfiguration))
         
         assert(contentViewController.preferredContentSize.width != 0 && contentViewController.preferredContentSize.height != 0, "[\(type(of: self))] contentViewController 的 preferredContentSize 不能是 NSZeroSize!")
         
         self.statusItemView = statusItem
         self.windowConfiguration = windowConfiguration
+        // 调用指定初始化方法
+        super.init(window: TFYStatusItemWindow.statusItemWindowWithConfiguration(configuration: windowConfiguration))
         self.contentViewController = contentViewController
         
         NotificationCenter.default.addObserver(self, selector: #selector(handleWindowDidResignKeyNotification(_:)), name: NSWindow.didResignKeyNotification, object: nil)

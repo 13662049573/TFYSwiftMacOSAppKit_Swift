@@ -9,7 +9,29 @@
 import Cocoa
 
 extension NSView {
+
+    static func initializeOnce() {
+        DispatchQueue.once(token: "viewToken") {
+            exchangeInstanceMethodsForClass(self.classForCoder(), originalSelector: #selector(self.init(frame:)), swizzledSelector: #selector(initWithFrame_hook(frameRect:)))
+            exchangeInstanceMethodsForClass(self.classForCoder(), originalSelector: #selector(self.init(coder:)), swizzledSelector: #selector(initWithCoder_hook(decoder:)))
+        }
+    }
     
+    @objc func initWithFrame_hook(frameRect: NSRect) -> Self {
+        let obj = self.initWithFrame_hook(frameRect: frameRect)
+        obj.wantsLayer = true
+        return obj
+    }
+
+    @objc func initWithCoder_hook(decoder: NSCoder) -> Self {
+        let obj = self.initWithCoder_hook(decoder: decoder)
+        obj.wantsLayer = true
+        return obj
+    }
+}
+
+public extension NSView {
+
     var macos_origin:CGPoint {
         set {
             var frame = self.frame
@@ -119,128 +141,236 @@ extension NSView {
             return self.frame.origin.x + self.frame.size.width
         }
     }
+    
 }
 
-private let timeIndex:TimeInterval = 60.0
-private let ButtonTitleFormat:String = "剩余%ld秒"
-private let RetainTitle:String = "重新获取"
+private let defaultTimeInterval: TimeInterval = 60.0
+private let buttonTitleFormat: String = "剩余%ld 秒"
+private let retainButtonTitle: String = "重新获取"
 
 public extension NSView {
     
-    private struct AssociateKeys {
-        static var timeName   = "time" + "funcName"
-        static var formatName    = "time" + "format"
-        static var stopTimeName    = "time" + "time"
-        static var timeTimeName    = "time" + "gcd"
-        static var userTimeName    = "time" + "userTimeName"
+    private struct AssociatedObjectKeys {
+        static var timeKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "timeKey".hashValue)!
+        static var formatKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "formatKey".hashValue)!
+        static var stopTimeKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "stopTimeKey".hashValue)!
+        static var timerKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "timerKey".hashValue)!
+        static var userTimeKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "userTimeKey".hashValue)!
     }
 
-    func tfy_removeAllSubViews() {
+    func removeAllSubviews() {
         while subviews.count > 0 {
             subviews.first?.removeFromSuperview()
         }
     }
 
-    func tfy_viewController() -> NSViewController? {
-        var nextResponder = self.nextResponder
-        var view = self
-        while !(nextResponder is NSViewController) {
-            view = view.superview!
-            nextResponder = view.nextResponder
+    func viewController() -> NSViewController? {
+        // 更简洁的获取视图控制器的方式
+        if let window = window {
+            if let delegate = window.delegate as? NSViewController {
+                return delegate
+            }
         }
-        return nextResponder as? NSViewController
+        return nil
     }
-    
-    var tfy_time:TimeInterval {
+
+    var timeInterval: TimeInterval {
         set {
-            objc_setAssociatedObject(self, (AssociateKeys.timeName), NSNumber(value: newValue), .OBJC_ASSOCIATION_ASSIGN)
+            objc_setAssociatedObject(self, AssociatedObjectKeys.timeKey, NSNumber(value: newValue),.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            let number:NSNumber = objc_getAssociatedObject(self, (AssociateKeys.timeName)) as! NSNumber
+            let number: NSNumber = objc_getAssociatedObject(self, AssociatedObjectKeys.timeKey) as! NSNumber
             return number.doubleValue
         }
     }
-    
-    private var tfy_userTime:TimeInterval {
+
+    private var userTimeInterval: TimeInterval {
         set {
-            objc_setAssociatedObject(self, (AssociateKeys.userTimeName), NSNumber(value: newValue), .OBJC_ASSOCIATION_ASSIGN)
+            objc_setAssociatedObject(self, AssociatedObjectKeys.userTimeKey, NSNumber(value: newValue),.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            let number:NSNumber = objc_getAssociatedObject(self, (AssociateKeys.userTimeName)) as! NSNumber
+            let number: NSNumber = objc_getAssociatedObject(self, AssociatedObjectKeys.userTimeKey) as! NSNumber
             return number.doubleValue
         }
     }
-    
-    var tfy_format:String? {
+
+    var titleFormat: String? {
         set {
-            objc_setAssociatedObject(self, (AssociateKeys.formatName),newValue, .OBJC_ASSOCIATION_COPY)
+            objc_setAssociatedObject(self, AssociatedObjectKeys.formatKey, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            return objc_getAssociatedObject(self, (AssociateKeys.formatName)) as? String
+            return objc_getAssociatedObject(self, AssociatedObjectKeys.formatKey) as? String
         }
     }
-    
-    private var stopTime:Int {
+
+    private var stopTime: Int {
         set {
-            objc_setAssociatedObject(self, (AssociateKeys.stopTimeName), NSNumber(integerLiteral: newValue), .OBJC_ASSOCIATION_ASSIGN)
+            objc_setAssociatedObject(self, AssociatedObjectKeys.stopTimeKey, NSNumber(integerLiteral: newValue),.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            let number:NSNumber = objc_getAssociatedObject(self, (AssociateKeys.stopTimeName)) as! NSNumber
+            let number: NSNumber = objc_getAssociatedObject(self, AssociatedObjectKeys.stopTimeKey) as! NSNumber
             return number.intValue
         }
     }
-    
-    private var timer:DispatchSourceTimer? {
+
+    private var timer: DispatchSourceTimer? {
         set {
-            objc_setAssociatedObject(self, (AssociateKeys.timeTimeName),newValue, .OBJC_ASSOCIATION_COPY)
+            objc_setAssociatedObject(self, AssociatedObjectKeys.timerKey, newValue,.OBJC_ASSOCIATION_COPY)
         }
         get {
-            return objc_getAssociatedObject(self, (AssociateKeys.timeTimeName)) as? DispatchSourceTimer
+            return objc_getAssociatedObject(self, AssociatedObjectKeys.timerKey) as? DispatchSourceTimer
         }
     }
-    
-    func tfy_startTimer(block: @escaping (String, Int) -> Void) {
-        if stopTime == 0 {
-            if tfy_time == 0 {
-                tfy_time = timeIndex
+
+    func startOrStopTimer(start: Bool, block: @escaping (String, Int) -> Void) {
+        if start {
+            if timeInterval == 0 {
+                timeInterval = defaultTimeInterval
             }
-            if tfy_format == nil {
-                tfy_format = ButtonTitleFormat
+            if titleFormat == nil {
+                titleFormat = buttonTitleFormat
             }
             let globalQueue = DispatchQueue.global(qos:.default)
-            let mainQueue = DispatchQueue.main
             timer = DispatchSource.makeTimerSource(queue: globalQueue)
             timer?.schedule(deadline:.now(), repeating: 1.0 * Double(NSEC_PER_SEC), leeway:.nanoseconds(0))
             timer?.setEventHandler { [self] in
-                if tfy_time <= 1 {
+                if timeInterval <= 1 {
                     timer?.cancel()
                 } else {
-                    tfy_time -= 1
+                    timeInterval -= 1
                     DispatchQueue.main.async {
                         self.stopTime = 1
-                        block(String(format: self.tfy_format!, self.tfy_time), 0)
+                        block(String(format: self.titleFormat!, self.timeInterval), 0)
                     }
                 }
             }
             timer?.setCancelHandler {
                 DispatchQueue.main.async {
                     self.stopTime = 0
-                    block(RetainTitle, 1)
-                    if self.tfy_userTime > 0 {
-                        self.tfy_time = self.tfy_userTime
+                    block(retainButtonTitle, 1)
+                    if self.userTimeInterval > 0 {
+                        self.timeInterval = self.userTimeInterval
                     } else {
-                        self.tfy_time = timeIndex
+                        self.timeInterval = defaultTimeInterval
                     }
                 }
             }
             timer?.resume()
+        } else {
+            if let timer = timer {
+                timer.cancel()
+            }
         }
     }
+    
+    func startAnimationWithFadeInDuration(fadeInDuration: TimeInterval) {
+        self.alphaValue = 0.0
+        // 这里假设没有找到 startAnimation 的实现，我们可以使用另一种动画方式来替代，比如使用隐式动画。
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(0.1) // 设置一个短暂的初始动画时间
+        self.layer?.opacity = 0.01
+        CATransaction.commit()
+        NSAnimationContext.runAnimationGroup({ (context) in
+            context.duration = fadeInDuration
+            self.animator().alphaValue = 1.0
+        }, completionHandler: nil)
+    }
+    
+    func adjustAutoresizeMasks() -> [NSNumber] {
+        return adjustAutoresizingAroundPosition(NSMaxY(self.frame), stickPositionToTop: true)
+    }
 
-    func tfy_endTimer() {
-        if let timer = timer {
-            timer.cancel()
+    func adjustAutoresizingAroundPosition(_ position: CGFloat, stickPositionToTop: Bool) -> [NSNumber] {
+        var subviewMasks = [NSNumber]()
+        var superview = self
+        var oldSuperview = superview
+
+        // 将 position 声明为变量
+        var positionValue = position
+
+        while !superview.isFlipped {
+            // 首先调整父视图的蒙版:
+            let mask = superview.autoresizingMask
+            subviewMasks.append(NSNumber(value: mask.rawValue))
+
+            // Make it stick to the top and bottom of the window, and change height:
+            var newMask = mask
+            newMask.insert(.height)
+            newMask.remove(.maxYMargin)
+            newMask.remove(.minYMargin)
+            superview.autoresizingMask = newMask
+
+            let subviews = superview.subviews
+
+            for subview in subviews {
+                if subview != oldSuperview {
+                    let oldSubviewMask = subview.autoresizingMask
+                    subviewMasks.append(NSNumber(value: oldSuperview.autoresizingMask.rawValue))
+
+                    var stickToBottom = NSMaxY(subview.frame) <= positionValue
+                    if !stickPositionToTop && NSMaxY(subview.frame) == positionValue {
+                        stickToBottom = true
+                    }
+
+                    if stickToBottom {
+                        // 这个子视图在我们下面。让它粘在窗口底部，不改变高度:
+                        var newSubviewMask = oldSubviewMask
+                        newSubviewMask.remove(.height)
+                        newSubviewMask.insert(.maxYMargin)
+                        newSubviewMask.remove(.minYMargin)
+                        subview.autoresizingMask = newSubviewMask
+                    } else {
+                        // 这个子视图在我们上面。让它粘在窗户顶部，不改变高度:
+                        var newSubviewMask = oldSubviewMask
+                        newSubviewMask.remove(.height)
+                        newSubviewMask.remove(.maxYMargin)
+                        newSubviewMask.insert(.minYMargin)
+                        subview.autoresizingMask = newSubviewMask
+                    }
+                }
+            }
+
+            // 到这个父视图的父视图，重复这个过程;注意，循环算法必须在下面的恢复方法中完全复制。理想情况下，这两个方法都应该使用另一个方法来获得下一个子视图，但我不能在这个阶段重构它，所以要注意这个问题:
+            oldSuperview = superview
+            positionValue = NSMaxY(superview.frame)
+            superview = superview.superview!
+        }
+
+        return subviewMasks
+    }
+
+    func restoreAutoresizeMasks(_ masks: [NSNumber]) {
+        var superview = self
+        var oldSuperview = superview
+        var enumerator = masks.makeIterator()
+
+        while !superview.isFlipped {
+            // 第一项是父视图的蒙版:
+            if let maskValue = enumerator.next() {
+               let autoresizingMask = NSView.AutoresizingMask(rawValue: maskValue.uintValue)
+               superview.autoresizingMask = autoresizingMask
+            } else {
+                // 处理掩码数组耗尽的情况，可以抛出错误或进行适当的处理
+                fatalError("掩码数组耗尽")
+            }
+
+            // 以下是子视图掩码:
+            let subviews = superview.subviews
+
+            for subview in subviews {
+                if subview != oldSuperview {
+                    if let subviewMaskValue = enumerator.next() {
+                        let subviewAutoresizingMask = NSView.AutoresizingMask(rawValue: subviewMaskValue.uintValue)
+                            subview.autoresizingMask = subviewAutoresizingMask
+                    } else {
+                        // 处理掩码数组耗尽的情况，可以抛出错误或进行适当的处理
+                        fatalError("掩码数组耗尽")
+                    }
+                }
+            }
+            // 到这个父视图的父视图，重复这个过程;注意，循环算法必须在上面的 adjust 方法中完全复制。理想情况下，这两个方法都应该使用另一个方法来获得下一个子视图，但我不能在这个阶段重构它，所以要注意这个问题:
+            oldSuperview = superview
+            superview = superview.superview!
         }
     }
 }
-

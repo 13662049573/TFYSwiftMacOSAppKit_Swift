@@ -83,11 +83,11 @@ public extension Chain where Base: NSDatePicker {
         return self
     }
     
-    @discardableResult
-    func timeInterval(_ value: TimeInterval) -> Self {
-        base.timeInterval = value
-        return self
-    }
+//    @discardableResult
+//    func timeInterval(_ value: TimeInterval) -> Self {
+//        base.timeInterval = value
+//        return self
+//    }
     
     @discardableResult
     func minDate(_ value:Date) -> Self {

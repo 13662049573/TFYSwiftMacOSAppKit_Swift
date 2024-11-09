@@ -36,7 +36,7 @@ public class TFYStatusItemDropView: NSView {
 
     public override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         let pboard = sender.draggingPasteboard
-        if let type = dropTypeInPasteboardTypes(pasteboardTypes: pboard.types!) {
+        if dropTypeInPasteboardTypes(pasteboardTypes: pboard.types!) != nil {
             return .copy
         } else {
             return .private

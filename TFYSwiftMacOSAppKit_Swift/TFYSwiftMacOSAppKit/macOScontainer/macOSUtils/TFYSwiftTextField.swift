@@ -42,7 +42,8 @@ public class TFYSwiftTextField: NSTextField {
         cell?.lineBreakMode = .byWordWrapping
         cell?.truncatesLastVisibleLine = true
         cell?.isEditable = true
-        
+        cell?.truncatesLastVisibleLine = true
+        self.preferredMaxLayoutWidth = 100
         NotificationCenter.default.addObserver(self, selector: #selector(delegate_swift?.textFieldDidChange(textField:)), name: NSControl.textDidChangeNotification, object: self)
     }
     
@@ -72,3 +73,4 @@ public class TFYSwiftTextField: NSTextField {
         }
     }
 }
+

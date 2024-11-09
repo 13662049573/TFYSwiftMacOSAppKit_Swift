@@ -30,7 +30,7 @@ public class TFYStatusItemWindowConfiguration: NSObject {
     public var backgroundColor: NSColor?
     public var presentationTransition: TFYPresentationTransition = .fade
     public var toolTip: String?
-    public var isPinned: Bool = false
+    @objc dynamic public var isPinned: Bool = false
 
     public override init() {
         super.init()

@@ -32,7 +32,8 @@ class ViewController: NSViewController {
             .focusRingType(.none)
             .borderColor(.blue)
             .borderWidth(2)
-            .addTarget(self, action: #selector(onClick));
+            .addTarget(self, action: #selector(onClick))
+            .backgroundColor(.blue);
         return btn
     }()
     

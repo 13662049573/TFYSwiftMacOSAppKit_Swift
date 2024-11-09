@@ -83,10 +83,9 @@ public extension NSObject {
     }
     
     // 交换指定类的两个实例方法
-    func exchangeInstanceMethodsForClass(_ targetClass: AnyClass, originalSelector: Selector, swizzledSelector: Selector) {
+    class func exchangeInstanceMethodsForClass(_ targetClass: AnyClass, originalSelector: Selector, swizzledSelector: Selector) {
         guard let originalMethod = class_getInstanceMethod(targetClass, originalSelector),
               let swizzledMethod = class_getInstanceMethod(targetClass, swizzledSelector) else {
-            // 可以抛出错误或者记录日志
             return
         }
         var didAddMethod = false

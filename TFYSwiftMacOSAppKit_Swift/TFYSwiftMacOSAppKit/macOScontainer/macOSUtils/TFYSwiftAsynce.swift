@@ -58,3 +58,14 @@ public class TFYSwiftAsynce: NSObject {
         return item
     }
 }
+
+extension DispatchQueue {
+    private static var onceTokens = [String]()
+    class func once(token: String, block: () -> Void) {
+        objc_sync_enter(self); defer { objc_sync_exit(self) }
+        if !onceTokens.contains(token) {
+            onceTokens.append(token)
+            block()
+        }
+    }
+}

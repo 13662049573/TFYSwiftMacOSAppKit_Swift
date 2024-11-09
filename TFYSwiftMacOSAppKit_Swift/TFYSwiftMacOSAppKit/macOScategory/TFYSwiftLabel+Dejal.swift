@@ -155,7 +155,7 @@ public extension TFYSwiftLabel {
 
     // 获取点击框架
     @discardableResult
-    func getTapFrame(_ point: NSPoint, result: ((_ str: String, _ range: NSRange, _ index: Int) -> Void)) -> Bool {
+    private func getTapFrame(_ point: NSPoint, result: ((_ str: String, _ range: NSRange, _ index: Int) -> Void)) -> Bool {
         let framesetter = CTFramesetterCreateWithAttributedString(self.attributedStringValue)
         var path = CGMutablePath()
         path.addRect(bounds, transform: CGAffineTransform.identity)
@@ -227,7 +227,7 @@ public extension TFYSwiftLabel {
     }
 
     // 获取行边界
-    func getLineBounds(_ line: CTLine, point: CGPoint) -> CGRect {
+    private func getLineBounds(_ line: CTLine, point: CGPoint) -> CGRect {
         var ascent: CGFloat = 0.0
         var descent: CGFloat = 0.0
         var leading: CGFloat = 0.0
@@ -237,7 +237,7 @@ public extension TFYSwiftLabel {
     }
 
     // 获取范围
-    func getRanges(_ strings: [String]) {
+    private func getRanges(_ strings: [String]) {
         if attributedStringValue.length == 0 {
             return
         }
@@ -275,14 +275,14 @@ public extension TFYSwiftLabel {
     }
 
     // 保存效果字典
-    func saveEffectDicWithRange(_ range: NSRange) {
+    private func saveEffectDicWithRange(_ range: NSRange) {
         effectDictionary = [:]
         let subAttribute = attributedStringValue.attributedSubstring(from: range)
         effectDictionary?[NSStringFromRange(range)] = subAttribute
     }
 
     // 应用点击效果
-    func applyTapEffect(_ status: Bool) {
+    private func applyTapEffect(_ status: Bool) {
         guard isTapEffectEnabled, let effectDic = effectDictionary,!effectDic.isEmpty else {
             return
         }
@@ -319,7 +319,7 @@ public extension TFYSwiftLabel {
     }
 }
 
-extension String {
+public extension String {
     // 将字符串范围转换为 NSRange
     func nsRange(from range: Range<String.Index>) -> NSRange {
         return NSRange(range, in: self)
@@ -337,7 +337,7 @@ extension String {
     }
 }
 
-extension String {
+public extension String {
     @discardableResult
     func exMatchStrRange(_ matchStr: String) -> [NSRange] {
         var selfStr = self as NSString

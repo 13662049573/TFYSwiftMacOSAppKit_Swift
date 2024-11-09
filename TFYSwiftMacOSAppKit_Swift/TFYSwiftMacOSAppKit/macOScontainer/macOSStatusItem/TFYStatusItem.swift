@@ -129,6 +129,11 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
         let itemFrame = itemView.frame
         customViewContainer = TFYStatusItemContainerView(frame: itemFrame)
         customViewContainer?.autoresizingMask = [.width,.height]
+        if let layer = customView!.layer {
+            let backgroundColor = layer.backgroundColor
+            customViewContainer?.wantsLayer = true
+            customViewContainer?.layer?.backgroundColor = backgroundColor
+        }
         customViewContainer?.target = self
         customViewContainer?.action = #selector(handleStatusItemButtonAction(_:))
         customViewContainer?.addSubview(itemView)
@@ -158,7 +163,7 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
         dropView = nil
         if dropHandler == nil { return }
         if let button = statusItem?.button {
-            let buttonWindowFrame = button.window?.frame ?? CGRect.zero
+            let buttonWindowFrame = button.window?.frame ?? .zero
             let statusItemFrame = CGRect(x: 0, y: 0, width: NSWidth(buttonWindowFrame), height: NSHeight(buttonWindowFrame))
             dropView = TFYStatusItemDropView(frame: statusItemFrame)
             dropView?.statusItem = self

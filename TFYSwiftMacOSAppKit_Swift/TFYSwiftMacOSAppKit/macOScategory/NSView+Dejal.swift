@@ -8,8 +8,30 @@
 
 import Cocoa
 
-public extension NSView {
+extension NSView {
+
+    static func initializeOnce() {
+        DispatchQueue.once(token: "viewToken") {
+            exchangeInstanceMethodsForClass(self.classForCoder(), originalSelector: #selector(self.init(frame:)), swizzledSelector: #selector(initWithFrame_hook(frameRect:)))
+            exchangeInstanceMethodsForClass(self.classForCoder(), originalSelector: #selector(self.init(coder:)), swizzledSelector: #selector(initWithCoder_hook(decoder:)))
+        }
+    }
     
+    @objc func initWithFrame_hook(frameRect: NSRect) -> Self {
+        let obj = self.initWithFrame_hook(frameRect: frameRect)
+        obj.wantsLayer = true
+        return obj
+    }
+
+    @objc func initWithCoder_hook(decoder: NSCoder) -> Self {
+        let obj = self.initWithCoder_hook(decoder: decoder)
+        obj.wantsLayer = true
+        return obj
+    }
+}
+
+public extension NSView {
+
     var macos_origin:CGPoint {
         set {
             var frame = self.frame
@@ -119,6 +141,7 @@ public extension NSView {
             return self.frame.origin.x + self.frame.size.width
         }
     }
+    
 }
 
 private let defaultTimeInterval: TimeInterval = 60.0
@@ -237,6 +260,117 @@ public extension NSView {
             if let timer = timer {
                 timer.cancel()
             }
+        }
+    }
+    
+    func startAnimationWithFadeInDuration(fadeInDuration: TimeInterval) {
+        self.alphaValue = 0.0
+        // 这里假设没有找到 startAnimation 的实现，我们可以使用另一种动画方式来替代，比如使用隐式动画。
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(0.1) // 设置一个短暂的初始动画时间
+        self.layer?.opacity = 0.01
+        CATransaction.commit()
+        NSAnimationContext.runAnimationGroup({ (context) in
+            context.duration = fadeInDuration
+            self.animator().alphaValue = 1.0
+        }, completionHandler: nil)
+    }
+    
+    func adjustAutoresizeMasks() -> [NSNumber] {
+        return adjustAutoresizingAroundPosition(NSMaxY(self.frame), stickPositionToTop: true)
+    }
+
+    func adjustAutoresizingAroundPosition(_ position: CGFloat, stickPositionToTop: Bool) -> [NSNumber] {
+        var subviewMasks = [NSNumber]()
+        var superview = self
+        var oldSuperview = superview
+
+        // 将 position 声明为变量
+        var positionValue = position
+
+        while !superview.isFlipped {
+            // 首先调整父视图的蒙版:
+            let mask = superview.autoresizingMask
+            subviewMasks.append(NSNumber(value: mask.rawValue))
+
+            // Make it stick to the top and bottom of the window, and change height:
+            var newMask = mask
+            newMask.insert(.height)
+            newMask.remove(.maxYMargin)
+            newMask.remove(.minYMargin)
+            superview.autoresizingMask = newMask
+
+            let subviews = superview.subviews
+
+            for subview in subviews {
+                if subview != oldSuperview {
+                    let oldSubviewMask = subview.autoresizingMask
+                    subviewMasks.append(NSNumber(value: oldSuperview.autoresizingMask.rawValue))
+
+                    var stickToBottom = NSMaxY(subview.frame) <= positionValue
+                    if !stickPositionToTop && NSMaxY(subview.frame) == positionValue {
+                        stickToBottom = true
+                    }
+
+                    if stickToBottom {
+                        // 这个子视图在我们下面。让它粘在窗口底部，不改变高度:
+                        var newSubviewMask = oldSubviewMask
+                        newSubviewMask.remove(.height)
+                        newSubviewMask.insert(.maxYMargin)
+                        newSubviewMask.remove(.minYMargin)
+                        subview.autoresizingMask = newSubviewMask
+                    } else {
+                        // 这个子视图在我们上面。让它粘在窗户顶部，不改变高度:
+                        var newSubviewMask = oldSubviewMask
+                        newSubviewMask.remove(.height)
+                        newSubviewMask.remove(.maxYMargin)
+                        newSubviewMask.insert(.minYMargin)
+                        subview.autoresizingMask = newSubviewMask
+                    }
+                }
+            }
+
+            // 到这个父视图的父视图，重复这个过程;注意，循环算法必须在下面的恢复方法中完全复制。理想情况下，这两个方法都应该使用另一个方法来获得下一个子视图，但我不能在这个阶段重构它，所以要注意这个问题:
+            oldSuperview = superview
+            positionValue = NSMaxY(superview.frame)
+            superview = superview.superview!
+        }
+
+        return subviewMasks
+    }
+
+    func restoreAutoresizeMasks(_ masks: [NSNumber]) {
+        var superview = self
+        var oldSuperview = superview
+        var enumerator = masks.makeIterator()
+
+        while !superview.isFlipped {
+            // 第一项是父视图的蒙版:
+            if let maskValue = enumerator.next() {
+               let autoresizingMask = NSView.AutoresizingMask(rawValue: maskValue.uintValue)
+               superview.autoresizingMask = autoresizingMask
+            } else {
+                // 处理掩码数组耗尽的情况，可以抛出错误或进行适当的处理
+                fatalError("掩码数组耗尽")
+            }
+
+            // 以下是子视图掩码:
+            let subviews = superview.subviews
+
+            for subview in subviews {
+                if subview != oldSuperview {
+                    if let subviewMaskValue = enumerator.next() {
+                        let subviewAutoresizingMask = NSView.AutoresizingMask(rawValue: subviewMaskValue.uintValue)
+                            subview.autoresizingMask = subviewAutoresizingMask
+                    } else {
+                        // 处理掩码数组耗尽的情况，可以抛出错误或进行适当的处理
+                        fatalError("掩码数组耗尽")
+                    }
+                }
+            }
+            // 到这个父视图的父视图，重复这个过程;注意，循环算法必须在上面的 adjust 方法中完全复制。理想情况下，这两个方法都应该使用另一个方法来获得下一个子视图，但我不能在这个阶段重构它，所以要注意这个问题:
+            oldSuperview = superview
+            superview = superview.superview!
         }
     }
 }

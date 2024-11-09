@@ -11,7 +11,7 @@ import Cocoa
 public extension NSControl {
 
     // 通用方法，用于设置属性
-    func setAttribute(forKey attributeKey: NSAttributedString.Key, value: Any, changeText: String? = nil, options: String.CompareOptions = [.caseInsensitive,.regularExpression]) {
+    private func setAttribute(forKey attributeKey: NSAttributedString.Key, value: Any, changeText: String? = nil, options: String.CompareOptions = [.caseInsensitive,.regularExpression]) {
         let attributedString = NSMutableAttributedString(attributedString: attributedStringValue)
         let textToSearch = changeText ?? stringValue
         if let textRange = findTextRange(stringValue, forKeyword: textToSearch, options: options) {
@@ -21,7 +21,7 @@ public extension NSControl {
     }
     
     // 查找文本范围的方法
-    func findTextRange(_ text: String, forKeyword keyword: String, options: String.CompareOptions) -> NSRange? {
+    private func findTextRange(_ text: String, forKeyword keyword: String, options: String.CompareOptions) -> NSRange? {
         if let range = text.range(of: keyword, options: options) {
             let start = text.distance(from: text.startIndex, to: range.lowerBound)
             let end = text.distance(from: text.startIndex, to: range.upperBound)
@@ -31,7 +31,7 @@ public extension NSControl {
     }
 
     // 通用方法，用于设置属性
-    func setAttributes(forKey attributeKey: NSAttributedString.Key, value: [Any], changeTexts: [String]? = nil, options: String.CompareOptions = [.caseInsensitive,.regularExpression]) {
+    private func setAttributes(forKey attributeKey: NSAttributedString.Key, value: [Any], changeTexts: [String]? = nil, options: String.CompareOptions = [.caseInsensitive,.regularExpression]) {
         let attributedString = NSMutableAttributedString(attributedString: attributedStringValue)
         let textsToSearch = changeTexts ?? [stringValue]
         let colorsToUse = value
@@ -67,12 +67,12 @@ public extension NSControl {
 
     // 改变字体
     func changeFonts(with textFonts: [NSFont], changeTexts: [String]? = nil) {
-        setAttributes(forKey: .font, value: textFonts,changeTexts: changeTexts)
+        setAttributes(forKey:.font, value: textFonts,changeTexts: changeTexts)
     }
     
     // 通用的改变颜色方法，可以传入单个颜色或颜色数组以及可选的文本列表
     func changeColors(with colors: [NSColor], changeTexts: [String]? = nil) {
-        setAttributes(forKey: .foregroundColor, value: colors,changeTexts: changeTexts)
+        setAttributes(forKey:.foregroundColor, value: colors,changeTexts: changeTexts)
     }
     
     // 改变背景颜色

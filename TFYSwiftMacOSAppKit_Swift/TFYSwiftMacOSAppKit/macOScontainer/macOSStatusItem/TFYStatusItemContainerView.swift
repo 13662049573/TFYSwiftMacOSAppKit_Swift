@@ -41,7 +41,7 @@ public class TFYStatusItemContainerView: NSView {
         highlighted = true
         needsDisplay = true
         if let target = target, let action = action {
-            target.perform(action, with: self)
+            target.perform(action, with: self, afterDelay: 0)
         }
     }
 

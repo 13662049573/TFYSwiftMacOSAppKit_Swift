@@ -23,20 +23,19 @@ class ViewController: NSViewController {
     }()
     
     lazy var button: NSButton = {
-        let btn = NSButton(frame: NSRect(x: 200, y: 300, width: 400, height: 160))
+        let btn = NSButton(frame: NSRect(x: 200, y: 300, width: 400, height: 100))
         btn.chain
             .font(.systemFont(ofSize: 16, weight: .bold))
+            .text("弹出界面")
+            .wantsLayer(true)
             .textColor(.red)
-            .borderColor(.white)
-            .cornerRadius(80)
-            .focusRingType(.none)
-            .borderColor(.blue)
-            .borderWidth(2)
-            .addTarget(self, action: #selector(onClick))
-            .backgroundColor(.blue);
+            .cornerRadius(50)
+            .border(2, borderColor: .orange)
+            .backgroundColor(.blue)
+            .bezelStyle(.smallSquare)
+            .addTarget(self, action: #selector(onClick(btn:)));
         return btn
     }()
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,11 +51,16 @@ class ViewController: NSViewController {
         lablel.addTapAction(["《说的几个时刻》","《说的进口关税个》","崩溃","看谁"]) { string, range, int in
             TFYLog("点击了\(string)标签 - {\(range.location) , \(range.length)} - \(int)")
         }
-
+        
     }
     
-    @objc func onClick() {
-        TFYLog("点击了====NSControl")
+    @objc func onClick(btn:NSButton) {
+        
+        let showVc:TFYSwiftHomeController = TFYSwiftHomeController()
+        showVc.preferredContentSize = NSSize(width: 400, height: 600)
+        TFYStatusItem.sharedInstance.presentStatusItemWithView(itemView: btn, contentViewController: showVc) { item, title, data in
+            TFYLog(item,title,data)
+        }
     }
 
 }

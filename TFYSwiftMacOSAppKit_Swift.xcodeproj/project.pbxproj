@@ -14,7 +14,6 @@
 		36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsynce.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsynce.swift */; };
 		36EC0CAD2CDA6513003EBAD5 /* TFYSwiftGCD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAC2CDA6513003EBAD5 /* TFYSwiftGCD.swift */; };
 		36EC0CAF2CDA6600003EBAD5 /* TFYSwiftTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAE2CDA6600003EBAD5 /* TFYSwiftTimer.swift */; };
-		36EC0CB42CDB92E3003EBAD5 /* NSTextView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CB32CDB92E3003EBAD5 /* NSTextView+Dejal.swift */; };
 		36EC0CB62CDB9EA4003EBAD5 /* NSView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */; };
 		36EC0CB92CDCEAF0003EBAD5 /* TFYStatusItemContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CB82CDCEAF0003EBAD5 /* TFYStatusItemContainerView.swift */; };
 		36EC0CBB2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CBA2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift */; };
@@ -103,6 +102,7 @@
 		3D04F8A22CDEE89D009493BF /* NSImage+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8A12CDEE89D009493BF /* NSImage+Dejal.swift */; };
 		3D04F8A42CDEEA40009493BF /* NSMenu+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8A32CDEEA40009493BF /* NSMenu+Dejal.swift */; };
 		3D04F8A62CDEEF4E009493BF /* NSSplitView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8A52CDEEF4E009493BF /* NSSplitView+Dejal.swift */; };
+		3D04F8AC2CDF2E51009493BF /* NSPopover+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8AB2CDF2E51009493BF /* NSPopover+Dejal.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -113,7 +113,6 @@
 		36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsynce.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftAsynce.swift; sourceTree = "<group>"; };
 		36EC0CAC2CDA6513003EBAD5 /* TFYSwiftGCD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftGCD.swift; sourceTree = "<group>"; };
 		36EC0CAE2CDA6600003EBAD5 /* TFYSwiftTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftTimer.swift; sourceTree = "<group>"; };
-		36EC0CB32CDB92E3003EBAD5 /* NSTextView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSTextView+Dejal.swift"; sourceTree = "<group>"; };
 		36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSView+Dejal.swift"; sourceTree = "<group>"; };
 		36EC0CB82CDCEAF0003EBAD5 /* TFYStatusItemContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStatusItemContainerView.swift; sourceTree = "<group>"; };
 		36EC0CBA2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStatusItemWindowConfiguration.swift; sourceTree = "<group>"; };
@@ -204,6 +203,7 @@
 		3D04F8A12CDEE89D009493BF /* NSImage+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImage+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F8A32CDEEA40009493BF /* NSMenu+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSMenu+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F8A52CDEEF4E009493BF /* NSSplitView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSSplitView+Dejal.swift"; sourceTree = "<group>"; };
+		3D04F8AB2CDF2E51009493BF /* NSPopover+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSPopover+Dejal.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -229,11 +229,14 @@
 		36EC0CB22CDB9284003EBAD5 /* macOScategory */ = {
 			isa = PBXGroup;
 			children = (
-				36EC0CB32CDB92E3003EBAD5 /* NSTextView+Dejal.swift */,
 				36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */,
 				3D04F7B32CDC8D2F009493BF /* NSTextField+Dejal.swift */,
 				3D04F8622CDDAE09009493BF /* NSControl+Dejal.swift */,
 				3D04F8682CDDF747009493BF /* TFYSwiftLabel+Dejal.swift */,
+				3D04F8A52CDEEF4E009493BF /* NSSplitView+Dejal.swift */,
+				3D04F8A12CDEE89D009493BF /* NSImage+Dejal.swift */,
+				3D04F8A32CDEEA40009493BF /* NSMenu+Dejal.swift */,
+				3D04F8AB2CDF2E51009493BF /* NSPopover+Dejal.swift */,
 			);
 			path = macOScategory;
 			sourceTree = "<group>";
@@ -327,9 +330,6 @@
 				3D04F76F2CDB6DED009493BF /* NSString+Dejal.swift */,
 				3D04F86A2CDE1AD5009493BF /* NSColor+Dejal.swift */,
 				3D04F89F2CDEE720009493BF /* CAGradientLayer+Dejal.swift */,
-				3D04F8A12CDEE89D009493BF /* NSImage+Dejal.swift */,
-				3D04F8A32CDEEA40009493BF /* NSMenu+Dejal.swift */,
-				3D04F8A52CDEEF4E009493BF /* NSSplitView+Dejal.swift */,
 			);
 			path = macOSfoundation;
 			sourceTree = "<group>";
@@ -532,6 +532,7 @@
 				3D04F80C2CDCA31F009493BF /* TFYSwiftNSSplitView.swift in Sources */,
 				3D04F80D2CDCA31F009493BF /* TFYSwiftNSSlider.swift in Sources */,
 				3D04F80E2CDCA31F009493BF /* TFYSwiftNSView.swift in Sources */,
+				3D04F8AC2CDF2E51009493BF /* NSPopover+Dejal.swift in Sources */,
 				3D04F8A42CDEEA40009493BF /* NSMenu+Dejal.swift in Sources */,
 				3D04F84A2CDCB269009493BF /* TFYSwiftCATextLayer.swift in Sources */,
 				3D04F80F2CDCA31F009493BF /* TFYSwiftNSTextField.swift in Sources */,
@@ -584,7 +585,6 @@
 				3D04F7582CDA251A009493BF /* TFYSwiftSecureTextField.swift in Sources */,
 				3D04F8632CDDAE09009493BF /* NSControl+Dejal.swift in Sources */,
 				36EC0CC52CDCF457003EBAD5 /* TFYStatusItem.swift in Sources */,
-				36EC0CB42CDB92E3003EBAD5 /* NSTextView+Dejal.swift in Sources */,
 				3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */,
 				3D04F7522CDA1020009493BF /* TFYSwiftTextFieldCell.swift in Sources */,
 				36EC0CA02CDA4AE3003EBAD5 /* TFYSwiftButton.swift in Sources */,

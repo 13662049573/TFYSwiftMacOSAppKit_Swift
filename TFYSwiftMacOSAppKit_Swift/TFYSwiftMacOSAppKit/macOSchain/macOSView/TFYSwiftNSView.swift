@@ -4,7 +4,7 @@
 //
 //  Created by mi ni on 2024/11/7.
 //  Copyright © 2024 TFYSwift. All rights reserved.
-//
+//  exchangeInstanceMethod
 
 import Cocoa
 
@@ -318,16 +318,16 @@ public extension Chain where Base: NSView {
     
     @discardableResult
     func cornerRadius(_ radius:CGFloat) -> Self {
-        base.layer?.masksToBounds = true
         base.layer?.cornerRadius = radius
+        base.layer?.masksToBounds = true
         return self
     }
     
     @discardableResult
     func border(_ borderWidth:CGFloat,borderColor:NSColor) -> Self {
-        base.layer?.masksToBounds = true
         base.layer?.borderWidth = borderWidth
         base.layer?.borderColor = borderColor.cgColor
+        base.layer?.masksToBounds = true
         return self
     }
     

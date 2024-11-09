@@ -64,7 +64,7 @@ extension NSTextView: TFYSwiftHasText {
 extension NSButton: TFYSwiftHasText {
     
     public func set(text: String) {
-        self.stringValue = text
+        self.title = text
     }
     
     public func set(attributedText: NSAttributedString) {
@@ -80,7 +80,11 @@ extension NSButton: TFYSwiftHasText {
     }
     
     func tfy_setTextColor(_ textColor: NSColor?) {
-        let attrTitle = NSMutableAttributedString(attributedString: attributedTitle)
+        
+        let attr:NSAttributedString = NSAttributedString(string: title)
+        
+        let attrTitle = NSMutableAttributedString(attributedString: attr)
+        
         let range = NSRange(location: 0, length: attrTitle.length)
         if let color = textColor {
             attrTitle.addAttribute(.foregroundColor, value: color, range: range)

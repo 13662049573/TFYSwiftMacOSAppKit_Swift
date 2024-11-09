@@ -124,8 +124,8 @@
             filePath = "TFYSwiftMacOSAppKit_Swift/ViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "62"
-            endingLineNumber = "62"
+            startingLineNumber = "60"
+            endingLineNumber = "60"
             landmarkName = "onClick(btn:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -143,6 +143,22 @@
             startingLineNumber = "22"
             endingLineNumber = "22"
             landmarkName = "applicationDidFinishLaunching(_:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "AAB0F5F5-3414-4A6E-BD77-40F29E9A4D5C"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScategory/TFYSwiftLabel+Dejal.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "174"
+            endingLineNumber = "174"
+            landmarkName = "getTapFrame(_:result:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

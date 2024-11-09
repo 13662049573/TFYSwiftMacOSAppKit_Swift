@@ -11,12 +11,10 @@ class ViewController: NSViewController {
 
     private lazy var lablel: TFYSwiftLabel = {
         let labe = TFYSwiftLabel().chain
-            .frame(CGRect(x: 0, y: 0, width: 500, height: 100))
-            .text("说的可不敢看谁都不敢开始崩溃时刻崩溃是白费口舌吧看《说的几个时刻》，《说的进口关税个》")
+            .frame(CGRect(x: 50, y: 100, width: 300, height: 50))
+            .text("用户协议和隐私政策请您务必审值阅读、充分理解 “用户协议” 和 ”隐私政策” 各项条款，包括但不限于：为了向您提供即时通讯、内容分享等服务，我们需要收集您的设备信息、操作日志等个人信息。您可阅读《用户协议》和《隐私政策》了解详细信息。如果您同意，请点击 “同意” 开始接受我们的服务;")
             .textColor(.gray)
             .font(.systemFont(ofSize: 14, weight: .bold))
-            .borderColor(.orange)
-            .borderWidth(2)
             .backgroundColor(.white)
             .build
         return labe
@@ -45,10 +43,10 @@ class ViewController: NSViewController {
         
         let color = NSColor(hexString: "F46734")
         
-        lablel.changeColors(with: [color, .blue, .green,.yellow], changeTexts: ["《说的几个时刻》","《说的进口关税个》","崩溃","看谁"])
-        lablel.changeFonts(with: [.systemFont(ofSize: 35, weight: .bold), .systemFont(ofSize: 14, weight: .bold),.systemFont(ofSize: 12, weight: .semibold)], changeTexts: ["《说的几个时刻》","《说的进口关税个》","崩溃","看谁"])
+        lablel.changeColors(with: [color, .blue], changeTexts: ["《用户协议》","《隐私政策》"])
+        lablel.changeFonts(with: [.systemFont(ofSize: 20, weight: .bold)], changeTexts: ["《用户协议》","《隐私政策》"])
         
-        lablel.addTapAction(["《说的几个时刻》","《说的进口关税个》","崩溃","看谁"]) { string, range, int in
+        lablel.addTapAction(["《用户协议》","《隐私政策》"]) { string, range, int in
             TFYLog("点击了\(string)标签 - {\(range.location) , \(range.length)} - \(int)")
         }
         

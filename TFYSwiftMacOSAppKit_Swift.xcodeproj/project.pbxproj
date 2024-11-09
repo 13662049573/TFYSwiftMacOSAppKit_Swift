@@ -103,6 +103,7 @@
 		3D04F8A42CDEEA40009493BF /* NSMenu+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8A32CDEEA40009493BF /* NSMenu+Dejal.swift */; };
 		3D04F8A62CDEEF4E009493BF /* NSSplitView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8A52CDEEF4E009493BF /* NSSplitView+Dejal.swift */; };
 		3D04F8AC2CDF2E51009493BF /* NSPopover+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8AB2CDF2E51009493BF /* NSPopover+Dejal.swift */; };
+		3D04F8B12CDF66E7009493BF /* NSGestureRecognizer+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8B02CDF66E7009493BF /* NSGestureRecognizer+Dejal.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -204,6 +205,7 @@
 		3D04F8A32CDEEA40009493BF /* NSMenu+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSMenu+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F8A52CDEEF4E009493BF /* NSSplitView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSSplitView+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F8AB2CDF2E51009493BF /* NSPopover+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSPopover+Dejal.swift"; sourceTree = "<group>"; };
+		3D04F8B02CDF66E7009493BF /* NSGestureRecognizer+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSGestureRecognizer+Dejal.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -237,6 +239,7 @@
 				3D04F8A12CDEE89D009493BF /* NSImage+Dejal.swift */,
 				3D04F8A32CDEEA40009493BF /* NSMenu+Dejal.swift */,
 				3D04F8AB2CDF2E51009493BF /* NSPopover+Dejal.swift */,
+				3D04F8B02CDF66E7009493BF /* NSGestureRecognizer+Dejal.swift */,
 			);
 			path = macOScategory;
 			sourceTree = "<group>";
@@ -543,6 +546,7 @@
 				3D04F8132CDCA31F009493BF /* TFYSwiftNSLevelIndicator.swift in Sources */,
 				3D04F8142CDCA31F009493BF /* TFYSwiftNSControl.swift in Sources */,
 				3D04F8152CDCA31F009493BF /* TFYSwiftNSText.swift in Sources */,
+				3D04F8B12CDF66E7009493BF /* NSGestureRecognizer+Dejal.swift in Sources */,
 				3D04F8162CDCA31F009493BF /* TFYSwiftNSRuleEditor.swift in Sources */,
 				3D04F8172CDCA31F009493BF /* TFYSwiftNSBox.swift in Sources */,
 				3D04F8182CDCA31F009493BF /* TFYSwiftNSTabView.swift in Sources */,

@@ -36,8 +36,13 @@ public class TFYSwiftLabel: TFYSwiftTextField {
         backgroundColor = .clear
         font = NSFont.systemFont(ofSize: 15)
         textColor = .black
-        maximumNumberOfLines = 1
+        maximumNumberOfLines = 0
         usesSingleLineMode = true
+        self.isTextAlignmentVerticalCenter = false
+        self.cell?.usesSingleLineMode = false
+        self.cell?.truncatesLastVisibleLine = true
+        self.cell?.isBezeled = false
+        self.cell?.isBordered = false
     }
     
     public override func moveDown(_ sender: Any?) {

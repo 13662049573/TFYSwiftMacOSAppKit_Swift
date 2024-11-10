@@ -22,13 +22,13 @@ Pod::Spec.new do |spec|
   spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => spec.version }
 
   spec.subspec 'macOScategory' do |ss|
-    ss.source_files  = "TFYSwiftMacOSAppKit/macOScategory/*.{swift}"
+    ss.source_files  = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScategory/*.{swift}"
     ss.dependency "TFYSwiftMacOSAppKit/macOScontainer"
     ss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
   end
 
   spec.subspec 'macOSchain' do |ss|
-    ss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/*.{swift}"
+    ss.source_files  = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/*.{swift}"
     ss.subspec 'macOSBase' do |sss|
        sss.source_files = 'TFYSwiftMacOSAppKit/macOSchain/macOSBase/*.{swift}'
     end
@@ -50,11 +50,11 @@ Pod::Spec.new do |spec|
   end
 
   spec.subspec 'macOSfoundation' do |ss|
-    ss.source_files  = "TFYSwiftMacOSAppKit/macOSfoundation/*.{swift}"
+    ss.source_files  = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSfoundation/*.{swift}"
   end
 
   spec.subspec 'macOScontainer' do |ss|
-    ss.source_files  = "TFYSwiftMacOSAppKit/macOScontainer/*.{swift}"
+    ss.source_files  = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/*.{swift}"
     ss.subspec 'macOSGcd' do |sss|
        sss.source_files  = "TFYSwiftMacOSAppKit/macOScontainer/macOSGcd/*.{swift}"
     end

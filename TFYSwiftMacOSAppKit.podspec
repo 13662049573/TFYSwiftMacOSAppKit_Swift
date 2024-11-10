@@ -17,7 +17,7 @@ Pod::Spec.new do |spec|
 
   spec.author       = { "田风有" => "420144542@qq.com" }
   
-  spec.osx.deployment_target = "11.0"
+  spec.osx.deployment_target = "12.0"
   
   spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => spec.version }
 
@@ -30,27 +30,27 @@ Pod::Spec.new do |spec|
   spec.subspec 'macOSchain' do |ss|
     ss.source_files  = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/*.{swift}"
 
-    ss.subspec 'macOSBase' do |sss|
-       sss.source_files = 'TFYSwiftMacOSAppKit/macOSchain/macOSBase/*.{swift}'
-    end
+   #  ss.subspec 'macOSBase' do |sss|
+   #     sss.source_files = 'TFYSwiftMacOSAppKit/macOSchain/macOSBase/*.{swift}'
+   #  end
 
-    ss.subspec 'macOSCALayer' do |sss|
-       sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSCALayer/*.{swift}'
-       sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
-       sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
-    end
+   #  ss.subspec 'macOSCALayer' do |sss|
+   #     sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSCALayer/*.{swift}'
+   #     sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
+   #     sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
+   #  end
 
-    ss.subspec 'macOSGesture' do |sss|
-       sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSGesture/*.{swift}'
-       sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
-       sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
-    end
+   #  ss.subspec 'macOSGesture' do |sss|
+   #     sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSGesture/*.{swift}'
+   #     sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
+   #     sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
+   #  end
 
-    ss.subspec 'macOSView' do |sss|
-      sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSView/*.{swift}'
-      sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
-      sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
-    end
+   #  ss.subspec 'macOSView' do |sss|
+   #    sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSView/*.{swift}'
+   #    sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
+   #    sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
+   #  end
 
   end
 

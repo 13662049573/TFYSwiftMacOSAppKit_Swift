@@ -36,19 +36,19 @@ Pod::Spec.new do |spec|
 
     ss.subspec 'macOSCALayer' do |sss|
        sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSCALayer/*.{swift}'
-       sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
+       sss.dependency "/macOSchain/macOSBase"
        sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
     end
 
     ss.subspec 'macOSGesture' do |sss|
        sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSGesture/*.{swift}'
-       sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
+       sss.dependency "macOSchain/macOSBase"
        sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
     end
 
     ss.subspec 'macOSView' do |sss|
       sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSView/*.{swift}'
-      sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
+      sss.dependency "macOSchain/macOSBase"
       sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
     end
 

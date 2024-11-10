@@ -7,6 +7,7 @@
 //
 
 import Cocoa
+import QuartzCore
 
 public enum TFYFadeDirection {
     case fadeIn

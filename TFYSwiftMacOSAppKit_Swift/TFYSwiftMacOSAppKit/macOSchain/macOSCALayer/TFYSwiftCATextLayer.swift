@@ -7,6 +7,7 @@
 //
 
 import Cocoa
+import QuartzCore
 
 public extension Chain where Base: CATextLayer {
     

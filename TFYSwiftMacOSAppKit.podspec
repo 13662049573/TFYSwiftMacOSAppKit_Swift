@@ -3,7 +3,7 @@ Pod::Spec.new do |spec|
 
   spec.name         = "TFYSwiftMacOSAppKit"
 
-  spec.version      = "1.0.1"
+  spec.version      = "1.0.2"
 
   spec.summary      = "swift 版纯代码进行写macOS 开发，封装库。基本组件。最低支持Mac 12"
 

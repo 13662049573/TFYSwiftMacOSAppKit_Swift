@@ -22,32 +22,32 @@ Pod::Spec.new do |spec|
   spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => spec.version }
 
   spec.subspec 'macOScategory' do |ss|
-    ss.source_files  = "TFYSwiftMacOSAppKit/macOScategory/*.{swift}"
+    ss.source_files  = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScategory/*.{swift}"
     ss.dependency "TFYSwiftMacOSAppKit/macOScontainer"
     ss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
   end
 
   spec.subspec 'macOSchain' do |ss|
-    ss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/*.{swift}"
+    ss.source_files  = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/*.{swift}"
 
     ss.subspec 'macOSBase' do |sss|
        sss.source_files = 'TFYSwiftMacOSAppKit/macOSchain/macOSBase/*.{swift}'
     end
 
     ss.subspec 'macOSCALayer' do |sss|
-       sss.source_files = 'TFYSwiftMacOSAppKit/macOSchain/macOSCALayer/*.{swift}'
+       sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSCALayer/*.{swift}'
        sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
        sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
     end
 
     ss.subspec 'macOSGesture' do |sss|
-       sss.source_files = 'TFYSwiftMacOSAppKit/macOSchain/macOSGesture/*.{swift}'
+       sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSGesture/*.{swift}'
        sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
        sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
     end
 
     ss.subspec 'macOSView' do |sss|
-      sss.source_files = 'TFYSwiftMacOSAppKit/macOSchain/macOSView/*.{swift}'
+      sss.source_files = 'TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSView/*.{swift}'
       sss.dependency "TFYSwiftMacOSAppKit/macOSchain/macOSBase"
       sss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
     end

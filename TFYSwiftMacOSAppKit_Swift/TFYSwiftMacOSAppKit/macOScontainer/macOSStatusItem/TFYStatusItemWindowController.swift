@@ -95,7 +95,7 @@ public class TFYStatusItemWindowController: NSWindowController {
         NotificationCenter.default.post(name: notificationName, object: window)
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = windowConfiguration!.animationDuration
-            context.timingFunction = CAMediaTimingFunction(name:.easeInEaseOut)
+            context.timingFunction = CAMediaTimingFunction(name:CAMediaTimingFunctionName.easeInEaseOut)
             window.animator().alphaValue = fadeDirection == .fadeIn ? 1.0 : 0.0
         }, completionHandler: animationCompletionForWindow(window, fadeDirection: fadeDirection))
     }
@@ -118,7 +118,7 @@ public class TFYStatusItemWindowController: NSWindowController {
         window.setFrame(windowStartFrame, display: false)
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = windowConfiguration!.animationDuration
-            context.timingFunction = CAMediaTimingFunction(name:.easeInEaseOut)
+            context.timingFunction = CAMediaTimingFunction(name:CAMediaTimingFunctionName.easeInEaseOut)
             window.animator().setFrame(windowEndFrame, display: false)
             window.animator().alphaValue = fadeDirection == .fadeIn ? 1 : 0
         }, completionHandler: animationCompletionForWindow(window, fadeDirection: fadeDirection))

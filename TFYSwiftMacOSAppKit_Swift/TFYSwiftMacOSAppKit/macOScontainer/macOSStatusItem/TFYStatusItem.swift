@@ -19,7 +19,7 @@ public enum TFYStatusItemProximityDragStatus {
     case exited
 }
 
-public typealias TFYStatusItemDropHandler = (TFYStatusItem, String, [Any]) -> Void
+public typealias TFYStatusItemDropHandler = (TFYStatusItem, NSPasteboard.PasteboardType, [Any]) -> Void
 public typealias TFYStatusItemProximityDragDetectionHandler = (TFYStatusItem, NSPoint, TFYStatusItemProximityDragStatus) -> Void
 public typealias TFYStatusItemShouldShowHandler = (TFYStatusItem) -> Bool
 

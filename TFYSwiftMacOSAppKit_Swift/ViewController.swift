@@ -74,11 +74,11 @@ class ViewController: NSViewController {
             TFYLog("\(title), \(range),\(index)")
         }
         
-//        lablel.addGestureTap { reco in
-//            reco.didTapAttributedText(linkDic: linkDic) { text, url,point in
-//                TFYLog("\(text), \(url ?? "_"),\(point)")
-//            }
-//        }
+        lablel.addGestureTap { reco in
+            reco.didTapAttributedText(linkDic: linkDic) { text, url,point in
+                TFYLog("\(text), \(url ?? "_"),\(point)")
+            }
+        }
     }
     
     @objc func onClick(btn:NSButton) {

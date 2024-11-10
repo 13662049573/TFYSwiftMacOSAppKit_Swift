@@ -12,7 +12,7 @@ public extension NSSplitView {
     // 第一个分割分隔符的位置属性，可以通过 animator 进行动画设置
     var splitPosition: CGFloat {
         get {
-            return splitPositionOfDividerAtIndex(0)
+            return splitPositionOfDivider(atIndex: 0)
         }
         set {
             setPosition(newValue, ofDividerAt: 0)
@@ -20,70 +20,70 @@ public extension NSSplitView {
     }
 
     // 获取指定索引的分割分隔符位置
-    func splitPositionOfDividerAtIndex(_ idx: Int) -> CGFloat {
-        let frame = subviews[idx].frame
+    func splitPositionOfDivider(atIndex index: Int) -> CGFloat {
+        let frame = subviews[index].frame
         return isVertical ? NSMaxX(frame) : NSMaxY(frame)
     }
 
     // 切换指定索引子视图的可见性（假设只使用了两个子视图）
-    func toggleSubviewAtIndex(_ idx: Int) {
-        let isCollapsed = isSubviewCollapsed(subviews[idx])
+    func toggleSubview(atIndex index: Int) {
+        let isCollapsed = isSubviewCollapsed(subviews[index])
         if isCollapsed {
-            expandSubviewAtIndex(idx)
+            expandSubview(atIndex: index)
         } else {
-            collapseSubviewAtIndex(idx)
+            collapseSubview(atIndex: index)
         }
     }
 
     // 折叠指定索引的子视图（假设只使用了两个子视图）
-    func collapseSubviewAtIndex(_ idx: Int) {
-        let other = idx == 0 ? 1 : 0
-        let remaining = subviews[other]
-        let collapsing = subviews[idx]
-        let remainingFrame = remaining.frame
+    func collapseSubview(atIndex index: Int) {
+        let otherIndex = index == 0 ? 1 : 0
+        let remainingSubview = subviews[otherIndex]
+        let collapsingSubview = subviews[index]
+        let remainingFrame = remainingSubview.frame
         let overallFrame = frame
 
-        if collapsing.isHidden {
+        if collapsingSubview.isHidden {
             return
         }
 
-        collapsing.isHidden = true
+        collapsingSubview.isHidden = true
 
         if isVertical {
-            remaining.frame.size = NSSize(width: overallFrame.size.width, height: remainingFrame.size.height)
+            remainingSubview.frame.size = NSSize(width: overallFrame.size.width, height: remainingFrame.size.height)
         } else {
-            remaining.frame.size = NSSize(width: remainingFrame.size.width, height: overallFrame.size.height)
+            remainingSubview.frame.size = NSSize(width: remainingFrame.size.width, height: overallFrame.size.height)
         }
 
         display()
     }
 
     // 展开指定索引的子视图（假设只使用了两个子视图）
-    func expandSubviewAtIndex(_ idx: Int) {
-        let other = idx == 0 ? 1 : 0
-        let remaining = subviews[other]
-        let collapsing = subviews[idx]
+    func expandSubview(atIndex index: Int) {
+        let otherIndex = index == 0 ? 1 : 0
+        let remainingSubview = subviews[otherIndex]
+        let collapsingSubview = subviews[index]
         let thickness = dividerThickness
 
-        if !collapsing.isHidden {
+        if !collapsingSubview.isHidden {
             return
         }
 
-        collapsing.isHidden = false
+        collapsingSubview.isHidden = false
 
-        let remainingFrame = remaining.frame
-        var collapsingFrame = collapsing.frame
+        let remainingFrame = remainingSubview.frame
+        var collapsingFrame = collapsingSubview.frame
 
         if isVertical {
-            remaining.frame.size.height = remainingFrame.height - collapsingFrame.height - thickness
+            remainingSubview.frame.size.height = remainingFrame.height - collapsingFrame.height - thickness
             collapsingFrame.origin.y = remainingFrame.height + thickness
         } else {
-            remaining.frame.size.width = remainingFrame.width - collapsingFrame.width - thickness
+            remainingSubview.frame.size.width = remainingFrame.width - collapsingFrame.width - thickness
             collapsingFrame.origin.x = remainingFrame.width + thickness
         }
 
-        remaining.frame.size = remainingFrame.size
-        collapsing.frame = collapsingFrame
+        remainingSubview.frame.size = remainingFrame.size
+        collapsingSubview.frame = collapsingFrame
 
         display()
     }
@@ -91,7 +91,6 @@ public extension NSSplitView {
 
 // 为 splitPosition 键添加可动画属性
 public extension NSSplitView {
-    
     override class func defaultAnimation(forKey key: String) -> Any? {
         if key == "splitPosition" {
             let animation = CABasicAnimation()

@@ -178,7 +178,7 @@ class TFYSwiftJsonUtils {
     }
 
     // 将 JSON 字符串转换为数组（字典组成的数组）
-    static func arrayFrom(jsonString: String) throws -> [[String : Any]] {
+    static func arrayFrom(jsonString: String) throws -> [[String : Any]]? {
         guard let jsonData = jsonString.data(using:.utf8) else {
             throw JsonUtilsError.invalidData
         }

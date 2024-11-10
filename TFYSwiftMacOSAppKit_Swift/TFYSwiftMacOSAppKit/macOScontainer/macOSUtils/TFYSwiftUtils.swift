@@ -11,6 +11,7 @@ import System
 import CoreWLAN
 import SystemConfiguration
 import CoreTelephony
+import QuartzCore
 
 public func TFYLog(_ msg: Any...,
                     file: NSString = #file,

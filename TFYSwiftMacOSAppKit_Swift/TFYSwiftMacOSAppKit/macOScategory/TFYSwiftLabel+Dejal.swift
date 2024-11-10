@@ -10,42 +10,41 @@ import Cocoa
 
 public extension TFYSwiftLabel {
     
-    private class TFYSwiftAttributeModel: NSObject {
+    private class LabelAttributeModel: NSObject {
         var range: NSRange?
         var str: String?
     }
     
     private struct AssociatedKeys {
-        static var hasTapAction:UnsafeRawPointer = UnsafeRawPointer(bitPattern: "hasTapAction".hashValue)!
-        static var attributeStringModels:UnsafeRawPointer = UnsafeRawPointer(bitPattern: "attributeStringModels".hashValue)!
-        static var tapActionBlock:UnsafeRawPointer = UnsafeRawPointer(bitPattern: "tapActionBlock".hashValue)!
-        static var isTapEffectEnabled:UnsafeRawPointer = UnsafeRawPointer(bitPattern: "isTapEffectEnabled".hashValue)!
-        static var effectDictionary:UnsafeRawPointer = UnsafeRawPointer(bitPattern: "effectDictionary".hashValue)!
+        static var hasTapActionEnabled: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "hasTapActionEnabled".hashValue)!
+        static var attributeStringModels: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "attributeStringModels".hashValue)!
+        static var tapActionBlock: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "tapActionBlock".hashValue)!
+        static var isTapEffectEnabled: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "isTapEffectEnabled".hashValue)!
+        static var effectDictionary: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "effectDictionary".hashValue)!
     }
-
-    // 模拟存储属性 hasTapAction
-    private var hasTapAction: Bool? {
+    
+    // 模拟存储属性 hasTapActionEnabled
+    private var hasTapActionEnabled: Bool? {
         get {
-            let value = objc_getAssociatedObject(self, AssociatedKeys.hasTapAction) as? Bool
+            let value = objc_getAssociatedObject(self, AssociatedKeys.hasTapActionEnabled) as? Bool
             return value
         }
         set {
-            objc_setAssociatedObject(self, AssociatedKeys.hasTapAction, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-            
+            objc_setAssociatedObject(self, AssociatedKeys.hasTapActionEnabled, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
-
+    
     // 模拟存储属性 attributeStringModels
-    private var attributeStringModels: [TFYSwiftAttributeModel]? {
+    private var attributeStringModels: [LabelAttributeModel]? {
         get {
-            let value = objc_getAssociatedObject(self, AssociatedKeys.attributeStringModels) as? [TFYSwiftAttributeModel]
+            let value = objc_getAssociatedObject(self, AssociatedKeys.attributeStringModels) as? [LabelAttributeModel]
             return value
         }
         set {
             objc_setAssociatedObject(self, AssociatedKeys.attributeStringModels, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
-
+    
     // 模拟存储属性 tapActionBlock
     private var tapActionBlock: ((_ str: String, _ range: NSRange, _ index: Int) -> Void)? {
         get {
@@ -55,7 +54,7 @@ public extension TFYSwiftLabel {
             objc_setAssociatedObject(self, AssociatedKeys.tapActionBlock, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
-
+    
     // 模拟存储属性 isTapEffectEnabled
     private var isTapEffectEnabled: Bool {
         get {
@@ -68,7 +67,7 @@ public extension TFYSwiftLabel {
             objc_setAssociatedObject(self, AssociatedKeys.isTapEffectEnabled, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
-
+    
     // 模拟存储属性 effectDictionary
     private var effectDictionary: [String : NSAttributedString]? {
         get {
@@ -78,7 +77,7 @@ public extension TFYSwiftLabel {
             objc_setAssociatedObject(self, AssociatedKeys.effectDictionary, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
-
+    
     // 获取字符在字符串中的索引
     var glyphIndexForString: Int? {
         let length = stringValue.count
@@ -89,7 +88,7 @@ public extension TFYSwiftLabel {
         let glyphRange = layoutManager.glyphRange(forCharacterRange: stringRange, actualCharacterRange: nil)
         return glyphRange.location
     }
-
+    
     // 设置和获取是否启用点击效果
     var isTapEffectEnabledProperty: Bool {
         set {
@@ -99,7 +98,7 @@ public extension TFYSwiftLabel {
             return isTapEffectEnabled
         }
     }
-
+    
     // 添加点击动作
     func addTapAction(_ strings: [String], tapAction: @escaping ((String, NSRange, Int) -> Void)) {
         getRanges(strings)
@@ -108,7 +107,7 @@ public extension TFYSwiftLabel {
     
     // 重写鼠标按下事件
     override func mouseDown(with event: NSEvent) {
-        if hasTapAction == false {
+        if hasTapActionEnabled == false {
             return
         }
         let point = event.locationInWindow
@@ -117,34 +116,23 @@ public extension TFYSwiftLabel {
             if let block = self.tapActionBlock {
                 block(string, range, index)
             }
-            if self.isTapEffectEnabled {
-                self.saveEffectDicWithRange(range)
-                self.applyTapEffect(true)
-            }
+            handleTapEffect(true)
         }
     }
     
     // 重写鼠标抬起事件
     override func mouseUp(with event: NSEvent) {
-        if isTapEffectEnabled {
-            DispatchQueue.main.async {
-                self.applyTapEffect(false)
-            }
-        }
+        handleTapEffect(false)
     }
-
+    
     // 重写鼠标拖动事件
     override func mouseDragged(with event: NSEvent) {
-        if isTapEffectEnabled {
-            DispatchQueue.main.async {
-                self.applyTapEffect(false)
-            }
-        }
+        handleTapEffect(false)
     }
-
+    
     // 重写点击测试方法
     override func hitTest(_ point: NSPoint) -> NSView? {
-        if hasTapAction == true {
+        if hasTapActionEnabled == true {
             let result = getTapFrame(point) { string, range, index in }
             if result {
                 return self
@@ -152,7 +140,7 @@ public extension TFYSwiftLabel {
         }
         return super.hitTest(point)
     }
-
+    
     // 获取点击框架
     @discardableResult
     private func getTapFrame(_ point: NSPoint, result: ((_ str: String, _ range: NSRange, _ index: Int) -> Void)) -> Bool {
@@ -175,11 +163,12 @@ public extension TFYSwiftLabel {
             path.addRect(CGRect(x: 0, y: 0, width: bounds.size.width, height: lineHeight), transform: CGAffineTransform.identity)
             frame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, nil)
         }
-
+        
         guard let linesAsCFArray = CTFrameGetLines(frame) as? [CTLine] else {
             print("Failed to convert lines as CFArray to Swift array.")
             return false
         }
+        
         let count = linesAsCFArray.count
         var origins = [CGPoint](repeating: CGPoint.zero, count: count)
         CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), &origins)
@@ -201,7 +190,7 @@ public extension TFYSwiftLabel {
                 let lineOutSpace = (CGFloat(bounds.size.height) - CGFloat(0) * CGFloat(count - 1) - CGFloat(rect.size.height) * CGFloat(count)) / 2
                 rect.origin.y = lineOutSpace + rect.size.height * CGFloat(i)
             }
-
+            
             if rect.contains(point) {
                 let relativePoint = CGPoint(x: point.x - rect.minX, y: point.y - rect.minY)
                 var index = CTLineGetStringIndexForPosition(lineRef, relativePoint)
@@ -225,7 +214,7 @@ public extension TFYSwiftLabel {
         }
         return false
     }
-
+    
     // 获取行边界
     private func getLineBounds(_ line: CTLine, point: CGPoint) -> CGRect {
         var ascent: CGFloat = 0.0
@@ -235,23 +224,23 @@ public extension TFYSwiftLabel {
         let height = ascent + abs(descent) + leading
         return CGRect(x: point.x, y: point.y, width: CGFloat(width), height: height)
     }
-
+    
     // 获取范围
     private func getRanges(_ strings: [String]) {
         if attributedStringValue.length == 0 {
             return
         }
         isEnabled = true
-        hasTapAction = true
+        hasTapActionEnabled = true
         let totalString = attributedStringValue.string
         attributeStringModels = []
-        var array = [TFYSwiftAttributeModel]()
+        var array = [LabelAttributeModel]()
         for str in strings {
             let ranges = totalString.exMatchStrRange(str)
             if ranges.count > 0 {
                 for i in 0..<ranges.count {
                     let range = ranges[i]
-                    let model = TFYSwiftAttributeModel()
+                    let model = LabelAttributeModel()
                     model.range = range
                     model.str = str
                     array.append(model)
@@ -273,14 +262,14 @@ public extension TFYSwiftLabel {
             attributeStringModels?.append(model)
         }
     }
-
+    
     // 保存效果字典
     private func saveEffectDicWithRange(_ range: NSRange) {
         effectDictionary = [:]
         let subAttribute = attributedStringValue.attributedSubstring(from: range)
         effectDictionary?[NSStringFromRange(range)] = subAttribute
     }
-
+    
     // 应用点击效果
     private func applyTapEffect(_ status: Bool) {
         guard isTapEffectEnabled, let effectDic = effectDictionary,!effectDic.isEmpty else {
@@ -297,7 +286,7 @@ public extension TFYSwiftLabel {
         }
         attributedStringValue = attStr
     }
-
+    
     // 启动定时器
     func timerStart(interval: Int = 60) {
         var time = interval
@@ -317,6 +306,15 @@ public extension TFYSwiftLabel {
         }
         codeTimer.resume()
     }
+    
+    // 处理点击效果
+    private func handleTapEffect(_ status: Bool) {
+        if isTapEffectEnabled {
+            DispatchQueue.main.async {
+                self.applyTapEffect(status)
+            }
+        }
+    }
 }
 
 public extension String {
@@ -324,7 +322,7 @@ public extension String {
     func nsRange(from range: Range<String.Index>) -> NSRange {
         return NSRange(range, in: self)
     }
-
+    
     // 将 NSRange 转换为字符串范围
     func range(from nsRange: NSRange) -> Range<String.Index>? {
         guard
@@ -352,4 +350,3 @@ public extension String {
         return allRange
     }
 }
-

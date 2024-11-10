@@ -80,79 +80,60 @@ public extension NSTextField {
 }
 
 public extension NSTextField {
-
-    /// 点击手势识别器
+    // 添加轻点手势
     @discardableResult
-    func addGestureTap(_ target: Any?, action: Selector?) -> NSClickGestureRecognizer {
+    func addGestureTap(_ target: AnyObject?, action: Selector?) -> NSClickGestureRecognizer {
         let obj = NSClickGestureRecognizer(target: target, action: action)
-        obj.numberOfClicksRequired = 1
-        isEnabled = true
-        if let window = self.window {
-            // 如果窗口有内容视图，可以尝试将手势识别器添加到内容视图上
-            if let contentView = window.contentView {
-                contentView.addGestureRecognizer(obj)
-            }
-        }
+        self.isEnabled = true
+        self.addGestureRecognizer(obj)
         return obj
     }
-
-    // 点击手势识别器（使用闭包）
+    
+    // 添加轻点手势，使用闭包方式
     @discardableResult
     func addGestureTap(_ action: @escaping ((NSClickGestureRecognizer) -> Void)) -> NSClickGestureRecognizer {
-        let obj = NSClickGestureRecognizer()
-        obj.numberOfClicksRequired = 1
-        isEnabled = true
-        if let window = self.window {
-            // 如果窗口有内容视图，可以尝试将手势识别器添加到内容视图上
-            if let contentView = window.contentView {
-                contentView.addGestureRecognizer(obj)
-            }
-        }
+        let obj = NSClickGestureRecognizer(target: nil, action: nil)
+        self.isEnabled = true
+        self.addGestureRecognizer(obj)
         obj.addAction(action)
         return obj
     }
-
-    // 拖拽手势
+    
+    // 添加长按手势
     @discardableResult
-    func addGesturePan(_ action: @escaping ((NSPanGestureRecognizer) -> Void)) -> NSPanGestureRecognizer {
-        let obj = NSPanGestureRecognizer(target: nil, action: nil)
-        isEnabled = true
-        if let window = self.window {
-            // 如果窗口有内容视图，可以尝试将手势识别器添加到内容视图上
-            if let contentView = window.contentView {
-                contentView.addGestureRecognizer(obj)
-            }
-        }
-        obj.addAction { (recognizer) in
-            if let gesture = recognizer as? NSPanGestureRecognizer {
-                let translate = gesture.translation(in: gesture.view?.superview)
-                if let view = self.superview {
-                    view.center = CGPoint(x: view.center.x + translate.x, y: view.center.y + translate.y)
-                    gesture.setTranslation(CGPoint.zero, in: gesture.view!.superview)
-                }
-                action(gesture)
-            }
+    func addGestureLongPress(_ target: AnyObject?, action: Selector?, for minimumPressDuration: TimeInterval = 0.5) -> NSPressGestureRecognizer {
+        let obj = NSPressGestureRecognizer(target: target, action: action)
+        obj.minimumPressDuration = minimumPressDuration
+        self.isEnabled = true
+        self.addGestureRecognizer(obj)
+        return obj
+    }
+    
+    // 添加长按手势，使用闭包方式
+    @discardableResult
+    func addGestureLongPress(_ action: @escaping ((NSPressGestureRecognizer) -> Void), for minimumPressDuration: TimeInterval = 0.5) -> NSPressGestureRecognizer {
+        let obj = NSPressGestureRecognizer(target: nil, action: nil)
+        obj.minimumPressDuration = minimumPressDuration
+        self.isEnabled = true
+        self.addGestureRecognizer(obj)
+        obj.addAction { recognizer in
+            action(recognizer as! NSPressGestureRecognizer)
         }
         return obj
     }
-
-    // 旋转手势
+    
+    // 添加拖拽手势
     @discardableResult
-    func addGestureRotation(_ action: @escaping ((NSRotationGestureRecognizer) -> Void)) -> NSRotationGestureRecognizer {
-        let obj = NSRotationGestureRecognizer(target: nil, action: nil)
-        isEnabled = true
-        if let window = self.window {
-            // 如果窗口有内容视图，可以尝试将手势识别器添加到内容视图上
-            if let contentView = window.contentView {
-                contentView.addGestureRecognizer(obj)
-            }
-        }
-        obj.addAction { (recognizer) in
-            if let gesture = recognizer as? NSRotationGestureRecognizer {
-                if let view = self.superview {
-                    view.transform = view.transform.rotated(by: gesture.rotation)
-                    gesture.rotation = 0.0
-                }
+    func addGesturePan(_ action: @escaping ((NSPanGestureRecognizer) -> Void)) -> NSPanGestureRecognizer {
+        let obj = NSPanGestureRecognizer(target: nil, action: nil)
+        self.isEnabled = true
+        self.addGestureRecognizer(obj)
+        obj.addAction { recognizer in
+            if let gesture = recognizer as? NSPanGestureRecognizer, let view = gesture.view {
+                let translate = gesture.translation(in: view.superview)
+                view.frame.origin.x += translate.x
+                view.frame.origin.y += translate.y
+                gesture.setTranslation(.zero, in: view.superview)
                 action(gesture)
             }
         }

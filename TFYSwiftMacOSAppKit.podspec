@@ -30,7 +30,7 @@ Pod::Spec.new do |spec|
   spec.subspec 'macOSchain' do |ss|
     ss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/*.{swift}"
     ss.subspec 'macOSBase' do |sss|
-       sss.source_files = 'macOSchain/macOSBase/*.{swift}'
+       sss.source_files = 'TFYSwiftMacOSAppKit/macOSchain/macOSBase/*.{swift}'
     end
     ss.subspec 'macOSCALayer' do |sss|
        sss.source_files = 'TFYSwiftMacOSAppKit/macOSchain/macOSCALayer/*.{swift}'

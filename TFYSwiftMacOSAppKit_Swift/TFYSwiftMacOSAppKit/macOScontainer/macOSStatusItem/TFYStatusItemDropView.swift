@@ -44,8 +44,8 @@ public class TFYStatusItemDropView: NSView {
 
     // 执行拖拽操作
     public override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        if let type = dropTypeInPasteboardTypes(pasteboardTypes: sender.draggingPasteboard.types.types!) {
-            let items = pboard.propertyList(forType: NSPasteboard.PasteboardType(rawValue: type))
+        if let type = dropTypeInPasteboardTypes(pasteboardTypes: sender.draggingPasteboard.types!) {
+            let items = sender.draggingPasteboard.propertyList(forType: NSPasteboard.PasteboardType(rawValue: type))
             if dropHandler != nil {
                 dropHandler!(statusItem!, type, items as! [Any])
                 return true

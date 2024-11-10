@@ -8,28 +8,6 @@
 
 import Cocoa
 
-extension NSView {
-
-    static func initializeOnce() {
-        DispatchQueue.once(token: "viewToken") {
-            exchangeInstanceMethodsForClass(self.classForCoder(), originalSelector: #selector(self.init(frame:)), swizzledSelector: #selector(initWithFrame_hook(frameRect:)))
-            exchangeInstanceMethodsForClass(self.classForCoder(), originalSelector: #selector(self.init(coder:)), swizzledSelector: #selector(initWithCoder_hook(decoder:)))
-        }
-    }
-    
-    @objc func initWithFrame_hook(frameRect: NSRect) -> Self {
-        let obj = self.initWithFrame_hook(frameRect: frameRect)
-        obj.wantsLayer = true
-        return obj
-    }
-
-    @objc func initWithCoder_hook(decoder: NSCoder) -> Self {
-        let obj = self.initWithCoder_hook(decoder: decoder)
-        obj.wantsLayer = true
-        return obj
-    }
-}
-
 public extension NSView {
 
     var macos_origin:CGPoint {

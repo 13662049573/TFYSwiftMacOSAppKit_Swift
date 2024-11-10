@@ -11,15 +11,15 @@ Pod::Spec.new do |spec|
                         swift 版纯代码进行写macOS 开发，封装库。基本组件。最低支持Mac 12
                    DESC
 
-  spec.homepage     = "http://EXAMPLE/TFYSwiftMacOSAppKit"
+  spec.homepage     = "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift"
   
   spec.license      = "MIT"
 
   spec.author       = { "田风有" => "420144542@qq.com" }
   
-  spec.osx.deployment_target = "12"
+  spec.osx.deployment_target = "12.0"
   
-  spec.source       = { :git => "http://EXAMPLE/TFYSwiftMacOSAppKit.git", :tag => spec.version }
+  spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => spec.version }
 
   spec.subspec 'macOScategory' do |ss|
     ss.source_files  = "TFYSwiftMacOSAppKit/macOScategory/*.{swift}"

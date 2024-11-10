@@ -6,13 +6,13 @@
 //  Copyright © 2024 TFYSwift. All rights reserved.
 //
 
-import Foundation
-import AppKit
+import Cocoa
 
 public protocol TFYCompatible {}
+
 extension NSObject: TFYCompatible {}
 
-internal protocol TFYSwiftPropertyCompatible {
+public protocol TFYSwiftPropertyCompatible {
     associatedtype T
     typealias SwiftCallBack = ((T?) -> ())
     var swiftCallBack: SwiftCallBack? { get set }
@@ -28,12 +28,12 @@ public struct Chain<Base> {
     }
 }
 
-public extension TFYCompatible {
-    static var chain: Chain<Self>.Type {
+extension TFYCompatible {
+    static public var chain: Chain<Self>.Type {
         get { Chain<Self>.self }
         set {}
     }
-    var chain: Chain<Self> {
+    public var chain: Chain<Self> {
         get { Chain(self) }
         set {}
     }

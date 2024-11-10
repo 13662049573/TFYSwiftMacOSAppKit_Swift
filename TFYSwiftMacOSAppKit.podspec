@@ -3,7 +3,7 @@ Pod::Spec.new do |spec|
 
   spec.name         = "TFYSwiftMacOSAppKit"
 
-  spec.version      = "1.0.4"
+  spec.version      = "1.0.5"
 
   spec.summary      = "swift 版纯代码进行写macOS 开发，封装库。基本组件。最低支持Mac 12"
 
@@ -17,7 +17,7 @@ Pod::Spec.new do |spec|
 
   spec.author       = { "田风有" => "420144542@qq.com" }
   
-  spec.osx.deployment_target = "12.0"
+  spec.osx.deployment_target = "11.0"
   
   spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => spec.version }
 

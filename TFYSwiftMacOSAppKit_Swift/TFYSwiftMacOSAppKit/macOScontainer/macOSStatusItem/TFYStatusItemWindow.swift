@@ -26,7 +26,13 @@ public class TFYStatusItemWindow: NSPanel {
         level = NSWindow.Level.statusBar
         backgroundColor = .clear
         collectionBehavior = [.canJoinAllSpaces,.ignoresCycle]
-        appearance = NSAppearance.current
+        if #available(macOS 12.0, *) {
+            // 使用 +currentDrawingAppearance 来获取当前绘制外观并设置给窗口
+            appearance = NSAppearance.currentDrawing()
+        } else {
+            // 在macOS 12.0以下版本，仍使用原来的方式
+            appearance = NSAppearance.current
+        }
     }
 
     // 重写 canBecomeKey 属性

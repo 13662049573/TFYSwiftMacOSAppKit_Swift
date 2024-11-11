@@ -7,6 +7,7 @@
 //
 
 import Cocoa
+import UniformTypeIdentifiers
 
 public class TFYSwiftOpenPanel: NSObject {
 
@@ -17,7 +18,7 @@ public class TFYSwiftOpenPanel: NSObject {
                                                      canChooseDirectoriesFlag: Bool,
                                                      canCreateDirectoriesFlag: Bool,
                                                      dirURL: URL,
-                                                     fileTypes: [String],
+                                                     fileTypes: [UTType],
                                                      completionHandler: @escaping (_ openpanel: NSOpenPanel, _ URLs: [URL]) -> Void) {
             let panel = createPanel(titleMessage: titleMessage,
                                     prompt: setPrompt,
@@ -43,7 +44,7 @@ public class TFYSwiftOpenPanel: NSObject {
                                                      canCreateDirectoriesFlag: Bool,
                                                      allowsSelectingHiddenExtensionFlag: Bool,
                                                      dirURL: URL,
-                                                     fileTypes: [String],
+                                                     fileTypes: [UTType],
                                                      completionHandler: @escaping (_ openpanel: NSOpenPanel, _ url: URL?) -> Void) {
             let panel = createPanel(titleMessage: titleMessage,
                                     prompt: prompt,
@@ -64,7 +65,7 @@ public class TFYSwiftOpenPanel: NSObject {
             }
         }
 
-        static public func savePanelWithAllowedFileTypes(fileTypes: [String],
+        static public func savePanelWithAllowedFileTypes(fileTypes: [UTType],
                                                          frame: NSRect,
                                                          titleMessage: String,
                                                          prompt: String,
@@ -101,16 +102,16 @@ public class TFYSwiftOpenPanel: NSObject {
                                         canChooseDirectories: Bool,
                                         canCreateDirectories: Bool,
                                         dirURL: URL?,
-                                        fileTypes: [String]) -> NSOpenPanel {
+                                        fileTypes: [UTType]) -> NSOpenPanel {
             let panel = NSOpenPanel()
             panel.prompt = prompt
             panel.message = titleMessage
             panel.canChooseDirectories = canChooseDirectories
             panel.canChooseFiles = canChooseFiles
             panel.allowsMultipleSelection = allowsMultipleSelection
-            panel.allowedFileTypes = fileTypes
             panel.canCreateDirectories = canCreateDirectories
             panel.directoryURL = dirURL
+            panel.allowedContentTypes = fileTypes
             return panel
         }
 }

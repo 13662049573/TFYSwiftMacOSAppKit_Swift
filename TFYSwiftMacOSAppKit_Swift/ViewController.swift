@@ -41,7 +41,7 @@ class ViewController: NSViewController {
     }()
     
     lazy var textfiled: NSTextField = {
-        let filed = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 50))
+        let filed = NSTextField(frame: NSRect(x: 100, y: 200, width: 300, height: 50))
         filed.chain
             .font(NSFont.systemFont(ofSize: 14, weight: .semibold))
             .wantsLayer(true)

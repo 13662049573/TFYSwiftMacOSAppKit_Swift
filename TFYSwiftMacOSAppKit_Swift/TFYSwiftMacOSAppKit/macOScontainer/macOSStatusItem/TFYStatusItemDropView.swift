@@ -9,7 +9,9 @@
 import Cocoa
 
 // TFYStatusItemDropView 类用于处理状态项的拖拽操作
-public class TFYStatusItemDropView: NSView {
+
+
+public class TFYStatusItemDropView: NSView  {
 
     // 弱引用状态项
     weak var statusItem: TFYStatusItem?
@@ -50,7 +52,7 @@ public class TFYStatusItemDropView: NSView {
         if dropTypeInPasteboardTypes(pasteboardTypes: pboard.types!) != nil {
             return .copy
         } else {
-            return .private
+            return NSDragOperation()
         }
     }
 

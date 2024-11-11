@@ -43,7 +43,11 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     // 是否显示处理方法
     public var shouldShowHandler: TFYStatusItemDropHandler?
    
-    public var dropHandler: TFYStatusItemDropHandler?
+    public var dropHandler: TFYStatusItemDropHandler? {
+        didSet {
+            self.configureDropView()
+        }
+    }
     
     // 可拖拽类型
     public var dropTypes: [NSPasteboard.PasteboardType]?

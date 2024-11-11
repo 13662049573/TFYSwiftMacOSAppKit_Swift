@@ -8,6 +8,7 @@
 
 import Cocoa
 import Dispatch
+import Foundation
 
 extension JSONEncoder {
     func encode<T: Encodable>(_ value: T, using customEncodeMethod: @escaping (T, Encoder) throws -> Void) throws -> Data {
@@ -29,8 +30,6 @@ struct AnyEncodable<T: Encodable>: Encodable {
         try _encode(value, encoder)
     }
 }
- 
-import Foundation
 
 enum JsonUtilsError: Error {
     case encodingError
@@ -40,8 +39,8 @@ enum JsonUtilsError: Error {
 }
 
 class TFYSwiftJsonUtils {
-    // 将字典转换为格式化后的 JSON 字符串
-    static func getJsonStrFromDictionary(_ dictionary: [String : Any]) throws -> String {
+    // 将字典转换为格式化后的JSON字符串
+    static func getJsonStrFromDictionary(_ dictionary: [String: Any]) throws -> String {
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: dictionary, options:.prettyPrinted)
             guard let result = String(data: jsonData, encoding:.utf8) else {
@@ -53,8 +52,8 @@ class TFYSwiftJsonUtils {
         }
     }
 
-    // 将字典转换为 JSON 数据
-    static func getJsonDataFromDictionary(_ dictionary: [String : Any]) throws -> Data {
+    // 将字典转换为JSON数据
+    static func getJsonDataFromDictionary(_ dictionary: [String: Any]) throws -> Data {
         do {
             return try JSONSerialization.data(withJSONObject: dictionary, options:.prettyPrinted)
         } catch {
@@ -62,8 +61,8 @@ class TFYSwiftJsonUtils {
         }
     }
 
-    // 将字典转换为 JSON 字符串并返回
-    static func dictionaryToString(_ dic: [String : Any]) throws -> String {
+    // 将字典转换为JSON字符串并返回
+    static func dictionaryToString(_ dic: [String: Any]) throws -> String {
         do {
             let dicData = try getJsonDataFromDictionary(dic)
             guard let result = String(data: dicData, encoding:.utf8) else {
@@ -75,8 +74,8 @@ class TFYSwiftJsonUtils {
         }
     }
 
-    // 将数组（字典组成的数组）转换为 JSON 字符串并返回
-    static func arrayToString(_ array: [[String : Any]]) throws -> String {
+    // 将数组（字典组成的数组）转换为JSON字符串并返回
+    static func arrayToString(_ array: [[String: Any]]) throws -> String {
         do {
             let arrData = try getJsonDataFromArray(array)
             guard let result = String(data: arrData, encoding:.utf8) else {
@@ -89,12 +88,16 @@ class TFYSwiftJsonUtils {
     }
 
     // 将字符串转换为字典
-    static func stringValueDic(_ str: String) throws -> [String : Any] {
+    static func stringValueDic(_ str: String) throws -> [String: Any] {
         guard let data = str.data(using:.utf8) else {
             throw JsonUtilsError.invalidData
         }
         do {
-            return try JSONSerialization.jsonObject(with: data, options:.mutableContainers) as! [String : Any]
+            if let dict = try JSONSerialization.jsonObject(with: data, options:.mutableContainers) as? [String: Any] {
+                return dict
+            } else {
+                throw JsonUtilsError.decodingError
+            }
         } catch {
             throw JsonUtilsError.decodingError
         }
@@ -106,14 +109,18 @@ class TFYSwiftJsonUtils {
             throw JsonUtilsError.invalidData
         }
         do {
-            return try JSONSerialization.jsonObject(with: data, options:.mutableContainers) as! [Any]
+            if let array = try JSONSerialization.jsonObject(with: data, options:.mutableContainers) as? [Any] {
+                return array
+            } else {
+                throw JsonUtilsError.decodingError
+            }
         } catch {
             throw JsonUtilsError.decodingError
         }
     }
 
-    // 将数组（字典组成的数组）转换为 JSON 数据
-    static func getJsonDataFromArray(_ array: [[String : Any]]) throws -> Data {
+    // 将数组（字典组成的数组）转换为JSON数据
+    static func getJsonDataFromArray(_ array: [[String: Any]]) throws -> Data {
         do {
             return try JSONSerialization.data(withJSONObject: array, options:.prettyPrinted)
         } catch {
@@ -121,7 +128,7 @@ class TFYSwiftJsonUtils {
         }
     }
 
-    // 将 JSON 数据解码为指定类型的模型
+    // 将JSON数据解码为指定类型的模型
     static func decodeJsonDataToModel<T: Decodable>(_ data: Data, type: T.Type) throws -> T {
         do {
             let decoder = JSONDecoder()
@@ -131,8 +138,8 @@ class TFYSwiftJsonUtils {
         }
     }
 
-    // 将单个可编码的模型转换为 JSON 字符串
-    static func toJson<T>(_ model: T) throws -> String where T : Encodable {
+    // 将单个可编码的模型转换为JSON字符串
+    static func toJson<T>(_ model: T) throws -> String where T: Encodable {
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = []
@@ -146,8 +153,8 @@ class TFYSwiftJsonUtils {
         }
     }
 
-    // 将可编码的模型数组转换为 JSON 字符串
-    static func modelsToJson<T>(_ models: [T], outputFormat: JSONEncoder.OutputFormatting = .prettyPrinted) throws -> String where T : Encodable {
+    // 将可编码的模型数组转换为JSON字符串
+    static func modelsToJson<T>(_ models: [T], outputFormat: JSONEncoder.OutputFormatting = .prettyPrinted) throws -> String where T: Encodable {
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = outputFormat
@@ -161,13 +168,13 @@ class TFYSwiftJsonUtils {
         }
     }
 
-    // 将 JSON 字符串转换为字典
-    static func dictionaryFrom(jsonString: String) throws -> [String : Any] {
+    // 将JSON字符串转换为字典
+    static func dictionaryFrom(jsonString: String) throws -> [String: Any] {
         guard let jsonData = jsonString.data(using:.utf8) else {
             throw JsonUtilsError.invalidData
         }
         do {
-            if let dict = try? JSONSerialization.jsonObject(with: jsonData, options:.mutableContainers) as? [String : Any] {
+            if let dict = try JSONSerialization.jsonObject(with: jsonData, options:.mutableContainers) as? [String: Any] {
                 return dict
             } else {
                 throw JsonUtilsError.invalidData
@@ -177,13 +184,13 @@ class TFYSwiftJsonUtils {
         }
     }
 
-    // 将 JSON 字符串转换为数组（字典组成的数组）
-    static func arrayFrom(jsonString: String) throws -> [[String : Any]]? {
+    // 将JSON字符串转换为数组（字典组成的数组）
+    static func arrayFrom(jsonString: String) throws -> [[String: Any]] {
         guard let jsonData = jsonString.data(using:.utf8) else {
             throw JsonUtilsError.invalidData
         }
         do {
-            if let array = try? JSONSerialization.jsonObject(with: jsonData, options:.mutableContainers) as? [[String : Any]] {
+            if let array = try JSONSerialization.jsonObject(with: jsonData, options:.mutableContainers) as? [[String: Any]] {
                 return array
             } else {
                 throw JsonUtilsError.invalidData
@@ -193,8 +200,8 @@ class TFYSwiftJsonUtils {
         }
     }
 
-    // 将 JSON 字符串或字典转换为指定类型的模型
-    static func toModel<T>(_ type: T.Type, value: Any) throws -> T where T : Decodable {
+    // 将JSON字符串或字典转换为指定类型的模型
+    static func toModel<T>(_ type: T.Type, value: Any) throws -> T where T: Decodable {
         do {
             if let data = try? JSONSerialization.data(withJSONObject: value) {
                 let decoder = JSONDecoder()

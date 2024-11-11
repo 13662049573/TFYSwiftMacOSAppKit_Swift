@@ -150,6 +150,7 @@ public class TFYSwiftUtils: NSObject {
     public static func getWiFiInfo() -> (wifiName: String?, macAddress: String?) {
         var wifiName: String?
         var macAddress: String?
+
         // 获取系统网络配置信息中的接口名称列表。
         let interfaceNames = SCDynamicStoreCopyKeyList((SCDynamicStore.self as! SCDynamicStore), "State:/Network/Global/IPv4" as CFString)
         if let interfaceNames = interfaceNames as? [String] {
@@ -159,18 +160,25 @@ public class TFYSwiftUtils: NSObject {
                    let serviceDict = (serviceID as? [String: Any])?["PrimaryInterface"] as? [String: Any],
                    let interfaceName = serviceDict["InterfaceName"] as? String,
                    interfaceName.hasPrefix("en") {
-                    let wlanClient = CWWiFiClient()
-                    // 获取 wifi 接口。
-                    if let interface = wlanClient.interface() {
-                        // 获取 wifi 的 SSID 数据并转换为字符串。
-                        let ssidData: Data? = interface.ssidData()
-                        if let ssidString = String(data: ssidData!, encoding:.utf8) {
-                            wifiName = ssidString
-                        }
-                        // 获取 wifi 的硬件地址并转换为字符串格式。
-                        if let macAddressData = interface.hardwareAddress() {
-                            macAddress = macAddressData.map { String(format: "%02x:", $0 as! CVarArg) }.joined(separator: "")
-                            macAddress?.removeLast() // 移除最后一个冒号
+
+                    // 将wlanClient声明为可选类型
+                    var wlanClient: CWWiFiClient?
+                    // 初始化wlanClient，这里假设初始化方式正确，但可能返回nil
+                    wlanClient = CWWiFiClient()
+
+                    // 通过if let正确解包wlanClient并获取wifi接口
+                    if let unwrappedWlanClient = wlanClient {
+                        if let interface = unwrappedWlanClient.interface() {
+                            // 获取wifi的SSID数据并转换为字符串。
+                            let ssidData: Data? = interface.ssidData()
+                            if let ssidString = String(data: ssidData!, encoding:.utf8) {
+                                wifiName = ssidString
+                            }
+                            // 获取wifi的硬件地址并转换为字符串格式。
+                            if let macAddressData = interface.hardwareAddress() {
+                                macAddress = macAddressData.map { String(format: "%02x:", $0 as! CVarArg) }.joined(separator: "")
+                                macAddress?.removeLast() // 移除最后一个冒号
+                            }
                         }
                     }
                     break

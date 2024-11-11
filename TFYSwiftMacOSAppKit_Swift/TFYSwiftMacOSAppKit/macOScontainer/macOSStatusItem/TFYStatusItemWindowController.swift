@@ -152,7 +152,7 @@ public class TFYStatusItemWindowController: NSWindowController {
             // 设置动画持续时间
             context.duration = windowConfiguration!.animationDuration
             // 设置动画的时间函数，这里使用缓入缓出
-            let timingFunction = CAMediaTimingFunction(name:.easeOut)
+            let timingFunction = CAMediaTimingFunction(name:CAMediaTimingFunctionName.easeOut)
             context.timingFunction = timingFunction
             // 设置窗口的透明度，根据淡入淡出方向设置为1或0
             window.animator().alphaValue = fadeDirection == .fadeIn ? 1.0 : 0.0
@@ -193,7 +193,7 @@ public class TFYStatusItemWindowController: NSWindowController {
             // 设置动画持续时间
             context.duration = windowConfiguration!.animationDuration
             // 设置动画的时间函数，这里使用缓入缓出
-            let timingFunction = CAMediaTimingFunction(name:.easeOut)
+            let timingFunction = CAMediaTimingFunction(name:CAMediaTimingFunctionName.easeOut)
             context.timingFunction = timingFunction
             // 设置窗口的最终框架（不显示更新）
             window.animator().setFrame(windowEndFrame, display: false)

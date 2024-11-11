@@ -91,13 +91,14 @@ public extension NSSplitView {
 
 // 为 splitPosition 键添加可动画属性
 public extension NSSplitView {
-    override class func defaultAnimation(forKey key: String) -> Any? {
+    // 定义一个新的类方法来处理特定的动画逻辑
+    class func customAnimation(forKey key: String) -> Any? {
         if key == "splitPosition" {
             let animation = CABasicAnimation()
             animation.duration = 0.2
             return animation
         } else {
-            return super.defaultAnimation(forKey: key)
+            return defaultAnimation(forKey: key)
         }
     }
 }

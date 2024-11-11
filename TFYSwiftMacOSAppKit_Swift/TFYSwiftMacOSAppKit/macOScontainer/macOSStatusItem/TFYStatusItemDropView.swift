@@ -8,11 +8,18 @@
 
 import Cocoa
 
-// TFYStatusItemDropView 类用于处理状态项的拖拽操作
+// 定义一个协议，用于处理文件接收的回调
+protocol ReadFileViewDelegate: AnyObject {
+    // 当接收到单个文件时调用此方法
+    func receivedFileUrl(_ fileUrl: URL)
 
+    // 当接收到多个文件时调用此方法
+    func receivedFileUrlList(_ fileUrls: [URL])
+}
 
-public class TFYStatusItemDropView: NSView  {
-
+public class TFYStatusItemDropView: NSView {
+    // 弱引用代理，遵循ReadFileViewDelegate协议
+    weak var delegate: ReadFileViewDelegate?
     // 弱引用状态项
     weak var statusItem: TFYStatusItem?
 
@@ -33,42 +40,73 @@ public class TFYStatusItemDropView: NSView  {
             return privateDropTypes
         }
     }
-
-    // 检查粘贴板类型是否在可拖拽类型中
-    public func dropTypeInPasteboardTypes(pasteboardTypes: [NSPasteboard.PasteboardType]) -> NSPasteboard.PasteboardType? {
-        // 遍历可拖拽类型，检查是否存在于传入的粘贴板类型数组中
-        for type in dropTypes {
-            if pasteboardTypes.contains(type) {
-                return type
-            }
-        }
-        return .string
+    
+    // 视图被销毁时调用的方法，取消注册拖放类型
+    deinit {
+        unregisterDraggedTypes()
     }
 
-    // 当拖拽进入视图时调用
+    // 当文件被拖动到视图区域时触发此方法，用于确定拖动操作的类型
     public override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         let pboard = sender.draggingPasteboard
-        // 检查粘贴板类型是否在可拖拽类型中，如果是则返回复制操作，否则返回私有操作
-        if dropTypeInPasteboardTypes(pasteboardTypes: pboard.types!) != nil {
-            return .copy
-        } else {
-            return NSDragOperation()
-        }
-    }
+        let sourceDragMask = sender.draggingSourceOperationMask
 
-    // 执行拖拽操作
-    public override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        let pboard = sender.draggingPasteboard
-        // 检查粘贴板类型是否在可拖拽类型中，并获取对应的类型字符串
-        if let type = dropTypeInPasteboardTypes(pasteboardTypes: pboard.types!) {
-            // 根据类型获取粘贴板中的属性列表，并进行类型转换
-            let items = pboard.propertyList(forType: type)
-            // 如果有拖拽处理闭包，则调用闭包进行处理并返回处理结果
-            if dropHandler != nil {
-                dropHandler!(statusItem!, type, items as! [Any])
-                return true
+        // 检查粘贴板中的数据类型是否为文件URL类型
+        if pboard.types?.contains(.fileURL) == true {
+            // 如果源拖动掩码包含链接操作类型，则返回链接拖动操作类型
+            if sourceDragMask.contains(.link) {
+                return.link
+            // 如果源拖动掩码包含复制操作类型，则返回复制拖动操作类型
+            } else if sourceDragMask.contains(.copy) {
+                return.copy
             }
         }
-        return false
+        // 如果不满足上述条件，返回无操作类型
+        return .private
+    }
+
+    public override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let zPasteboard = sender.draggingPasteboard
+
+        // 判断粘贴板中的项目数量是否小于等于1，即是否为单文件
+        if zPasteboard.pasteboardItems?.count ?? 0 <= 1 {
+            if let urlData = zPasteboard.data(forType:.fileURL) {
+                var bookmarkDataIsStaleValue = false
+                do {
+                    let url = try URL(resolvingBookmarkData: urlData, options: [], relativeTo: nil, bookmarkDataIsStale: &bookmarkDataIsStaleValue)
+                    // 如果有代理并且成功获取到文件URL，则调用代理的receivedFileUrl方法传递单文件URL
+                    if let delegate = self.delegate {
+                        delegate.receivedFileUrl(url)
+                        if dropHandler != nil {
+                            dropHandler!(statusItem!,.fileURL,[url])
+                        }
+                    }
+                } catch {
+                    // 在这里可以添加对异常的处理逻辑，比如打印错误信息等
+                    print("解析URL时出错: \(error)")
+                }
+            }
+        } else {
+            // 多文件情况
+            if let list = zPasteboard.propertyList(forType:.string) as? [String] {
+                var urlList: [URL] = []
+                for str in list {
+                    var maybeUrl: URL?
+                    maybeUrl = URL(fileURLWithPath: str)
+                    if let url = maybeUrl {
+                        urlList.append(url)
+                    }
+                }
+                // 如果获取到了文件URL列表并且有代理，则调用代理的receivedFileUrlList方法传递文件URL列表
+                if urlList.count > 0, let delegate = self.delegate {
+                    delegate.receivedFileUrlList(urlList)
+                    if dropHandler != nil {
+                        dropHandler!(statusItem!,.fileURL,urlList)
+                    }
+                }
+            }
+        }
+        // 返回表示操作成功的布尔值
+        return true
     }
 }

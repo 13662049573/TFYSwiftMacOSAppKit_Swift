@@ -15,13 +15,25 @@ class TFYSwiftHomeController: NSViewController {
         self.view = view
     }
     
+    lazy var textfiled: NSTextField = {
+        let filed = NSTextField(frame: NSRect(x: 100, y: 200, width: 300, height: 50))
+        filed.chain
+            .font(NSFont.systemFont(ofSize: 14, weight: .semibold))
+            .wantsLayer(true)
+            .backgroundColor(.white)
+            .text("sssssssss")
+            .textColor(.red)
+        return filed
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do view setup here.
         
-        self.view.wantsLayer = true
-        self.view.layer?.backgroundColor = NSColor.red.cgColor
-        
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor.white.cgColor
+     
+        view.addSubview(textfiled)
     }
     
 }

@@ -5,10 +5,10 @@ Pod::Spec.new do |spec|
 
   spec.version      = "1.0.7"
 
-  spec.summary      = "swift 版纯代码进行写macOS 开发，封装库。基本组件。最低支持Mac 12"
+  spec.summary      = "swift 版纯代码进行写macOS 开发，封装库。基本组件。最低支持Mac 12.4"
 
   spec.description  = <<-DESC
-                        swift 版纯代码进行写macOS 开发，封装库。基本组件。最低支持Mac 12
+                        swift 版纯代码进行写macOS 开发，封装库。基本组件。最低支持Mac 12.4
                    DESC
 
   spec.homepage     = "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift"

@@ -79,6 +79,8 @@ class ViewController: NSViewController {
                 TFYLog("\(text), \(url ?? "_"),\(point)")
             }
         }
+        
+        textfiled.stringValue = "\(String(describing: TFYSwiftUtils.getWiFiInfo().macAddress))--\(String(describing: TFYSwiftUtils.getWiFiInfo().wifiName))"
     }
     
     @objc func onClick(btn:NSButton) {

@@ -753,6 +753,7 @@
 				DEVELOPMENT_TEAM = QH95759TSS;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "TFYSwiftMacOSAppKit-Swift-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "swift链接";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
@@ -782,6 +783,7 @@
 				DEVELOPMENT_TEAM = QH95759TSS;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "TFYSwiftMacOSAppKit-Swift-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "swift链接";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;

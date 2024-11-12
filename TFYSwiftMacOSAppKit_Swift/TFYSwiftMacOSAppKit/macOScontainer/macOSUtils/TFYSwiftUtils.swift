@@ -8,17 +8,13 @@
 
 import Cocoa
 import System
-import CoreWLAN
 import SystemConfiguration
 import CoreTelephony
 import QuartzCore
-
-import Cocoa
-import System
+import Network
 import CoreWLAN
-import SystemConfiguration
-import CoreTelephony
-import QuartzCore
+import SystemConfiguration.CaptiveNetwork
+import Darwin
 
 // 日志打印工具函数，用于在 DEBUG 环境下打印详细的日志信息并写入文件。
 public func TFYLog(_ msg: Any...,
@@ -87,6 +83,7 @@ private func createFile(filePath: String) -> (isSuccess: Bool, error: String) {
 }
 
 public class TFYSwiftUtils: NSObject {
+    
     // 获取本机 IP 的静态方法。
     public static func getIPAddress() -> String? {
         var addresses = [String]()
@@ -119,75 +116,119 @@ public class TFYSwiftUtils: NSObject {
         return addresses.first
     }
 
-    // 获取连接 wifi 的 IP 地址的静态方法，需要定位权限和添加 Access WiFi information。
+    // 获取连接wifi的IP地址的静态方法，支持macOS 12以上
     public static func getWiFiIP() -> String? {
         var address: String?
-        // 获取系统中的网络接口信息。
+        // 获取系统中的网络接口信息
         var ifaddr: UnsafeMutablePointer<ifaddrs>? = nil
-        guard getifaddrs(&ifaddr) == 0, let firstAddr = ifaddr else { return nil }
-        for ifptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
-            let interface = ifptr.pointee
-            // 检查接口地址类型是 IPV4 或 IPV6。
+
+        // 获取网络接口信息，若失败则打印错误并返回nil
+        let result = getifaddrs(&ifaddr)
+        if result != 0 {
+            print("获取网络接口信息失败，错误码：\(result)")
+            return nil
+        }
+
+        var currentAddr = ifaddr
+        // 遍历网络接口信息
+        while let addr = currentAddr {
+            let interface = addr.pointee
+            // 检查接口地址类型是IPV4或IPV6
             let addrFamily = interface.ifa_addr.pointee.sa_family
             if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
-                // 检查接口名称是否为 en0，通常 en0 是无线接口。
+                // 检查接口名称是否为en0或其他可能的无线接口名称
                 let name = String(cString: interface.ifa_name)
-                if name == "en0" {
+                if name == "en0" || name == "en1" || name == "en2" {
                     var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                    // 将接口地址转换为人类可读的字符串形式。
+                    // 将接口地址转换为人类可读的字符串形式
                     if getnameinfo(&interface.ifa_addr.pointee, socklen_t(interface.ifa_addr.pointee.sa_len), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST) == 0 {
                         address = String(cString: hostname)
+                        // 找到符合条件的接口并获取到IP地址后，释放已遍历过的网络接口信息内存
+                        freeifaddrs(ifaddr)
+                        return address
                     }
                 }
             }
+            currentAddr = addr.pointee.ifa_next
         }
-        // 释放获取到的网络接口信息内存。
+
+        // 释放获取到的网络接口信息内存，如果循环结束未找到符合条件的接口
         freeifaddrs(ifaddr)
         return address
     }
+    
+    // 函数用于获取所有网络接口信息，返回可选的接口信息数组
+    private static func getSupportedInterfaces() -> [CFString]? {
+        guard let interfaces = CNCopySupportedInterfaces() as? [CFString] else {
+            print("获取网络接口信息失败，错误码： \(errno)")
+            return nil
+        }
+        return interfaces
+    }
 
-    // 获取连接 wifi 的名字和 mac 地址的静态方法，需要定位权限和添加 Access WiFi information。
+    // 获取连接wifi的名字和mac地址的静态方法，支持macOS 12以上
     public static func getWiFiInfo() -> (wifiName: String?, macAddress: String?) {
+        // 用于存储WiFi名称和MAC地址
         var wifiName: String?
         var macAddress: String?
 
-        // 获取系统网络配置信息中的接口名称列表。
-        let interfaceNames = SCDynamicStoreCopyKeyList((SCDynamicStore.self as! SCDynamicStore), "State:/Network/Global/IPv4" as CFString)
-        if let interfaceNames = interfaceNames as? [String] {
-            for name in interfaceNames {
-                // 获取指定接口的服务 ID。
-                if let serviceID = SCDynamicStoreCopyValue(nil, name as CFString),
-                   let serviceDict = (serviceID as? [String: Any])?["PrimaryInterface"] as? [String: Any],
-                   let interfaceName = serviceDict["InterfaceName"] as? String,
+        // 获取所有网络接口信息
+        if let interfaces = getSupportedInterfaces() {
+            for interface in interfaces {
+                // 获取指定接口的详细信息
+                var interfaceInfo: [String: Any]?
+                let interfaceData = SCDynamicStoreCopyValue(nil, "State:/InternetInterface/\(interface)/IPv4" as CFString)
+                if let interfaceData = interfaceData as? [String: Any] {
+                    interfaceInfo = interfaceData
+                }
+
+                // 检查是否是Wi-Fi接口（通常以"en"开头）
+                if let interfaceInfo = interfaceInfo,
+                   let interfaceName = interfaceInfo["Interface"] as? String,
                    interfaceName.hasPrefix("en") {
 
-                    // 将wlanClient声明为可选类型
+                    // 获取Wi-Fi客户端实例，将其声明为可选类型并处理初始化失败情况
                     var wlanClient: CWWiFiClient?
-                    // 初始化wlanClient，这里假设初始化方式正确，但可能返回nil
                     wlanClient = CWWiFiClient()
 
-                    // 通过if let正确解包wlanClient并获取wifi接口
-                    if let unwrappedWlanClient = wlanClient {
-                        if let interface = unwrappedWlanClient.interface() {
-                            // 获取wifi的SSID数据并转换为字符串。
-                            let ssidData: Data? = interface.ssidData()
-                            if let ssidString = String(data: ssidData!, encoding:.utf8) {
-                                wifiName = ssidString
-                            }
-                            // 获取wifi的硬件地址并转换为字符串格式。
-                            if let macAddressData = interface.hardwareAddress() {
-                                macAddress = macAddressData.map { String(format: "%02x:", $0 as! CVarArg) }.joined(separator: "")
-                                macAddress?.removeLast() // 移除最后一个冒号
-                            }
+                    guard let unwrappedWlanClient = wlanClient else {
+                        print("创建CWWiFiClient实例失败")
+                        continue
+                    }
+
+                    // 获取WiFi接口实例并处理可能为nil的情况
+                    guard let wifiInterface = unwrappedWlanClient.interface() else {
+                        print("获取WiFi接口失败")
+                        continue
+                    }
+
+                    // 获取wifi的SSID数据并转换为字符串。
+                    if let ssidData = wifiInterface.ssidData() {
+                        if let ssidString = String(data: ssidData, encoding:.utf8) {
+                            wifiName = ssidString
                         }
                     }
+
+                    // 获取wifi的硬件地址并转换为字符串格式。
+                    if let macAddressData = wifiInterface.hardwareAddress() {
+                        macAddress = macAddressData.map { String(format: "%02x:", $0 as! CVarArg) }.joined(separator: "")
+                        macAddress?.removeLast() // 移除最后一个冒号
+                    }
+
                     break
                 }
             }
+        } else {
+            // 如果获取网络接口信息失败，这里可以根据具体需求进行更多处理，比如返回特定的错误值或进行其他提示操作
+            print("无法继续获取WiFi信息，因为获取网络接口信息失败。")
+            // 示例：返回特定的错误值表示获取失败
+            return (nil, nil)
         }
+
         return (wifiName, macAddress)
     }
-
+    
+    
     // 检查应用是否有更新的静态方法，传入应用 ID 和回调函数，回调函数返回是否有更新以及新版本号（如果有）。
     public static func checkForAppUpdate(appID: String, completion: @escaping (_ isUpdated: Bool, _ newVersion: String?) -> Void) {
         let url = URL(string: "https://itunes.apple.com/lookup?id=\(appID)")!

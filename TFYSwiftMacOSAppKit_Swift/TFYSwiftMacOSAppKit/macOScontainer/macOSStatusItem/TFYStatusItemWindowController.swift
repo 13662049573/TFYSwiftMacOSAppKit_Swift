@@ -123,7 +123,6 @@ public class TFYStatusItemWindowController: NSWindowController {
     func dismissStatusItemWindow() {
         // 如果动画正在运行，则直接返回
         if animationIsRunning { return }
-
         // 执行窗口淡出动画
         animateWindow(window as! TFYStatusItemWindow, withFadeDirection:.fadeOut)
     }
@@ -152,8 +151,8 @@ public class TFYStatusItemWindowController: NSWindowController {
             // 设置动画持续时间
             context.duration = windowConfiguration!.animationDuration
             // 设置动画的时间函数，这里使用缓入缓出
-            let timingFunction = CAMediaTimingFunction(name:CAMediaTimingFunctionName.easeOut)
-            context.timingFunction = timingFunction
+            let customTimingFunction = CAMediaTimingFunction(controlPoints: 0.1, 0.1, 0.9, 0.9)
+            context.timingFunction = customTimingFunction
             // 设置窗口的透明度，根据淡入淡出方向设置为1或0
             window.animator().alphaValue = fadeDirection == .fadeIn ? 1.0 : 0.0
             
@@ -193,8 +192,8 @@ public class TFYStatusItemWindowController: NSWindowController {
             // 设置动画持续时间
             context.duration = windowConfiguration!.animationDuration
             // 设置动画的时间函数，这里使用缓入缓出
-            let timingFunction = CAMediaTimingFunction(name:CAMediaTimingFunctionName.easeOut)
-            context.timingFunction = timingFunction
+            let customTimingFunction = CAMediaTimingFunction(controlPoints: 0.1, 0.1, 0.9, 0.9)
+            context.timingFunction = customTimingFunction
             // 设置窗口的最终框架（不显示更新）
             window.animator().setFrame(windowEndFrame, display: false)
             // 设置窗口的透明度，根据淡入淡出方向设置为1或0

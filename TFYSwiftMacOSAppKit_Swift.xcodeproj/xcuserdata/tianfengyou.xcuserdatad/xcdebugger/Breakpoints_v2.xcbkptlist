@@ -20,5 +20,67 @@
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "987CE123-1645-4525-8334-1EA76ADB2EAF"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/TFYStatusItemWindowController.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "192"
+            endingLineNumber = "192"
+            landmarkName = "animateWindow(_:withSlideAndFadeTransitionUsingFadeDirection:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "987CE123-1645-4525-8334-1EA76ADB2EAF - 18063f2234ee6ad0"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "TFYSwiftMacOSAppKit_Swift.TFYStatusItemWindowController.animateWindow(_: TFYSwiftMacOSAppKit_Swift.TFYStatusItemWindow, withSlideAndFadeTransitionUsingFadeDirection: TFYSwiftMacOSAppKit_Swift.TFYFadeDirection) -&gt; ()"
+                  moduleName = "TFYSwiftMacOSAppKit_Swift.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/tianfengyou/Desktop/%E8%87%AA%E5%B7%B1%E5%BA%93/TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/TFYStatusItemWindowController.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "193"
+                  endingLineNumber = "193">
+               </Location>
+               <Location
+                  uuid = "987CE123-1645-4525-8334-1EA76ADB2EAF - c7050bd943f9eb81"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (__C.NSAnimationContext) -&gt; () in TFYSwiftMacOSAppKit_Swift.TFYStatusItemWindowController.animateWindow(_: TFYSwiftMacOSAppKit_Swift.TFYStatusItemWindow, withSlideAndFadeTransitionUsingFadeDirection: TFYSwiftMacOSAppKit_Swift.TFYFadeDirection) -&gt; ()"
+                  moduleName = "TFYSwiftMacOSAppKit_Swift.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/tianfengyou/Desktop/%E8%87%AA%E5%B7%B1%E5%BA%93/TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/TFYStatusItemWindowController.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "195"
+                  endingLineNumber = "195">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "0C47AC8C-444B-42B7-A466-3537F20CF235"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/TFYStatusItemWindowController.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "166"
+            endingLineNumber = "166"
+            landmarkName = "animateWindow(_:withSlideAndFadeTransitionUsingFadeDirection:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

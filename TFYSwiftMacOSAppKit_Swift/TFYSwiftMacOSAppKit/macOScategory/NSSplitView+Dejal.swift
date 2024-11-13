@@ -9,6 +9,7 @@
 import Cocoa
 
 public extension NSSplitView {
+    
     // 第一个分割分隔符的位置属性，可以通过 animator 进行动画设置
     var splitPosition: CGFloat {
         get {
@@ -86,19 +87,5 @@ public extension NSSplitView {
         collapsingSubview.frame = collapsingFrame
 
         display()
-    }
-}
-
-// 为 splitPosition 键添加可动画属性
-public extension NSSplitView {
-    // 定义一个新的类方法来处理特定的动画逻辑
-    class func customAnimation(forKey key: String) -> Any? {
-        if key == "splitPosition" {
-            let animation = CABasicAnimation()
-            animation.duration = 0.2
-            return animation
-        } else {
-            return defaultAnimation(forKey: key)
-        }
     }
 }

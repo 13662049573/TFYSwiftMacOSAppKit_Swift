@@ -23,8 +23,8 @@ Pod::Spec.new do |spec|
 
   spec.subspec 'macOScategory' do |ss|
     ss.source_files  = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScategory/*.{swift}"
-    ss.dependency "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer"
-    ss.dependency "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSfoundation"
+    ss.dependency "FYSwiftMacOSAppKit/macOScontainer/macOSUtils"
+    ss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
   end
 
   spec.subspec 'macOSchain' do |ss|

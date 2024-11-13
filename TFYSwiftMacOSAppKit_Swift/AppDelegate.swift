@@ -18,9 +18,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let view:NSView = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 30))
         view.wantsLayer = true
         view.layer?.backgroundColor = NSColor.orange.cgColor
-        TFYStatusItem.sharedInstance.presentStatusItemWithView(itemView: view, contentViewController: showVc) { item, title, data in
-            TFYLog(item, title, data)
-        }
+        TFYStatusItem.sharedInstance.presentStatusItemWithView(itemView: view, contentViewController: showVc)
         
 //        TFYStatusItem.sharedInstance.presentStatusItemWithImage(itemImage: NSImage(named: "mood_analysis_select_5")!, contentViewController: showVc)
     }

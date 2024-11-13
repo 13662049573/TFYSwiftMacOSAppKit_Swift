@@ -19,7 +19,6 @@ public enum TFYStatusItemProximityDragStatus {
     case exited
 }
 
-public typealias TFYStatusItemDropHandler = (TFYStatusItem, NSPasteboard.PasteboardType, [Any]) -> Void
 public typealias TFYStatusItemProximityDragDetectionHandler = (TFYStatusItem, NSPoint, TFYStatusItemProximityDragStatus) -> Void
 public typealias TFYStatusItemShouldShowHandler = (TFYStatusItem) -> Bool
 
@@ -38,19 +37,9 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     private var customViewContainer: TFYStatusItemContainerView?
     private var customView: NSView?
     private var presentationMode: TFYStatusItemPresentationMode = .undefined
-    private var dropView: TFYStatusItemDropView?
-    private var statusItemWindowController: TFYStatusItemWindowController?
-    // 是否显示处理方法
-    public var shouldShowHandler: TFYStatusItemDropHandler?
-   
-    public var dropHandler: TFYStatusItemDropHandler? {
-        didSet {
-            self.configureDropView()
-        }
-    }
     
-    // 可拖拽类型
-    public var dropTypes: [NSPasteboard.PasteboardType]?
+    private var statusItemWindowController: TFYStatusItemWindowController?
+
     // 邻近拖拽检测处理方法
     public var proximityDragDetectionHandler: TFYStatusItemProximityDragDetectionHandler?
     
@@ -70,8 +59,6 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
         windowConfiguration = TFYStatusItemWindowConfiguration.defaultConfiguration()
         appearsDisabled = false
         enabled = true
-        dropTypes = [.fileURL]
-        dropHandler = nil
         proximityDragDetectionEnabled = false
         proximityDragZoneDistance = 23
         proximityDragDetectionHandler = nil
@@ -112,7 +99,6 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
         customView = nil
         statusItemWindowController = nil
         windowConfiguration = nil
-        dropHandler = nil
         proximityDragDetectionHandler = nil
         proximityDragCollisionArea = nil
         customViewContainer = nil
@@ -162,44 +148,18 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
         }
     }
 
-    func configureDropView() {
-        dropView?.removeFromSuperview()
-        dropView = nil
-        if dropHandler == nil { return }
-        if let button = statusItem?.button {
-            let buttonWindowFrame = button.window?.frame ?? .zero
-            let statusItemFrame = CGRect(x: 0, y: 0, width: NSWidth(buttonWindowFrame), height: NSHeight(buttonWindowFrame))
-            dropView = TFYStatusItemDropView(frame: statusItemFrame)
-            dropView?.statusItem = self
-            dropView?.dropTypes = dropTypes!
-            dropView?.dropHandler = dropHandler
-            button.addSubview(dropView!)
-            dropView?.autoresizingMask = [.width,.height]
-        }
-    }
-
     @objc public func presentStatusItemWithImage(itemImage: NSImage, contentViewController: NSViewController) {
-        presentStatusItemWithImage(itemImage: itemImage, contentViewController: contentViewController, dropHandler: nil)
-    }
-
-    @objc public func presentStatusItemWithImage(itemImage: NSImage, contentViewController: NSViewController, dropHandler: TFYStatusItemDropHandler?) {
         guard presentationMode == .undefined else { return }
         configureWithImage(itemImage: itemImage)
         configureProximityDragCollisionArea()
-        self.dropHandler = dropHandler
         presentationMode = .image
         statusItemWindowController = TFYStatusItemWindowController(connectedStatusItem: self, contentViewController: contentViewController, windowConfiguration: windowConfiguration!)
     }
 
     @objc public func presentStatusItemWithView(itemView: NSView, contentViewController: NSViewController) {
-        presentStatusItemWithView(itemView: itemView, contentViewController: contentViewController, dropHandler: nil)
-    }
-
-    @objc public func presentStatusItemWithView(itemView: NSView, contentViewController: NSViewController, dropHandler: TFYStatusItemDropHandler?) {
         guard presentationMode == .undefined else { return }
         configureWithView(itemView: itemView)
         configureProximityDragCollisionArea()
-        self.dropHandler = dropHandler
         presentationMode = .customView
         statusItemWindowController = TFYStatusItemWindowController(connectedStatusItem: self, contentViewController: contentViewController, windowConfiguration: windowConfiguration!)
     }
@@ -220,7 +180,7 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     @objc public func handleStatusItemButtonAction(_ sender: Any?) {
         if isStatusItemWindowVisible {
             dismissStatusItemWindow()
-        } else if shouldShowHandler == nil {
+        } else {
             showStatusItemWindow()
         }
     }

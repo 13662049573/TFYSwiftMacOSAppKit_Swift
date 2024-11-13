@@ -19,7 +19,6 @@
 		36EC0CBB2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CBA2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift */; };
 		36EC0CBD2CDCEF5E003EBAD5 /* TFYStatusItemWindowBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CBC2CDCEF5E003EBAD5 /* TFYStatusItemWindowBackgroundView.swift */; };
 		36EC0CBF2CDCF032003EBAD5 /* TFYStatusItemWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CBE2CDCF032003EBAD5 /* TFYStatusItemWindow.swift */; };
-		36EC0CC12CDCF2D2003EBAD5 /* TFYStatusItemDropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CC02CDCF2D2003EBAD5 /* TFYStatusItemDropView.swift */; };
 		36EC0CC32CDCF3B5003EBAD5 /* TFYStatusItemWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CC22CDCF3B5003EBAD5 /* TFYStatusItemWindowController.swift */; };
 		36EC0CC52CDCF457003EBAD5 /* TFYStatusItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CC42CDCF457003EBAD5 /* TFYStatusItem.swift */; };
 		3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F73E2CDA0E13009493BF /* AppDelegate.swift */; };
@@ -119,7 +118,6 @@
 		36EC0CBA2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStatusItemWindowConfiguration.swift; sourceTree = "<group>"; };
 		36EC0CBC2CDCEF5E003EBAD5 /* TFYStatusItemWindowBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStatusItemWindowBackgroundView.swift; sourceTree = "<group>"; };
 		36EC0CBE2CDCF032003EBAD5 /* TFYStatusItemWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStatusItemWindow.swift; sourceTree = "<group>"; };
-		36EC0CC02CDCF2D2003EBAD5 /* TFYStatusItemDropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStatusItemDropView.swift; sourceTree = "<group>"; };
 		36EC0CC22CDCF3B5003EBAD5 /* TFYStatusItemWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStatusItemWindowController.swift; sourceTree = "<group>"; };
 		36EC0CC42CDCF457003EBAD5 /* TFYStatusItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStatusItem.swift; sourceTree = "<group>"; };
 		3D04F72C2CDA0E09009493BF /* TFYSwiftMacOSAppKit_Swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TFYSwiftMacOSAppKit_Swift.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -319,7 +317,6 @@
 				36EC0CBA2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift */,
 				36EC0CBC2CDCEF5E003EBAD5 /* TFYStatusItemWindowBackgroundView.swift */,
 				36EC0CBE2CDCF032003EBAD5 /* TFYStatusItemWindow.swift */,
-				36EC0CC02CDCF2D2003EBAD5 /* TFYStatusItemDropView.swift */,
 				36EC0CC22CDCF3B5003EBAD5 /* TFYStatusItemWindowController.swift */,
 				36EC0CC42CDCF457003EBAD5 /* TFYStatusItem.swift */,
 			);
@@ -562,7 +559,6 @@
 				3D04F83A2CDCA744009493BF /* TFYSwiftNSClickGestureRecognizer.swift in Sources */,
 				3D04F84C2CDCB324009493BF /* TFYSwiftCATiledLayer.swift in Sources */,
 				3D04F81E2CDCA31F009493BF /* TFYSwiftNSCollectionView.swift in Sources */,
-				36EC0CC12CDCF2D2003EBAD5 /* TFYStatusItemDropView.swift in Sources */,
 				3D04F81F2CDCA31F009493BF /* TFYSwiftNSImageView.swift in Sources */,
 				36EC0CBD2CDCEF5E003EBAD5 /* TFYStatusItemWindowBackgroundView.swift in Sources */,
 				3D04F8482CDCB135009493BF /* TFYSwiftCAShapeLayer.swift in Sources */,

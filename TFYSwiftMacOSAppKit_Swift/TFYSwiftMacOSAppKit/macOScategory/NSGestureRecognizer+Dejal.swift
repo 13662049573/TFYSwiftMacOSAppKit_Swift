@@ -65,98 +65,69 @@ public extension NSClickGestureRecognizer {
     }
     
     // NSTextField 富文本点击（类似 iOS 中 UILabel 的效果）
-    func didTapAttributedText(linkDic: [String: String], action: @escaping (String, String?, CGPoint) -> Void) {
-        // 确保视图是 NSTextField 类型
-        guard let textField = self.view as? NSTextField else { return }
-        // 获取文本字段的富文本内容
-        let attributedText = textField.attributedStringValue
-
-        // 设置文本字段的一些属性
+    func didTapAttributedText(linkDictionary: [String: String], action: @escaping (String?, String?, CGPoint?, Error?) -> Void) {
+        guard let textField = self.view as? NSTextField else {
+            action(nil, nil, nil, NSError(domain: "CustomError", code: 1001, userInfo: [NSLocalizedDescriptionKey: "The view is not an NSTextField"]))
+            return
+        }
+        textField.isBordered = false
+        textField.isEditable = false
+        textField.drawsBackground = true
         textField.usesSingleLineMode = true
         textField.cell?.usesSingleLineMode = false
         textField.cell?.truncatesLastVisibleLine = true
         textField.cell?.isBezeled = false
         textField.cell?.isBordered = false
+        
+        let attributedText = textField.attributedStringValue
+        let layoutManager = configureLayoutManager(with: attributedText, for: textField)
+        let locationOfTouchInTextContainer = calculateTouchLocation(in: textField, with: layoutManager)
 
-        // 创建布局管理器、文本容器和文本存储对象
-        let layoutManager = NSLayoutManager()
-        let textContainer = NSTextContainer(size: CGSize.zero)
-        let textStorage = NSTextStorage(attributedString: attributedText)
-
-        // 将文本容器添加到布局管理器中，并将布局管理器添加到文本存储对象中
-        layoutManager.addTextContainer(textContainer)
-        textStorage.addLayoutManager(layoutManager)
-
-        // 设置文本容器的一些属性
-        textContainer.lineFragmentPadding = 5.0
-        textContainer.lineBreakMode = .byWordWrapping
-        textContainer.maximumNumberOfLines = 0
-
-        // 计算富文本的自然大小，并设置文本容器的大小
-        let naturalSize = attributedText.size()
-        textContainer.size = CGSize(width: naturalSize.width + 5.0, height: naturalSize.height + 5.0)
-
-        // 检查文本容器是否正确关联到布局管理器
-        if !layoutManager.textContainers.contains(textContainer) {
-            print("Text container not properly associated with layout manager!")
-            // 可以考虑在此处添加适当的错误处理或重新关联的逻辑
-        }
-
-        // 获取触摸点在文本字段中的位置
-        let locationOfTouchInTextField = self.location(in: textField)
-        // 获取文本边界框
-        let textBoundingBox = layoutManager.usedRect(for: textContainer)
-        // 获取文本字段的边界大小
-        let textFieldBoundsSize = textField.bounds.size
-        // 计算文本容器的偏移量
-        let textContainerOffset = CGPoint(x: (textFieldBoundsSize.width - textBoundingBox.size.width) * 0.5 - textBoundingBox.origin.x,
-                                          y: (textFieldBoundsSize.height - textBoundingBox.size.height) * 0.5 - textBoundingBox.origin.y)
-
-        // 计算触摸点在文本容器中的位置
-        let locationOfTouchInTextContainer = CGPoint(x: locationOfTouchInTextField.x - textContainerOffset.x,
-                                                     y: locationOfTouchInTextField.y - textContainerOffset.y)
-
-        // 尝试更准确地计算 glyphIndex
-        var glyphIndex: Int?
-        for index in 0..<layoutManager.numberOfGlyphs {
-            let glyphRect = layoutManager.boundingRect(forGlyphRange: NSRange(location: index, length: 1), in: textContainer)
-            if glyphRect.contains(locationOfTouchInTextContainer) {
-                glyphIndex = index
-                break
-            }
-        }
-        // 如果没有找到合适的 glyphIndex，默认为 0
-        glyphIndex = glyphIndex ?? 0
-
-        // 计算正确的字符索引
-        var characterIndex = 0
-        let offsetInTextContainer = locationOfTouchInTextContainer
-        layoutManager.lineFragmentUsedRect(forGlyphAt: glyphIndex!, effectiveRange: nil)
-        while glyphIndex! > 0 {
-            glyphIndex! -= 1
-            layoutManager.characterIndexForGlyph(at: glyphIndex!)
-            let characterRange = layoutManager.characterRange(forGlyphRange: NSRange(location: glyphIndex!, length: 1), actualGlyphRange: nil)
-            let glyphRect = layoutManager.boundingRect(forGlyphRange: NSRange(location: glyphIndex!, length: 1), in: textContainer)
-            if offsetInTextContainer.x >= glyphRect.origin.x && offsetInTextContainer.x < glyphRect.origin.x + glyphRect.size.width && offsetInTextContainer.y >= glyphRect.origin.y && offsetInTextContainer.y < glyphRect.origin.y + glyphRect.size.height {
-                characterIndex = characterRange.location
-                break
-            }
-        }
-
-        // 预处理特殊字符
-        let preprocessedText = preprocessSpecialCharacters(attributedText)
-
-        // 遍历链接字典，检查触摸点是否在特定的链接范围内
-        for (key, value) in linkDic {
-            let targetRange = (preprocessedText.string as NSString).range(of: key)
-            if characterIndex >= targetRange.location && characterIndex < targetRange.location + targetRange.length {
-                action(key, value, locationOfTouchInTextField)
-            }
+        if let characterIndex = findCharacterIndex(at: locationOfTouchInTextContainer, using: layoutManager),
+           let (key, value) = findLink(at: characterIndex, in: linkDictionary, with: attributedText) {
+            action(key, value, locationOfTouchInTextContainer, nil)
+        } else {
+            print("No link found at the location or glyph index not found.")
         }
     }
 
-    func preprocessSpecialCharacters(_ attributedText: NSAttributedString) -> NSAttributedString {
-        // 如果需要，可以添加更全面的特殊字符处理逻辑
-        return attributedText
+    private func configureLayoutManager(with attributedText: NSAttributedString, for textField: NSTextField) -> NSLayoutManager {
+        let layoutManager = NSLayoutManager()
+        let textContainer = NSTextContainer(size: textField.bounds.size)
+        let textStorage = NSTextStorage(attributedString: attributedText)
+
+        layoutManager.addTextContainer(textContainer)
+        textStorage.addLayoutManager(layoutManager)
+
+        textContainer.lineFragmentPadding = 0
+        textContainer.lineBreakMode = textField.cell!.lineBreakMode
+        return layoutManager
+    }
+
+    private func calculateTouchLocation(in textField: NSTextField, with layoutManager: NSLayoutManager) -> CGPoint {
+        let locationOfTouchInTextField = self.location(in: textField)
+        let textContainer = layoutManager.textContainers.first!
+        let textBoundingBox = layoutManager.usedRect(for: textContainer)
+        let textContainerOffset = CGPoint(x: (textField.bounds.width - textBoundingBox.size.width) * 0.5 - textBoundingBox.origin.x,
+                                          y: (textField.bounds.height - textBoundingBox.size.height) * 0.5 - textBoundingBox.origin.y)
+        return CGPoint(x: locationOfTouchInTextField.x - textContainerOffset.x,
+                       y: locationOfTouchInTextField.y - textContainerOffset.y)
+    }
+
+    private func findCharacterIndex(at location: CGPoint, using layoutManager: NSLayoutManager) -> Int? {
+        guard let textContainer = layoutManager.textContainers.first else { return nil }
+        let glyphIndex = layoutManager.glyphIndex(for: location, in: textContainer, fractionOfDistanceThroughGlyph: nil)
+        return glyphIndex != NSNotFound ? layoutManager.characterIndexForGlyph(at: glyphIndex) : nil
+    }
+
+    private func findLink(at characterIndex: Int, in linkDic: [String: String], with attributedText: NSAttributedString) -> (String, String?)? {
+        let nsString = attributedText.string as NSString
+        for (key, value) in linkDic {
+            let range = nsString.range(of: key)
+            if NSLocationInRange(characterIndex, range) {
+                return (key, value)
+            }
+        }
+        return nil
     }
 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		36D89F9B2CE6457B00BD1A5D /* NSTextView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36D89F9A2CE6457B00BD1A5D /* NSTextView+Dejal.swift */; };
 		36EC0C9E2CDA4627003EBAD5 /* TFYSwiftLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0C9D2CDA4627003EBAD5 /* TFYSwiftLabel.swift */; };
 		36EC0CA02CDA4AE3003EBAD5 /* TFYSwiftButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0C9F2CDA4AE3003EBAD5 /* TFYSwiftButton.swift */; };
 		36EC0CA72CDA5812003EBAD5 /* TFYSwiftUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CA62CDA5812003EBAD5 /* TFYSwiftUtils.swift */; };
@@ -106,6 +107,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		36D89F9A2CE6457B00BD1A5D /* NSTextView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSTextView+Dejal.swift"; sourceTree = "<group>"; };
 		36EC0C9D2CDA4627003EBAD5 /* TFYSwiftLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftLabel.swift; sourceTree = "<group>"; };
 		36EC0C9F2CDA4AE3003EBAD5 /* TFYSwiftButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftButton.swift; sourceTree = "<group>"; };
 		36EC0CA62CDA5812003EBAD5 /* TFYSwiftUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftUtils.swift; sourceTree = "<group>"; };
@@ -229,6 +231,7 @@
 				3D04F8A32CDEEA40009493BF /* NSMenu+Dejal.swift */,
 				3D04F8AB2CDF2E51009493BF /* NSPopover+Dejal.swift */,
 				3D04F8B02CDF66E7009493BF /* NSGestureRecognizer+Dejal.swift */,
+				36D89F9A2CE6457B00BD1A5D /* NSTextView+Dejal.swift */,
 			);
 			path = macOScategory;
 			sourceTree = "<group>";
@@ -529,6 +532,7 @@
 				3D04F84A2CDCB269009493BF /* TFYSwiftCATextLayer.swift in Sources */,
 				3D04F80F2CDCA31F009493BF /* TFYSwiftNSTextField.swift in Sources */,
 				3D04F8102CDCA31F009493BF /* TFYSwiftNSColorWell.swift in Sources */,
+				36D89F9B2CE6457B00BD1A5D /* NSTextView+Dejal.swift in Sources */,
 				3D04F8112CDCA31F009493BF /* TFYSwiftNSStackView.swift in Sources */,
 				3D04F8122CDCA31F009493BF /* TFYSwiftNSRulerView.swift in Sources */,
 				3D04F8692CDDF747009493BF /* TFYSwiftLabel+Dejal.swift in Sources */,

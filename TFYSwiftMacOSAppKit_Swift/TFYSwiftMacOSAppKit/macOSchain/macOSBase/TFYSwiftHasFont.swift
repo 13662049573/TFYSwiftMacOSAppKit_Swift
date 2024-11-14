@@ -12,7 +12,7 @@ public protocol TFYSwiftHasFont: AnyObject {
     func set(font:NSFont)
 }
 
-extension NSTextView: TFYSwiftHasFont {
+extension NSText: TFYSwiftHasFont {
     
     public func set(font: NSFont) {
         self.font = font

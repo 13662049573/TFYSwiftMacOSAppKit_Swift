@@ -13,8 +13,6 @@ public protocol TFYSwiftHasText {
     
     func set(text: String)
     
-    func set(attributedText: NSAttributedString)
-    
     func set(color: NSColor?)
     
     func set(alignment: NSTextAlignment)
@@ -27,10 +25,6 @@ extension NSTextField: TFYSwiftHasText {
         self.stringValue = text
     }
     
-    public func set(attributedText: NSAttributedString) {
-        self.attributedStringValue = attributedText
-    }
-    
     public func set(color: NSColor?) {
         self.textColor = color
     }
@@ -41,14 +35,10 @@ extension NSTextField: TFYSwiftHasText {
 
 }
 
-extension NSTextView: TFYSwiftHasText {
+extension NSText: TFYSwiftHasText {
     
     public func set(text: String) {
         self.string = text
-    }
-    
-    public func set(attributedText: NSAttributedString) {
-        self.textStorage?.setAttributedString(attributedText)
     }
     
     public func set(color: NSColor?) {
@@ -65,10 +55,6 @@ extension NSButton: TFYSwiftHasText {
     
     public func set(text: String) {
         self.title = text
-    }
-    
-    public func set(attributedText: NSAttributedString) {
-        self.attributedTitle = attributedText
     }
     
     public func set(color: NSColor?) {
@@ -102,12 +88,6 @@ public extension Chain where Base: TFYSwiftHasText {
     @discardableResult
     func text(_ text: String) -> Chain {
         base.set(text: text)
-        return self
-    }
-    
-    @discardableResult
-    func attributedText(_ attributedText: NSAttributedString) -> Chain {
-        base.set(attributedText: attributedText)
         return self
     }
     

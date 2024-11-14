@@ -17,6 +17,12 @@ public extension Chain where Base: NSTextView {
     }
     
     @discardableResult
+    func attributedStringValue(_ attr: NSAttributedString) -> Self {
+        base.textStorage?.setAttributedString(attr)
+        return self
+    }
+    
+    @discardableResult
     func textContainerInset(_ size:NSSize) -> Self {
         base.textContainerInset = size
         return self

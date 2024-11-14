@@ -51,6 +51,21 @@ class ViewController: NSViewController {
         return filed
     }()
     
+    lazy var textView: NSTextView = {
+        let textView = NSTextView(frame: NSRect(x: 200, y: 100, width: 300, height: 300))
+        textView.chain
+            .editable(false)
+            .font(.systemFont(ofSize: 20, weight: .semibold))
+            .text("用户协议和隐私政策请您务必审值阅读、充分理解 “用户协议” 和 ”隐私政策” 各项条款，包括但不限于：为了向您提供即时通讯、内容分享等服务，我们需要收集您的设备信息、操作日志等个人信息。您可阅读《用户协议》和《隐私政策》了解详细信息。如果您同意，请点击 “同意” 开始接受我们的服务;")
+            .textColor(.red)
+            .wantsLayer(true)
+            .autoresizingMask([.width,.height])
+            .editable(false)
+            .drawsBackground(true)
+            .backgroundColor(.white)
+        return textView
+    }()
+    
     
     var clickGesture: NSClickGestureRecognizer!
     
@@ -61,6 +76,7 @@ class ViewController: NSViewController {
         view.addSubview(button)
         view.addSubview(lablel)
         view.addSubview(textfiled)
+        view.addSubview(textView)
         
         let color = NSColor(hexString: "F46734")
         
@@ -70,17 +86,21 @@ class ViewController: NSViewController {
         lablel.changeColors(with: [color, .blue], changeTexts: ["《用户协议》","《隐私政策》"])
         lablel.changeFonts(with: [.systemFont(ofSize: 20, weight: .bold)], changeTexts: ["《用户协议》","《隐私政策》"])
         
-        lablel.addTapAction(["《用户协议》","《隐私政策》"]) { title, range, index in
-            TFYLog("\(title), \(range),\(index)")
-        }
+//        lablel.addTapAction(["《用户协议》","《隐私政策》"]) { title, range, index in
+//            TFYLog("\(title), \(range),\(index)")
+//        }
         
         lablel.addGestureTap { reco in
-            reco.didTapAttributedText(linkDic: linkDic) { text, url,point in
-                TFYLog("\(text), \(url ?? "_"),\(point)")
+            reco.didTapAttributedText(linkDictionary: linkDic) { key, value, point, error in
+
             }
         }
-        
-        textfiled.stringValue = "\(String(describing: TFYSwiftUtils.getWiFiInfo().macAddress))--\(String(describing: TFYSwiftUtils.getWiFiInfo().wifiName))"
+   
+        textView.clickableTexts = linkDic
+        textView.tapCallback = { key, value, index in
+            print("Clicked key: \(key), value: \(value), at index: \(index)")
+        }
+        textView.setupClickDetection()
     }
     
     @objc func onClick(btn:NSButton) {

@@ -35,6 +35,12 @@ public extension Chain where Base: TFYSwiftTextField {
     }
     
     @discardableResult
+    func attributedStringValue(_ attr: NSAttributedString) -> Self {
+        base.attributedStringValue = attr
+        return self
+    }
+    
+    @discardableResult
     func drawsBackground(_ draws: Bool) -> Self {
         base.drawsBackground = draws
         return self

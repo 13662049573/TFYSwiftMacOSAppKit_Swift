@@ -16,11 +16,11 @@ public extension TFYSwiftLabel {
     }
     
     private struct AssociatedKeys {
-        static var hasTapActionEnabled: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "hasTapActionEnabled".hashValue)!
-        static var attributeStringModels: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "attributeStringModels".hashValue)!
-        static var tapActionBlock: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "tapActionBlock".hashValue)!
-        static var isTapEffectEnabled: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "isTapEffectEnabled".hashValue)!
-        static var effectDictionary: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "effectDictionary".hashValue)!
+        static var hasTapActionEnabled = UnsafeRawPointer(bitPattern: 1)!
+        static var attributeStringModels = UnsafeRawPointer(bitPattern: 2)!
+        static var tapActionBlock = UnsafeRawPointer(bitPattern: 3)!
+        static var isTapEffectEnabled = UnsafeRawPointer(bitPattern: 4)!
+        static var effectDictionary = UnsafeRawPointer(bitPattern: 5)!
     }
     
     // 模拟存储属性 hasTapActionEnabled
@@ -30,7 +30,7 @@ public extension TFYSwiftLabel {
             return value
         }
         set {
-            objc_setAssociatedObject(self, AssociatedKeys.hasTapActionEnabled, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, AssociatedKeys.hasTapActionEnabled, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
     
@@ -41,7 +41,7 @@ public extension TFYSwiftLabel {
             return value
         }
         set {
-            objc_setAssociatedObject(self, AssociatedKeys.attributeStringModels, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, AssociatedKeys.attributeStringModels, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
     
@@ -51,7 +51,7 @@ public extension TFYSwiftLabel {
             return objc_getAssociatedObject(self, AssociatedKeys.tapActionBlock) as? ((String, NSRange, Int) -> Void)
         }
         set {
-            objc_setAssociatedObject(self, AssociatedKeys.tapActionBlock, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, AssociatedKeys.tapActionBlock, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
     
@@ -64,7 +64,7 @@ public extension TFYSwiftLabel {
             return true
         }
         set {
-            objc_setAssociatedObject(self, AssociatedKeys.isTapEffectEnabled, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, AssociatedKeys.isTapEffectEnabled, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
     
@@ -105,7 +105,7 @@ public extension TFYSwiftLabel {
         tapActionBlock = tapAction
     }
     
-    // 重写鼠标按下事件
+    // 重写鼠标按���事件
     override func mouseDown(with event: NSEvent) {
         if hasTapActionEnabled == false {
             return
@@ -272,36 +272,32 @@ public extension TFYSwiftLabel {
     
     // 应用点击效果
     private func applyTapEffect(_ status: Bool) {
-        guard isTapEffectEnabled, let effectDic = effectDictionary,!effectDic.isEmpty else {
+        guard isTapEffectEnabled, let effectDic = effectDictionary, !effectDic.isEmpty else {
             return
         }
-        let attStr = NSMutableAttributedString(attributedString: attributedStringValue)
-        let subAtt = NSMutableAttributedString(attributedString: effectDic.values.first!)
-        let range = NSRangeFromString(effectDic.keys.first!)
         if status {
+            let attStr = NSMutableAttributedString(attributedString: attributedStringValue)
+            let subAtt = NSMutableAttributedString(attributedString: effectDic.values.first!)
+            let range = NSRangeFromString(effectDic.keys.first!)
             subAtt.addAttribute(.backgroundColor, value: NSColor.lightGray, range: NSMakeRange(0, subAtt.length))
             attStr.replaceCharacters(in: range, with: subAtt)
-        } else {
-            attStr.replaceCharacters(in: range, with: subAtt)
+            attributedStringValue = attStr
         }
-        attributedStringValue = attStr
     }
     
     // 启动定时器
     func timerStart(interval: Int = 60) {
         var time = interval
-        let codeTimer = DispatchSource.makeTimerSource(flags:.init(rawValue: 0), queue: DispatchQueue.global())
-        codeTimer.schedule(deadline:.now(), repeating:.milliseconds(1000))
+        let codeTimer = DispatchSource.makeTimerSource()
+        codeTimer.schedule(deadline: .now(), repeating: .seconds(1))
         codeTimer.setEventHandler {
-            time -= 1
             DispatchQueue.main.async {
+                time -= 1
                 self.isEnabled = time <= 0
-                if time > 0 {
-                    self.stringValue = "剩余\(time)s"
-                    return
+                self.stringValue = time > 0 ? "剩余\(time)s" : "发送验证码"
+                if time <= 0 {
+                    codeTimer.cancel()
                 }
-                codeTimer.cancel()
-                self.stringValue = "发送验证码"
             }
         }
         codeTimer.resume()
@@ -338,15 +334,22 @@ public extension String {
 public extension String {
     @discardableResult
     func exMatchStrRange(_ matchStr: String) -> [NSRange] {
-        var selfStr = self as NSString
-        var withStr = Array(repeating: "X", count: (matchStr as NSString).length).joined(separator: "") //辅助字符串
-        if matchStr == withStr { withStr = withStr.lowercased() } //临时处理辅助字符串差错
-        var allRange = [NSRange]()
-        while selfStr.range(of: matchStr).location != NSNotFound {
-            let range = selfStr.range(of: matchStr)
-            allRange.append(NSRange(location: range.location,length: range.length))
-            selfStr = selfStr.replacingCharacters(in: NSMakeRange(range.location, range.length), with: withStr) as NSString
+        var ranges = [NSRange]()
+        var start = utf16.startIndex
+        while start < utf16.endIndex {
+            let substring = String(utf16[start...])
+            if let range = substring!.range(of: matchStr) {
+                let nsRange = NSRange(range, in: substring!)
+                ranges.append(NSRange(location: nsRange.location + start.utf16Offset(in: self), length: nsRange.length))
+                if let rangeEnd = range.upperBound.samePosition(in: utf16) {
+                    start = rangeEnd
+                } else {
+                    break
+                }
+            } else {
+                break
+            }
         }
-        return allRange
+        return ranges
     }
 }

@@ -217,15 +217,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		36EC0CA32CDA55F2003EBAD5 /* macOSGcd */ = {
-			isa = PBXGroup;
-			children = (
-				36EC0CAC2CDA6513003EBAD5 /* TFYSwiftGCD.swift */,
-				36EC0CAE2CDA6600003EBAD5 /* TFYSwiftTimer.swift */,
-			);
-			path = macOSGcd;
-			sourceTree = "<group>";
-		};
 		36EC0CB22CDB9284003EBAD5 /* macOScategory */ = {
 			isa = PBXGroup;
 			children = (
@@ -286,6 +277,8 @@
 		3D04F74E2CDA0FAA009493BF /* macOSUtils */ = {
 			isa = PBXGroup;
 			children = (
+				36EC0CAC2CDA6513003EBAD5 /* TFYSwiftGCD.swift */,
+				36EC0CAE2CDA6600003EBAD5 /* TFYSwiftTimer.swift */,
 				36EC0CA62CDA5812003EBAD5 /* TFYSwiftUtils.swift */,
 				3D04F7512CDA1020009493BF /* TFYSwiftTextFieldCell.swift */,
 				3D04F7532CDA1275009493BF /* TFYSwiftSecureTextFieldCell.swift */,
@@ -304,7 +297,6 @@
 			isa = PBXGroup;
 			children = (
 				3D04F75B2CDAEA2D009493BF /* macOSStatusItem */,
-				36EC0CA32CDA55F2003EBAD5 /* macOSGcd */,
 				3D04F74E2CDA0FAA009493BF /* macOSUtils */,
 			);
 			path = macOScontainer;

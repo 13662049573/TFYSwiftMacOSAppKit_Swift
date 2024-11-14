@@ -3,7 +3,7 @@ Pod::Spec.new do |spec|
 
   spec.name         = "TFYSwiftMacOSAppKit"
 
-  spec.version      = "1.1.0"
+  spec.version      = "1.1.1"
 
   spec.summary      = "swift 版纯代码进行写macOS 开发，封装库。基本组件。最低支持Mac 12.4"
 
@@ -60,10 +60,6 @@ Pod::Spec.new do |spec|
 
   spec.subspec 'macOScontainer' do |ss|
     ss.source_files  = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/*.{swift}"
-
-    ss.subspec 'macOSGcd' do |sss|
-       sss.source_files  = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSGcd/*.{swift}"
-    end
 
     ss.subspec 'macOSStatusItem' do |sss|
        sss.source_files  = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/*.{swift}"

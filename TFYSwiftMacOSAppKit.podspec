@@ -34,14 +34,6 @@ Pod::Spec.new do |spec|
 
   spec.subspec 'macOScontainer' do |ss|
     ss.source_files  = "TFYSwiftMacOSAppKit/macOScontainer/**/*.{swift}"
-
-    ss.subspec 'macOSStatusItem' do |sss|
-       sss.source_files  = "TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/**/*.{swift}"
-    end
-
-    ss.subspec 'macOSUtils' do |sss|
-       sss.source_files  = "TFYSwiftMacOSAppKit/macOScontainer/macOSUtils/**/*.{swift}"
-    end
   end
 
 end

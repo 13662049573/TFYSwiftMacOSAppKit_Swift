@@ -22,7 +22,6 @@ extension NSTextView {
         }
         set {
             objc_setAssociatedObject(self, AssociatedKeys.clickableTextsKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-            updateTextStorage() // 更新文本存储
         }
     }
     
@@ -34,21 +33,6 @@ extension NSTextView {
         set {
             objc_setAssociatedObject(self, AssociatedKeys.tapCallbackKey, newValue, .OBJC_ASSOCIATION_COPY_NONATOMIC)
         }
-    }
-    
-    // 使用可点击文本更新文本存储
-    private func updateTextStorage() {
-        let fullAttributedString = NSMutableAttributedString()
-        clickableTexts.forEach { key, _ in
-            let attributedString = NSAttributedString(string: key + " ", attributes: [
-                .link: key, // 链接属性
-                .foregroundColor: NSColor.blue, // 文本颜色
-                .underlineStyle: NSUnderlineStyle.single.rawValue // 下划线样式
-            ])
-            fullAttributedString.append(attributedString)
-        }
-        self.textStorage?.setAttributedString(fullAttributedString)
-        setupAutomaticLineWrapping()  // Ensure line wrapping is setup after updating text
     }
     
     // 设置手势识别器以检测点击
@@ -82,5 +66,66 @@ extension NSTextView {
                 currentIndex += 1
             }
         }
+    }
+}
+
+extension NSTextView {
+    // NSTextView 富文本点击处理
+    func didTapAttributedText(linkDictionary: [String: String], action: @escaping (String?, String?, CGPoint?) -> Void) {
+        let attributedText = self.attributedString()
+        let layoutManager = configureLayoutManager(for: self, with: attributedText)
+
+        // 假设 lastMouseDownEvent 是最近一次鼠标点击事件
+        if let event = self.window?.currentEvent, event.type == .leftMouseDown {
+            let locationOfTouchInTextContainer = calculateTouchLocation(event: event, with: layoutManager)
+
+            if let characterIndex = findCharacterIndex(at: locationOfTouchInTextContainer, using: layoutManager),
+               let (key, value) = findLink(at: characterIndex, in: linkDictionary, with: attributedText) {
+                action(key, value, locationOfTouchInTextContainer)
+            } else {
+                action(nil, nil, nil)
+            }
+        }
+    }
+
+    private func configureLayoutManager(for textView: NSTextView, with attributedText: NSAttributedString) -> NSLayoutManager {
+        let layoutManager = NSLayoutManager()
+        let textContainer = NSTextContainer(size: textView.bounds.size)
+        let textStorage = NSTextStorage(attributedString: attributedText)
+
+        layoutManager.addTextContainer(textContainer)
+        textStorage.addLayoutManager(layoutManager)
+
+        textContainer.lineFragmentPadding = 0
+        textContainer.lineBreakMode = .byWordWrapping
+        return layoutManager
+    }
+
+    private func calculateTouchLocation(event: NSEvent, with layoutManager: NSLayoutManager) -> CGPoint {
+        let locationOfTouchInWindow = event.locationInWindow
+        let locationOfTouchInTextView = self.convert(locationOfTouchInWindow, from: nil)
+        let textContainer = layoutManager.textContainers.first!
+        let textBoundingBox = layoutManager.usedRect(for: textContainer)
+        let textContainerOffset = CGPoint(x: (self.bounds.width - textBoundingBox.size.width) * 0.5 - textBoundingBox.origin.x,
+                                          y: (self.bounds.height - textBoundingBox.size.height) * 0.5 - textBoundingBox.origin.y)
+        return CGPoint(x: locationOfTouchInTextView.x - textContainerOffset.x,
+                       y: locationOfTouchInTextView.y - textContainerOffset.y)
+    }
+
+    private func findCharacterIndex(at location: CGPoint, using layoutManager: NSLayoutManager) -> Int? {
+        guard let textContainer = layoutManager.textContainers.first else { return nil }
+        let glyphIndex = layoutManager.glyphIndex(for: location, in: textContainer, fractionOfDistanceThroughGlyph: nil)
+        return glyphIndex != NSNotFound ? layoutManager.characterIndexForGlyph(at: glyphIndex) : nil
+    }
+
+    private func findLink(at characterIndex: Int, in linkDictionary: [String: String], with attributedText: NSAttributedString) -> (String, String?)? {
+        let nsString = attributedText.string as NSString
+        for (key, value) in linkDictionary {
+            let range = nsString.range(of: key)
+            if NSLocationInRange(characterIndex, range) {
+                return (key, value)
+            }
+        }
+        return nil
     }
 }

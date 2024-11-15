@@ -139,4 +139,23 @@ public extension NSTextField {
         }
         return obj
     }
+    
+    // 启动定时器
+    func timerStart(interval: Int = 60) {
+        var time = interval
+        let codeTimer = DispatchSource.makeTimerSource()
+        codeTimer.schedule(deadline: .now(), repeating: .seconds(1))
+        codeTimer.setEventHandler {
+            DispatchQueue.main.async {
+                time -= 1
+                self.isEnabled = time <= 0
+                self.stringValue = time > 0 ? "剩余\(time)s" : "发送验证码"
+                if time <= 0 {
+                    codeTimer.cancel()
+                }
+            }
+        }
+        codeTimer.resume()
+    }
+    
 }

@@ -6,250 +6,486 @@
 //  Copyright © 2024 TFYSwift. All rights reserved.
 //
 
-import Cocoa
-import System
-import SystemConfiguration
-import CoreTelephony
-import QuartzCore
-import Network
+import Foundation
 import CoreWLAN
-import SystemConfiguration.CaptiveNetwork
-import Darwin
+import SystemConfiguration
+import Network
+import CoreLocation
+import NetworkExtension
+import IOKit
 
-// 日志打印工具函数，用于在 DEBUG 环境下打印详细的日志信息并写入文件。
-public func TFYLog(_ msg: Any...,
-                    file: NSString = #file,
-                    line: Int = #line,
-                    column: Int = #column,
-                    fn: String = #function) {
-    // 如果是 DEBUG 环境
-    #if DEBUG
-    // 将传入的多个参数转换为字符串并拼接在一起，每个参数占一行。
-    var msgStr = ""
-    for element in msg {
-        msgStr += "\(element)\n"
-    }
-    // 构建日志信息的前缀，包含当前时间、文件路径、行数、列数、函数名和打印内容。
-    let prefix = "----------------######################----begin🚀----##################----------------\n当前时间：\(NSDate())\n当前文件完整的路径是：\(file)\n当前文件是：\(file.lastPathComponent)\n第 \(line) 行 \n第 \(column) 列 \n函数名：\(fn)\n打印内容如下：\n\(msgStr)----------------######################----end😊----##################----------------"
-    print(prefix)
-    // 将内容同步写到文件中去（Caches 文件夹下）。
-    let cachePath = CachesDirectory()
-    let logURL = cachePath + "/log.txt"
-    appendText(fileURL: URL(string: logURL)!, string: "\(prefix)")
-    #endif
-}
-
-// 获取程序的/Library/Caches 目录路径。
-private func CachesDirectory() -> String {
-    let cachesPath = NSHomeDirectory() + "/Library/Caches"
-    return cachesPath
-}
-
-// 在文件末尾追加新内容的函数。
-private func appendText(fileURL: URL, string: String) {
-    do {
-        // 如果文件不存在则新建一个。
-        createFile(filePath: fileURL.path)
-        let fileHandle = try FileHandle(forWritingTo: fileURL)
-        let stringToWrite = "\n" + string
-        // 找到文件末尾位置并添加新内容。
-        fileHandle.seekToEndOfFile()
-        fileHandle.write(stringToWrite.data(using: String.Encoding.utf8)!)
-    } catch let error as NSError {
-        print("failed to append: \(error)")
-    }
-}
-
-// 判断文件或文件夹是否存在的函数。
-private func judgeFileOrFolderExists(filePath: String) -> Bool {
-    let exist = FileManager.default.fileExists(atPath: filePath)
-    // 查看文件夹是否存在，如果存在就直接读取，不存在就直接返回 false。
-    guard exist else {
-        return false
-    }
-    return true
-}
-
-// 创建文件的函数，如果文件已存在则直接返回成功状态，否则创建文件并返回创建结果。
-@discardableResult
-private func createFile(filePath: String) -> (isSuccess: Bool, error: String) {
-    guard !judgeFileOrFolderExists(filePath: filePath) else {
-        // 如果文件已存在，直接返回成功状态。
-        return (true, "")
-    }
-    // 创建文件，withIntermediateDirectories 为 ture 表示路径中间如果有不存在的文件夹都会创建。
-    let createSuccess = FileManager.default.createFile(atPath: filePath, contents: nil, attributes: nil)
-    return (createSuccess, "")
-}
-
-public class TFYSwiftUtils: NSObject {
+// MARK: - Network Utilities Class
+public final class TFYSwiftUtils: NSObject, CLLocationManagerDelegate {
     
-    // 获取本机 IP 的静态方法。
-    public static func getIPAddress() -> String? {
-        var addresses = [String]()
-        var ifaddr: UnsafeMutablePointer<ifaddrs>? = nil
-        // 获取系统中的网络接口信息。
-        if getifaddrs(&ifaddr) == 0 {
+    static let IOS_CELLULAR = "pdp_ip0"
+    static let IOS_WIFI = "en0"
+    static let IOS_VPN = "utun0"
+    static let IP_ADDR_IPv4 = "ipv4"
+    static let IP_ADDR_IPv6 = "ipv6"
+    
+    // MARK: - Types
+    public struct NetworkInfo {
+        let name: String?
+        let ip: String?
+        let macAddress: String?
+    }
+    
+    // MARK: - Properties
+    private static let shared = TFYSwiftUtils()
+    private var locationManager: CLLocationManager?
+    private var wifiNameCompletion: ((String?) -> Void)?
+    
+    // MARK: - Initialization
+    override init() {
+        super.init()
+        setupLocationManager()
+    }
+    
+    // MARK: - Setup Location Manager
+    private func setupLocationManager() {
+        locationManager = CLLocationManager()
+        locationManager?.delegate = self
+        locationManager?.requestWhenInUseAuthorization()  // Adjust based on your app's requirement
+    }
+    
+    // MARK: - CLLocationManagerDelegate
+    public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        print("Authorization status changed")
+        checkLocationAuthorization(manager: manager)
+    }
+    
+    private func checkLocationAuthorization(manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            handleLocationPermissionGranted()
+        case .denied, .restricted, .notDetermined:
+            completeWithFailure()
+        @unknown default:
+            fatalError("Unhandled case in location authorization status")
+        }
+    }
+    
+    public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        completeWithFailure()
+    }
+    
+    // MARK: - Public Method to Get WiFi Information
+    public static func getWiFiInfo(completion: @escaping (NetworkInfo) -> Void) {
+        shared.getWiFiName { name in
+            let ip = getWiFiIP()
+            let macAddress = getMacAddress()
+            let info = NetworkInfo(
+                name: name,
+                ip: ip,
+                macAddress: macAddress
+            )
+            completion(info)
+        }
+    }
+    
+    // MARK: - Private Method to Get WiFi Name
+    private func getWiFiName(completion: @escaping (String?) -> Void) {
+        if let name = try? Self.getWiFiNameUsingCWWiFiClient() {
+            completion(name)
+            return
+        }
+        wifiNameCompletion = completion
+        requestLocationPermission()
+    }
+    
+    private static func getWiFiNameUsingCWWiFiClient() throws -> String? {
+        CWWiFiClient.shared().interface()?.ssid()
+    }
+    
+    private func requestLocationPermission() {
+        locationManager?.requestWhenInUseAuthorization()
+    }
+    
+    private func handleLocationPermissionGranted() {
+        if let name = try? Self.getWiFiNameUsingCWWiFiClient() {
+            wifiNameCompletion?(name)
+        } else {
+            completeWithFailure()
+        }
+    }
+    
+    private func completeWithFailure() {
+        wifiNameCompletion?(nil)
+        wifiNameCompletion = nil
+    }
+    
+    // MARK: - Private Method to Get WiFi IP Address
+    private static func getWiFiIP() -> String? {
+        guard let sock = createSocket() else { return nil }
+        defer { close(sock) }
+        guard let addr = createSocketAddress(),
+              connectSocket(sock, addr) else {
+            return nil
+        }
+        return getLocalAddress(for: sock)
+    }
+
+    // MARK: - Private Helper Methods for Socket Operations
+    private static func createSocket() -> Int32? {
+        let sock = socket(AF_INET, SOCK_DGRAM, 0)
+        return sock != -1 ? sock : nil
+    }
+
+    private static func createSocketAddress() -> sockaddr_in? {
+        var addr = sockaddr_in()
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_addr.s_addr = inet_addr("8.8.8.8") // Google DNS
+        addr.sin_port = UInt16(53).bigEndian        // DNS port
+        return addr
+    }
+
+    private static func connectSocket(_ sock: Int32, _ addr: sockaddr_in) -> Bool {
+        var addr = addr
+        let connectResult = withUnsafePointer(to: &addr) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                connect(sock, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        return connectResult != -1
+    }
+
+    private static func getLocalAddress(for sock: Int32) -> String? {
+        var localAddr = sockaddr_in()
+        var len = socklen_t(MemoryLayout<sockaddr_in>.size)
+        
+        let getsockResult = withUnsafeMutablePointer(to: &localAddr) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                getsockname(sock, $0, &len)
+            }
+        }
+        guard getsockResult != -1 else { return nil }
+        
+        var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+        let result = withUnsafePointer(to: &localAddr) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                getnameinfo($0, len, &hostname, socklen_t(hostname.count), nil, 0, NI_NUMERICHOST)
+            }
+        }
+        return result == 0 ? String(cString: hostname) : nil
+    }
+    
+    // MARK: - Private Method to Get MAC Address
+    private static func getMacAddress() -> String? {
+        let matching = IOServiceMatching("IOEthernetInterface") as NSMutableDictionary
+        var iterator: io_iterator_t = 0
+        guard IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator) == KERN_SUCCESS else {
+            return nil
+        }
+        defer { IOObjectRelease(iterator) }
+        
+        var macAddress: String?
+        repeat {
+            let service = IOIteratorNext(iterator)
+            guard service != 0 else { break }
+            defer { IOObjectRelease(service) }
+            
+            var parentService: io_object_t = 0
+            guard IORegistryEntryGetParentEntry(service, kIOServicePlane, &parentService) == KERN_SUCCESS else {
+                continue
+            }
+            defer { IOObjectRelease(parentService) }
+            
+            if let macData = IORegistryEntryCreateCFProperty(parentService, "IOMACAddress" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? Data {
+                macAddress = macData.map { String(format: "%02x", $0) }.joined(separator: ":")
+                break
+            }
+        } while true
+        
+        return macAddress
+    }
+    
+    // MARK: - Get Device Current Network IP Address
+        static func getIPAddress(preferIPv4: Bool) -> String {
+            let searchArray = preferIPv4 ?
+                [IOS_VPN + "/" + IP_ADDR_IPv4, IOS_VPN + "/" + IP_ADDR_IPv6, IOS_WIFI + "/" + IP_ADDR_IPv4, IOS_WIFI + "/" + IP_ADDR_IPv6, IOS_CELLULAR + "/" + IP_ADDR_IPv4, IOS_CELLULAR + "/" + IP_ADDR_IPv6] :
+                [IOS_VPN + "/" + IP_ADDR_IPv6, IOS_VPN + "/" + IP_ADDR_IPv4, IOS_WIFI + "/" + IP_ADDR_IPv6, IOS_WIFI + "/" + IP_ADDR_IPv4, IOS_CELLULAR + "/" + IP_ADDR_IPv6, IOS_CELLULAR + "/" + IP_ADDR_IPv4]
+
+            guard let addresses = getIPAddresses() else {
+                TFYLogger.log("没有找到IP地址。")
+                return ""
+            }
+            for key in searchArray {
+                if let address = addresses[key], isValidatIP(ipAddress: address) {
+                    TFYLogger.log("找到有效IP: \(address)")
+                    return address
+                }
+            }
+            TFYLogger.log("在搜索数组中找不到有效的IP地址。")
+            return ""
+        }
+
+        static func isValidatIP(ipAddress: String) -> Bool {
+            let urlRegEx = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$"
+            let regex = try? NSRegularExpression(pattern: urlRegEx, options: [])
+            if let match = regex?.firstMatch(in: ipAddress, options: [], range: NSRange(location: 0, length: ipAddress.utf16.count)) {
+                return match.range.location != NSNotFound
+            }
+            return false
+        }
+
+        static func getIPAddresses() -> [String: String]? {
+            var addresses = [String: String]()
+            var ifaddr: UnsafeMutablePointer<ifaddrs>?
+            guard getifaddrs(&ifaddr) == 0 else {
+                TFYLogger.log("日志含义获取网络接口失败。")
+                return nil
+            }
             var ptr = ifaddr
             while ptr != nil {
-                let flags = Int32(ptr!.pointee.ifa_flags)
-                var addr = ptr!.pointee.ifa_addr.pointee
-                // 检查接口是否处于活动状态且不是回环接口。
-                if (flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK)) == (IFF_UP | IFF_RUNNING) {
-                    // 检查接口地址类型是 IPV4 或 IPV6。
-                    if addr.sa_family == UInt8(AF_INET) || addr.sa_family == UInt8(AF_INET6) {
-                        var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                        // 将接口地址转换为人类可读的字符串形式。
-                        if getnameinfo(&addr, socklen_t(addr.sa_len), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST) == 0 {
-                            if let address = String(validatingUTF8: hostname) {
-                                addresses.append(address)
-                            }
-                        }
+                defer { ptr = ptr?.pointee.ifa_next }
+
+                let interface = ptr!.pointee
+                let addrFamily = interface.ifa_addr.pointee.sa_family
+                if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
+                    let flags = Int32(interface.ifa_flags)
+                    if (flags & IFF_UP) == 0 {
+                        continue // Interface is not up
                     }
-                }
-                ptr = ptr!.pointee.ifa_next
-            }
-            // 释放获取到的网络接口信息内存。
-            freeifaddrs(ifaddr)
-        }
-        // 返回第一个找到的 IP 地址，如果没有则返回 nil。
-        return addresses.first
-    }
 
-    // 获取连接wifi的IP地址的静态方法，支持macOS 12以上
-    public static func getWiFiIP() -> String? {
-        var address: String?
-        // 获取系统中的网络接口信息
-        var ifaddr: UnsafeMutablePointer<ifaddrs>? = nil
-
-        // 获取网络接口信息，若失败则打印错误并返回nil
-        let result = getifaddrs(&ifaddr)
-        if result != 0 {
-            print("获取网络接口信息失败，错误码：\(result)")
-            return nil
-        }
-
-        var currentAddr = ifaddr
-        // 遍历网络接口信息
-        while let addr = currentAddr {
-            let interface = addr.pointee
-            // 检查接口地址类型是IPV4或IPV6
-            let addrFamily = interface.ifa_addr.pointee.sa_family
-            if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
-                // 检查接口名称是否为en0或其他可能的无线接口名称
-                let name = String(cString: interface.ifa_name)
-                if name == "en0" || name == "en1" || name == "en2" {
+                    var addr = interface.ifa_addr.pointee
                     var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                    // 将接口地址转换为人类可读的字符串形式
-                    if getnameinfo(&interface.ifa_addr.pointee, socklen_t(interface.ifa_addr.pointee.sa_len), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST) == 0 {
-                        address = String(cString: hostname)
-                        // 找到符合条件的接口并获取到IP地址后，释放已遍历过的网络接口信息内存
-                        freeifaddrs(ifaddr)
-                        return address
+                    if getnameinfo(&addr, socklen_t(interface.ifa_addr.pointee.sa_len), &hostname, socklen_t(hostname.count), nil, 0, NI_NUMERICHOST) == 0 {
+                        let address = String(cString: hostname)
+                        let name = String(cString: interface.ifa_name)
+                        let type = addrFamily == UInt8(AF_INET) ? IP_ADDR_IPv4 : IP_ADDR_IPv6
+                        let key = name + "/" + type
+                        addresses[key] = address
+                        TFYLogger.log("接口： \(name) 地址： \(address)")
                     }
                 }
             }
-            currentAddr = addr.pointee.ifa_next
+            freeifaddrs(ifaddr)
+            if addresses.isEmpty {
+                TFYLogger.log("没有IP地址被填充。")
+            }
+            return addresses.isEmpty ? nil : addresses
+        }
+    
+    // Fetch the raw device model string using sysctlbyname
+        func getRawDeviceModel() -> String {
+            var size: size_t = 0
+            sysctlbyname("hw.model", nil, &size, nil, 0)
+            var machine = Array<CChar>(repeating: 0, count: size)
+            sysctlbyname("hw.model", &machine, &size, nil, 0)
+            return String(cString: machine)
         }
 
-        // 释放获取到的网络接口信息内存，如果循环结束未找到符合条件的接口
-        freeifaddrs(ifaddr)
-        return address
+        // Convert the raw device model string to a friendly device name
+    func convertToFriendlyDeviceModel(_ rawModel: String) -> String {
+        switch rawModel {
+        // M1 Models
+        case "Macmini9,1":
+            return "Mac mini (M1, 2020)"
+        case "iMac21,1", "iMac21,2":
+            return "iMac (24-inch, M1, 2021)"
+        case "MacBookAir10,1":
+            return "MacBook Air (M1, 2020)"
+        case "MacBookPro17,1":
+            return "MacBook Pro (13-inch, M1, 2020)"
+
+        // M2 Models
+        case "Mac14,2":
+            return "MacBook Air (M2, 2022)"
+        case "Mac14,7":
+            return "MacBook Pro (13-inch, M2, 2022)"
+        case "Mac14,5", "Mac14,9":
+            return "MacBook Pro (14-inch, M2, 2023)"
+        case "Mac14,6", "Mac14,10":
+            return "MacBook Pro (16-inch, M2, 2023)"
+        case "Mac14,8":
+            return "MacBook Air (15-inch, M2, 2023)"
+
+        // Speculative M3 Models
+        case "Mac15,12":
+            return "MacBook Air (13-inch, M3, 2024)"
+        case "Mac15,13":
+            return "MacBook Air (15-inch, M3, 2024)"
+
+        // Speculative M4 Models
+        case "Mac17,1":
+            return "MacBook Pro (M4, 2025)"  // Hypothetical model
+        case "Mac17,2":
+            return "MacBook Air (M4, 2025)"  // Hypothetical model
+
+        // Other Models
+        case "iMac18,1", "iMac18,2":
+            return "iMac (Retina 4K, 21.5-inch, 2017)"
+        case "iMac18,3":
+            return "iMac (Retina 5K, 27-inch, 2017)"
+        case "iMacPro1,1":
+            return "iMac Pro (2017)"
+        case "iMac19,1":
+            return "iMac (Retina 5K, 27-inch, 2020)"
+        case "iMac19,2":
+            return "iMac (Retina 4K, 21.5-inch, 2020)"
+        case "iMac20,1", "iMac20,2":
+            return "iMac (Retina 5K, 27-inch, 2020)"
+        case "MacBookPro14,1", "MacBookPro14,2", "MacBookPro14,3":
+            return "MacBook Pro 2017"
+        case "MacBookPro15,1", "MacBookPro15,2", "MacBookPro15,3":
+            return "MacBook Pro 2018"
+        case "MacBookPro15,4":
+            return "MacBook Pro 2019 (Butterfly Keyboard)"
+        case "MacBookPro16,1", "MacBookPro16,4":
+            return "MacBook Pro 2019 (Magic Keyboard)"
+        case "MacBookPro16,2", "MacBookPro16,3":
+            return "MacBook Pro 2020"
+        case "MacBookAir7,2":
+            return "MacBook Air 2017"
+        case "MacBookAir8,1":
+            return "MacBook Air 2018"
+        case "MacBookAir8,2":
+            return "MacBook Air 2019"
+        case "MacBookAir9,1":
+            return "MacBook Air 2020"
+        case "Macmini7,1":
+            return "Mac mini (Late 2014)"
+        case "Macmini8,1":
+            return "Mac mini 2018"
+        case "MacPro7,1":
+            return "Mac Pro 2019"
+        default:
+            return "Unknown"
+        }
+    }
+
+        // Get device model and convert to friendly name
+        func getDeviceModel() -> String {
+            let rawModel = getRawDeviceModel()
+            return convertToFriendlyDeviceModel(rawModel)
+        }
+
+        // Get the current system version string
+        func systemVersion() -> String {
+            return ProcessInfo.processInfo.operatingSystemVersionString
+        }
+
+        // Get the application version string
+        func version() -> String {
+            return Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
+        }
+
+        // Get the device name
+        func deviceName() -> String {
+            return Host.current().localizedName ?? "Unknown"
+        }
+
+        // Get or generate a unique device identifier (UUID)
+        func uuid() -> String {
+            let defaults = UserDefaults.standard
+            if let storedUUID = defaults.string(forKey: "deviceID") {
+                return storedUUID
+            } else {
+                let newUUID = UUID().uuidString
+                defaults.set(newUUID, forKey: "deviceID")
+                return newUUID
+            }
+        }
+    
+}
+
+// MARK: - Usage Example
+extension TFYSwiftUtils {
+    public static func printNetworkInfo() {
+        getWiFiInfo { info in
+            TFYLogger.log("""
+            Network Information:
+            WiFi Name: \(info.name ?? "Unknown")
+            IP Address: \(info.ip ?? "Unknown")
+            MAC Address: \(info.macAddress ?? "Unknown")
+            """)
+        }
+    }
+}
+
+// MARK: - App Update Checker
+public final class TFYAppUpdateChecker {
+    public static func checkForUpdate(appID: String) async throws -> (isUpdated: Bool, newVersion: String?) {
+        let url = URL(string: "https://itunes.apple.com/lookup?id=\(appID)")!
+        
+        let (data, _) = try await URLSession.shared.data(from: url)
+        
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let results = json["results"] as? [[String: Any]],
+              let firstResult = results.first,
+              let version = firstResult["version"] as? String else {
+            throw NSError(domain: "AppUpdateError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])
+        }
+        
+        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+        return (currentVersion == version, version)
+    }
+}
+
+// MARK: - Logger
+public struct TFYLogger {
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+        return formatter
+    }()
+    
+    private static let logQueue = DispatchQueue(label: "com.tfy.logger")
+    
+    public static func log(_ items: Any...,
+                          file: String = #file,
+                          line: Int = #line,
+                          column: Int = #column,
+                          function: String = #function) {
+        #if DEBUG
+        logQueue.async {
+            let timestamp = dateFormatter.string(from: Date())
+            let fileName = (file as NSString).lastPathComponent
+            let message = items.map { "\($0)" }.joined(separator: "\n")
+            
+            let logMessage = """
+            ----------------######################----begin🚀----##################----------------
+            时间: \(timestamp)
+            文件: \(fileName)
+            行号: \(line)
+            列号: \(column)
+            函数: \(function)
+            内容:
+            \(message)
+            ----------------######################----end😊----##################----------------
+            
+            """
+            
+            print(logMessage)
+            writeToFile(logMessage)
+        }
+        #endif
     }
     
-    // 函数用于获取所有网络接口信息，返回可选的接口信息数组
-    private static func getSupportedInterfaces() -> [CFString]? {
-        guard let interfaces = CNCopySupportedInterfaces() as? [CFString] else {
-            print("获取网络接口信息失败，错误码： \(errno)")
+    private static func writeToFile(_ message: String) {
+        guard let logFileURL = getLogFileURL() else { return }
+        
+        do {
+            if !FileManager.default.fileExists(atPath: logFileURL.path) {
+                try "".write(to: logFileURL, atomically: true, encoding: .utf8)
+            }
+            
+            let handle = try FileHandle(forWritingTo: logFileURL)
+            defer { handle.closeFile() }
+            
+            handle.seekToEndOfFile()
+            if let data = message.data(using: .utf8) {
+                handle.write(data)
+            }
+        } catch {
+            print("Error writing to log file: \(error)")
+        }
+    }
+    
+    private static func getLogFileURL() -> URL? {
+        guard let cachesDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
             return nil
         }
-        return interfaces
-    }
-
-    // 获取连接wifi的名字和mac地址的静态方法，支持macOS 12以上
-    public static func getWiFiInfo() -> (wifiName: String?, macAddress: String?) {
-        // 用于存储WiFi名称和MAC地址
-        var wifiName: String?
-        var macAddress: String?
-
-        // 获取所有网络接口信息
-        if let interfaces = getSupportedInterfaces() {
-            for interface in interfaces {
-                // 获取指定接口的详细信息
-                var interfaceInfo: [String: Any]?
-                let interfaceData = SCDynamicStoreCopyValue(nil, "State:/InternetInterface/\(interface)/IPv4" as CFString)
-                if let interfaceData = interfaceData as? [String: Any] {
-                    interfaceInfo = interfaceData
-                }
-
-                // 检查是否是Wi-Fi接口（通常以"en"开头）
-                if let interfaceInfo = interfaceInfo,
-                   let interfaceName = interfaceInfo["Interface"] as? String,
-                   interfaceName.hasPrefix("en") {
-
-                    // 获取Wi-Fi客户端实例，将其声明为可选类型并处理初始化失败情况
-                    var wlanClient: CWWiFiClient?
-                    wlanClient = CWWiFiClient()
-
-                    guard let unwrappedWlanClient = wlanClient else {
-                        print("创建CWWiFiClient实例失败")
-                        continue
-                    }
-
-                    // 获取WiFi接口实例并处理可能为nil的情况
-                    guard let wifiInterface = unwrappedWlanClient.interface() else {
-                        print("获取WiFi接口失败")
-                        continue
-                    }
-
-                    // 获取wifi的SSID数据并转换为字符串。
-                    if let ssidData = wifiInterface.ssidData() {
-                        if let ssidString = String(data: ssidData, encoding:.utf8) {
-                            wifiName = ssidString
-                        }
-                    }
-
-                    // 获取wifi的硬件地址并转换为字符串格式。
-                    if let macAddressData = wifiInterface.hardwareAddress() {
-                        macAddress = macAddressData.map { String(format: "%02x:", $0 as! CVarArg) }.joined(separator: "")
-                        macAddress?.removeLast() // 移除最后一个冒号
-                    }
-
-                    break
-                }
-            }
-        } else {
-            // 如果获取网络接口信息失败，这里可以根据具体需求进行更多处理，比如返回特定的错误值或进行其他提示操作
-            print("无法继续获取WiFi信息，因为获取网络接口信息失败。")
-            // 示例：返回特定的错误值表示获取失败
-            return (nil, nil)
-        }
-
-        return (wifiName, macAddress)
-    }
-    
-    
-    // 检查应用是否有更新的静态方法，传入应用 ID 和回调函数，回调函数返回是否有更新以及新版本号（如果有）。
-    public static func checkForAppUpdate(appID: String, completion: @escaping (_ isUpdated: Bool, _ newVersion: String?) -> Void) {
-        let url = URL(string: "https://itunes.apple.com/lookup?id=\(appID)")!
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            guard let data = data, error == nil else {
-                completion(false, "无法连接到 App Store")
-                return
-            }
-            do {
-                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let results = json["results"] as? [Any],
-                   let firstResult = results.first as? [String: Any],
-                   let version = firstResult["version"] as? String {
-                    let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
-                    completion(currentVersion == version, version)
-                } else {
-                    completion(false, "无法获取版本信息")
-                }
-            } catch {
-                completion(false, "解析错误: \(error.localizedDescription)")
-            }
-        }.resume()
+        return cachesDirectory.appendingPathComponent("log.txt")
     }
 }

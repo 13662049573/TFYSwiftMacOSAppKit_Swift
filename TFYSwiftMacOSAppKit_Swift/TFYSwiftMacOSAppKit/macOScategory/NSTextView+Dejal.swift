@@ -22,7 +22,6 @@ extension NSTextView {
         }
         set {
             objc_setAssociatedObject(self, AssociatedKeys.clickableTextsKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-            updateTextStorage() // 更新文本存储
         }
     }
     
@@ -34,21 +33,6 @@ extension NSTextView {
         set {
             objc_setAssociatedObject(self, AssociatedKeys.tapCallbackKey, newValue, .OBJC_ASSOCIATION_COPY_NONATOMIC)
         }
-    }
-    
-    // 使用可点击文本更新文本存储
-    private func updateTextStorage() {
-        let fullAttributedString = NSMutableAttributedString()
-        clickableTexts.forEach { key, _ in
-            let attributedString = NSAttributedString(string: key + " ", attributes: [
-                .link: key, // 链接属性
-                .foregroundColor: NSColor.blue, // 文本颜色
-                .underlineStyle: NSUnderlineStyle.single.rawValue // 下划线样式
-            ])
-            fullAttributedString.append(attributedString)
-        }
-        self.textStorage?.setAttributedString(fullAttributedString)
-        setupAutomaticLineWrapping()  // Ensure line wrapping is setup after updating text
     }
     
     // 设置手势识别器以检测点击

@@ -7,6 +7,7 @@
 
 import Cocoa
 
+
 class ViewController: NSViewController {
 
     override func loadView() {
@@ -66,6 +67,12 @@ class ViewController: NSViewController {
         return textView
     }()
     
+    lazy var imageView: NSImageView = {
+        let image = NSImageView(frame: NSMakeRect(1200, 100, 300, 300))
+        
+        return image
+    }()
+    
     
     var clickGesture: NSClickGestureRecognizer!
     
@@ -76,6 +83,7 @@ class ViewController: NSViewController {
         view.addSubview(button)
         view.addSubview(lablel)
         view.addSubview(textfiled)
+        view.addSubview(imageView)
         //view.addSubview(textView)
         
         let color = NSColor(hexString: "F46734")
@@ -100,6 +108,16 @@ class ViewController: NSViewController {
     
         let address = TFYSwiftUtils.getIPAddress(preferIPv4: true)
         TFYLogger.log(address)
+        
+        let qrImage = NSImage.generateQRCode(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300))
+        let qrWithLogoImage = NSImage.generateQRCodeWithLogo(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300), logoImageName: "mood_day_14", logoSize: CGSize(width: 50, height: 50))
+        let coloredQRImage = NSImage.generateColoredQRCode(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300), rgbColor: CIColor.red, backgroundColor: CIColor.white)
+        let circularDotsQRImage = NSImage.generateRandomPolygonDotsQRCode(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300))
+        
+        let qrWithImagePattern = NSImage.generateQRCodeWithImagePattern(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300), patternImage: NSImage(named: "mood_day_4")!)
+        
+        imageView.image = qrWithImagePattern
+        
     }
     
     @objc func onClick(btn:NSButton) {

@@ -14,7 +14,7 @@ public class TFYSwiftTimer {
     private let internalTimer: DispatchSourceTimer
     private var isRunning = false
     public let repeats: Bool
-    public typealias SwiftTimerHandler = (TFYSwiftTimer) -> Void
+    public typealias SwiftTimerHandler = (TFYSwiftTimer?) -> Void
     private var handler: SwiftTimerHandler
 
     public init(interval: DispatchTimeInterval, repeats: Bool = false, leeway: DispatchTimeInterval = .seconds(0), queue: DispatchQueue = .main, handler: @escaping SwiftTimerHandler) {
@@ -22,19 +22,20 @@ public class TFYSwiftTimer {
         self.repeats = repeats
         internalTimer = DispatchSource.makeTimerSource(queue: queue)
         internalTimer.setEventHandler { [weak self] in
-            self?.handler(self!)
+            self?.handler(self)
         }
         internalTimer.schedule(deadline: .now() + interval, repeating: repeats ? interval : .never, leeway: leeway)
     }
 
-    public static func repeaticTimer(interval: DispatchTimeInterval, leeway: DispatchTimeInterval = .seconds(0), queue: DispatchQueue = .main, handler: @escaping SwiftTimerHandler) -> TFYSwiftTimer {
+    public static func repeatingTimer(interval: DispatchTimeInterval, leeway: DispatchTimeInterval = .seconds(0), queue: DispatchQueue = .main, handler: @escaping SwiftTimerHandler) -> TFYSwiftTimer {
         return TFYSwiftTimer(interval: interval, repeats: true, leeway: leeway, queue: queue, handler: handler)
     }
 
     deinit {
         if !isRunning {
-            internalTimer.resume()
+            internalTimer.resume() // Ensure timer is resumed to properly release it
         }
+        internalTimer.cancel()
     }
 
     public func fire() {
@@ -65,7 +66,7 @@ public class TFYSwiftTimer {
     public func rescheduleHandler(handler: @escaping SwiftTimerHandler) {
         self.handler = handler
         internalTimer.setEventHandler { [weak self] in
-            self?.handler(self!)
+            self?.handler(self)
         }
     }
 }
@@ -95,20 +96,10 @@ public extension TFYSwiftTimer {
     }
 }
 
-// MARK: - Count Down Timer
 public class TFYSwiftCountDownTimer {
 
-    private let internalTimer: TFYSwiftTimer
-    private var leftTimes: Int
-    private let originalTimes: Int
-    private let handler: (TFYSwiftCountDownTimer, _ leftTimes: Int) -> Void
-
-    public init(interval: DispatchTimeInterval, times: Int, queue: DispatchQueue = .main, handler: @escaping (TFYSwiftCountDownTimer, _ leftTimes: Int) -> Void) {
-        self.leftTimes = times
-        self.originalTimes = times
-        self.handler = handler
-        self.internalTimer = TFYSwiftTimer.repeaticTimer(interval: interval, queue: queue, handler: { _ in })
-        self.internalTimer.rescheduleHandler { [weak self] _ in
+    private lazy var internalTimer: TFYSwiftTimer = {
+        let timer = TFYSwiftTimer.repeatingTimer(interval: interval, queue: queue, handler: { [weak self] _ in
             guard let strongSelf = self else { return }
             if strongSelf.leftTimes > 0 {
                 strongSelf.leftTimes -= 1
@@ -116,7 +107,22 @@ public class TFYSwiftCountDownTimer {
             } else {
                 strongSelf.internalTimer.suspend()
             }
-        }
+        })
+        return timer
+    }()
+
+    private var leftTimes: Int
+    private let originalTimes: Int
+    private let handler: (TFYSwiftCountDownTimer, _ leftTimes: Int) -> Void
+    private let interval: DispatchTimeInterval
+    private let queue: DispatchQueue
+
+    public init(interval: DispatchTimeInterval, times: Int, queue: DispatchQueue = .main, handler: @escaping (TFYSwiftCountDownTimer, _ leftTimes: Int) -> Void) {
+        self.interval = interval
+        self.leftTimes = times
+        self.originalTimes = times
+        self.handler = handler
+        self.queue = queue
     }
 
     public func start() {

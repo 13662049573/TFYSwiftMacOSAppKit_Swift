@@ -8,12 +8,12 @@
 
 import Cocoa
 
-// MARK: - Error Definitions
+// MARK: - 错误定义
 enum JsonUtilsError: LocalizedError {
-    case encodingError(Error)
-    case decodingError(Error)
-    case invalidData
-    case invalidType
+    case encodingError(Error)  // 编码错误
+    case decodingError(Error)  // 解码错误
+    case invalidData           // 数据无效
+    case invalidType           // 类型不匹配
     
     var errorDescription: String? {
         switch self {
@@ -25,7 +25,7 @@ enum JsonUtilsError: LocalizedError {
     }
 }
 
-// MARK: - Encodable Extensions
+// MARK: - Encodable 扩展
 private struct AnyEncodable<T: Encodable>: Encodable {
     private let value: T
     private let encode: (T, Encoder) throws -> Void
@@ -46,12 +46,12 @@ extension JSONEncoder {
     }
 }
 
-// MARK: - JSON Utils Implementation
+// MARK: - JSON 工具类实现
 final class TFYSwiftJsonUtils {
-    // MARK: - Shared Instances
+    // MARK: - 共享实例
     private static let jsonEncoder: JSONEncoder = {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = .prettyPrinted
+        encoder.outputFormatting = .prettyPrinted  // 设置输出格式为美化打印
         return encoder
     }()
     
@@ -65,9 +65,9 @@ final class TFYSwiftJsonUtils {
         return decoder
     }()
     
-    private init() {} // 防止实例化
+    private init() {} // 防止类被实例化
     
-    // MARK: - Dictionary/Array Conversions
+    // MARK: - 字典/数组转换为 JSON 字符串
     static func toJsonString(_ value: Any, prettyPrinted: Bool = true) throws -> String {
         let options: JSONSerialization.WritingOptions = prettyPrinted ? .prettyPrinted : []
         let data = try JSONSerialization.data(withJSONObject: value, options: options)
@@ -86,7 +86,7 @@ final class TFYSwiftJsonUtils {
         }
     }
     
-    // MARK: - String to Dictionary/Array
+    // MARK: - JSON 字符串转换为字典/数组
     static func toDictionary(from jsonString: String) throws -> [String: Any] {
         guard let data = jsonString.data(using: .utf8) else {
             throw JsonUtilsError.invalidData
@@ -116,7 +116,7 @@ final class TFYSwiftJsonUtils {
         }
     }
     
-    // MARK: - Model Conversions
+    // MARK: - 模型转换
     static func toJson<T: Encodable>(_ model: T, prettyPrinted: Bool = false) throws -> String {
         jsonEncoder.outputFormatting = prettyPrinted ? .prettyPrinted : []
         do {

@@ -110,13 +110,8 @@ class ViewController: NSViewController {
         TFYLogger.log(address)
         
         let qrImage = NSImage.generateQRCode(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300))
-        let qrWithLogoImage = NSImage.generateQRCodeWithLogo(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300), logoImageName: "mood_day_14", logoSize: CGSize(width: 50, height: 50))
-        let coloredQRImage = NSImage.generateColoredQRCode(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300), rgbColor: CIColor.red, backgroundColor: CIColor.white)
-        let circularDotsQRImage = NSImage.generateRandomPolygonDotsQRCode(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300))
-        
-        let qrWithImagePattern = NSImage.generateQRCodeWithImagePattern(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300), patternImage: NSImage(named: "mood_day_4")!)
-        
-        imageView.image = qrWithImagePattern
+       
+        imageView.image = qrImage
         
     }
     

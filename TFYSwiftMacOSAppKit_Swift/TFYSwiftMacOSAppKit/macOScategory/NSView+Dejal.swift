@@ -202,42 +202,36 @@ public extension NSView {
 
     func startOrStopTimer(start: Bool, block: @escaping (String, Int) -> Void) {
         if start {
-            if timeInterval == 0 {
-                timeInterval = defaultTimeInterval
-            }
-            if titleFormat == nil {
-                titleFormat = buttonTitleFormat
-            }
-            let globalQueue = DispatchQueue.global(qos:.default)
+            // Initialize timeInterval and titleFormat only if they are not set
+            timeInterval = timeInterval == 0 ? defaultTimeInterval : timeInterval
+            titleFormat = titleFormat ?? buttonTitleFormat
+
+            let globalQueue = DispatchQueue.global(qos: .default)
             timer = DispatchSource.makeTimerSource(queue: globalQueue)
-            timer?.schedule(deadline:.now(), repeating: 1.0 * Double(NSEC_PER_SEC), leeway:.nanoseconds(0))
-            timer?.setEventHandler { [self] in
-                if timeInterval <= 1 {
-                    timer?.cancel()
+            timer?.schedule(deadline: .now(), repeating: 1.0)
+            timer?.setEventHandler { [weak self] in
+                guard let self = self else { return }
+                if self.timeInterval <= 1 {
+                    self.timer?.cancel()
                 } else {
-                    timeInterval -= 1
+                    self.timeInterval -= 1
                     DispatchQueue.main.async {
                         self.stopTime = 1
                         block(String(format: self.titleFormat!, self.timeInterval), 0)
                     }
                 }
             }
-            timer?.setCancelHandler {
+            timer?.setCancelHandler { [weak self] in
+                guard let self = self else { return }
                 DispatchQueue.main.async {
                     self.stopTime = 0
                     block(retainButtonTitle, 1)
-                    if self.userTimeInterval > 0 {
-                        self.timeInterval = self.userTimeInterval
-                    } else {
-                        self.timeInterval = defaultTimeInterval
-                    }
+                    self.timeInterval = self.userTimeInterval > 0 ? self.userTimeInterval : defaultTimeInterval
                 }
             }
             timer?.resume()
         } else {
-            if let timer = timer {
-                timer.cancel()
-            }
+            timer?.cancel()
         }
     }
     
@@ -263,52 +257,37 @@ public extension NSView {
         var superview = self
         var oldSuperview = superview
 
-        // 将 position 声明为变量
+        // Declare position as a variable
         var positionValue = position
 
         while !superview.isFlipped {
-            // 首先调整父视图的蒙版:
+            // Adjust the parent view's mask:
             let mask = superview.autoresizingMask
             subviewMasks.append(NSNumber(value: mask.rawValue))
 
             // Make it stick to the top and bottom of the window, and change height:
             var newMask = mask
             newMask.insert(.height)
-            newMask.remove(.maxYMargin)
-            newMask.remove(.minYMargin)
+            newMask.remove([.maxYMargin, .minYMargin])
             superview.autoresizingMask = newMask
 
             let subviews = superview.subviews
 
-            for subview in subviews {
-                if subview != oldSuperview {
-                    let oldSubviewMask = subview.autoresizingMask
-                    subviewMasks.append(NSNumber(value: oldSuperview.autoresizingMask.rawValue))
+            for subview in subviews where subview != oldSuperview {
+                let oldSubviewMask = subview.autoresizingMask
+                subviewMasks.append(NSNumber(value: oldSuperview.autoresizingMask.rawValue))
 
-                    var stickToBottom = NSMaxY(subview.frame) <= positionValue
-                    if !stickPositionToTop && NSMaxY(subview.frame) == positionValue {
-                        stickToBottom = true
-                    }
+                let stickToBottom = !stickPositionToTop && NSMaxY(subview.frame) <= positionValue
 
-                    if stickToBottom {
-                        // 这个子视图在我们下面。让它粘在窗口底部，不改变高度:
-                        var newSubviewMask = oldSubviewMask
-                        newSubviewMask.remove(.height)
-                        newSubviewMask.insert(.maxYMargin)
-                        newSubviewMask.remove(.minYMargin)
-                        subview.autoresizingMask = newSubviewMask
-                    } else {
-                        // 这个子视图在我们上面。让它粘在窗户顶部，不改变高度:
-                        var newSubviewMask = oldSubviewMask
-                        newSubviewMask.remove(.height)
-                        newSubviewMask.remove(.maxYMargin)
-                        newSubviewMask.insert(.minYMargin)
-                        subview.autoresizingMask = newSubviewMask
-                    }
-                }
+                // Adjust subview masks based on position relative to `positionValue`
+                var newSubviewMask = oldSubviewMask
+                newSubviewMask.remove(.height)
+                newSubviewMask.remove(stickToBottom ? .minYMargin : .maxYMargin)
+                newSubviewMask.insert(stickToBottom ? .maxYMargin : .minYMargin)
+                subview.autoresizingMask = newSubviewMask
             }
 
-            // 到这个父视图的父视图，重复这个过程;注意，循环算法必须在下面的恢复方法中完全复制。理想情况下，这两个方法都应该使用另一个方法来获得下一个子视图，但我不能在这个阶段重构它，所以要注意这个问题:
+            // Move to the parent view and repeat the process
             oldSuperview = superview
             positionValue = NSMaxY(superview.frame)
             superview = superview.superview!
@@ -316,37 +295,30 @@ public extension NSView {
 
         return subviewMasks
     }
-
+    
     func restoreAutoresizeMasks(_ masks: [NSNumber]) {
         var superview = self
         var oldSuperview = superview
         var enumerator = masks.makeIterator()
 
         while !superview.isFlipped {
-            // 第一项是父视图的蒙版:
-            if let maskValue = enumerator.next() {
-               let autoresizingMask = NSView.AutoresizingMask(rawValue: maskValue.uintValue)
-               superview.autoresizingMask = autoresizingMask
-            } else {
-                // 处理掩码数组耗尽的情况，可以抛出错误或进行适当的处理
-                fatalError("掩码数组耗尽")
+            // Restore the mask for the parent view:
+            guard let maskValue = enumerator.next() else {
+                fatalError("Mask array exhausted unexpectedly")
             }
+            let autoresizingMask = NSView.AutoresizingMask(rawValue: maskValue.uintValue)
+            superview.autoresizingMask = autoresizingMask
 
-            // 以下是子视图掩码:
-            let subviews = superview.subviews
-
-            for subview in subviews {
-                if subview != oldSuperview {
-                    if let subviewMaskValue = enumerator.next() {
-                        let subviewAutoresizingMask = NSView.AutoresizingMask(rawValue: subviewMaskValue.uintValue)
-                            subview.autoresizingMask = subviewAutoresizingMask
-                    } else {
-                        // 处理掩码数组耗尽的情况，可以抛出错误或进行适当的处理
-                        fatalError("掩码数组耗尽")
-                    }
+            // Restore masks for subviews:
+            for subview in superview.subviews where subview != oldSuperview {
+                guard let subviewMaskValue = enumerator.next() else {
+                    fatalError("Mask array exhausted unexpectedly")
                 }
+                let subviewAutoresizingMask = NSView.AutoresizingMask(rawValue: subviewMaskValue.uintValue)
+                subview.autoresizingMask = subviewAutoresizingMask
             }
-            // 到这个父视图的父视图，重复这个过程;注意，循环算法必须在上面的 adjust 方法中完全复制。理想情况下，这两个方法都应该使用另一个方法来获得下一个子视图，但我不能在这个阶段重构它，所以要注意这个问题:
+
+            // Move to the parent view and repeat the process
             oldSuperview = superview
             superview = superview.superview!
         }

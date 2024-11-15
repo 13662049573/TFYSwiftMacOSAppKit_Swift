@@ -38,12 +38,19 @@ public class TFYSwiftTextField: NSTextField {
     }
     
     func registerForNotifications() {
+        autoresizingMask = [.width,.height]
+        isBordered = false
+        drawsBackground = true
+        maximumNumberOfLines = 0
+        usesSingleLineMode = true
         cell = TFYSwiftTextFieldCell(textCell: "")
         cell?.lineBreakMode = .byWordWrapping
         cell?.truncatesLastVisibleLine = true
-        cell?.isEditable = true
-        cell?.truncatesLastVisibleLine = true
-        self.preferredMaxLayoutWidth = 100
+        cell?.usesSingleLineMode = false
+        cell?.isBezeled = false
+        cell?.isBordered = false
+        preferredMaxLayoutWidth = 100
+        
         NotificationCenter.default.addObserver(self, selector: #selector(delegate_swift?.textFieldDidChange(textField:)), name: NSControl.textDidChangeNotification, object: self)
     }
     

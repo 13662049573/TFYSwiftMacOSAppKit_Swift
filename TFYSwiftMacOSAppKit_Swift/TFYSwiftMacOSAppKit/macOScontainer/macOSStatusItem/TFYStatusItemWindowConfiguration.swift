@@ -14,9 +14,9 @@ public enum TFYPresentationTransition: Int {
     case slideAndFade
 }
 
-let TFYDefaultArrowHeight: CGFloat = 11.0
-let TFYDefaultArrowWidth: CGFloat = 42.0
-let TFYDefaultCornerRadius: CGFloat = 5.0
+public let TFYDefaultArrowHeight: CGFloat = 11.0
+public let TFYDefaultArrowWidth: CGFloat = 42.0
+public let TFYDefaultCornerRadius: CGFloat = 5.0
 
 public class TFYStatusItemWindowConfiguration: NSObject {
     

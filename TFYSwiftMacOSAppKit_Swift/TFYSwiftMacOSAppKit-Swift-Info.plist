@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+    <!-- 位置权限 -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>需要位置权限以获取WiFi信息</string>
+    <key>NSLocationUsageDescription</key>
+    <string>需要位置权限以获取WiFi信息</string>
+    <!-- 网络权限 -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    <key>com.apple.security.network.server</key>
+    <true/>
+    <!-- WiFi权限 -->
+    <key>com.apple.security.network.wifi-info</key>
+    <true/>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>由于XYZ原因，我们需要你的位置</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>由于XYZ原因，我们需要你的位置</string>
+</dict>
+</plist>

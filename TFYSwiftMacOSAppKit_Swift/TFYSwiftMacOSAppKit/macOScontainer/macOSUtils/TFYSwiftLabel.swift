@@ -29,20 +29,10 @@ public class TFYSwiftLabel: TFYSwiftTextField {
     }
     
     fileprivate func setupUI() {
-        autoresizingMask = [.width,.height]
-        isBordered = false
-        isEditable = false
-        drawsBackground = true
-        backgroundColor = .clear
-        font = NSFont.systemFont(ofSize: 15)
-        textColor = .black
-        maximumNumberOfLines = 0
-        usesSingleLineMode = true
         self.isTextAlignmentVerticalCenter = false
-        self.cell?.usesSingleLineMode = false
-        self.cell?.truncatesLastVisibleLine = true
-        self.cell?.isBezeled = false
-        self.cell?.isBordered = false
+        isEditable = false
+        textColor = .black
+        font = NSFont.systemFont(ofSize: 15)
     }
     
     public override func moveDown(_ sender: Any?) {

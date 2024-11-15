@@ -7,6 +7,7 @@
 
 import Cocoa
 
+
 class ViewController: NSViewController {
 
     override func loadView() {
@@ -16,7 +17,7 @@ class ViewController: NSViewController {
     
     private lazy var lablel: TFYSwiftLabel = {
         let labe = TFYSwiftLabel().chain
-            .frame(CGRect(x: 300, y: 400, width: 400, height: 50))
+            .frame(CGRect(x: 200, y: 400, width: self.view.macos_width-400, height: 50))
             .text("用户协议和隐私政策请您务必审值阅读、充分理解 “用户协议” 和 ”隐私政策” 各项条款，包括但不限于：为了向您提供即时通讯、内容分享等服务，我们需要收集您的设备信息、操作日志等个人信息。您可阅读《用户协议》和《隐私政策》了解详细信息。如果您同意，请点击 “同意” 开始接受我们的服务;")
             .textColor(.gray)
             .font(.systemFont(ofSize: 14, weight: .bold))
@@ -26,7 +27,7 @@ class ViewController: NSViewController {
     }()
     
     lazy var button: NSButton = {
-        let btn = NSButton(frame: NSRect(x: 200, y: 300, width: 400, height: 100))
+        let btn = NSButton(frame: NSRect(x: 200, y: 300, width: self.view.macos_width-400, height: 100))
         btn.chain
             .font(.systemFont(ofSize: 16, weight: .bold))
             .text("弹出界面")
@@ -41,7 +42,7 @@ class ViewController: NSViewController {
     }()
     
     lazy var textfiled: NSTextField = {
-        let filed = NSTextField(frame: NSRect(x: 100, y: 200, width: 300, height: 50))
+        let filed = NSTextField(frame: NSRect(x: 100, y: 200, width: self.view.macos_width-200, height: 200))
         filed.chain
             .font(NSFont.systemFont(ofSize: 14, weight: .semibold))
             .wantsLayer(true)
@@ -52,7 +53,7 @@ class ViewController: NSViewController {
     }()
     
     lazy var textView: NSTextView = {
-        let textView = NSTextView(frame: NSRect(x: 200, y: 100, width: 300, height: 300))
+        let textView = NSTextView(frame: NSRect(x: 200, y: 100, width: self.view.macos_width-400, height: 300))
         textView.chain
             .editable(false)
             .font(.systemFont(ofSize: 20, weight: .semibold))
@@ -66,6 +67,12 @@ class ViewController: NSViewController {
         return textView
     }()
     
+    lazy var imageView: NSImageView = {
+        let image = NSImageView(frame: NSMakeRect(1200, 100, 300, 300))
+        
+        return image
+    }()
+    
     
     var clickGesture: NSClickGestureRecognizer!
     
@@ -76,31 +83,41 @@ class ViewController: NSViewController {
         view.addSubview(button)
         view.addSubview(lablel)
         view.addSubview(textfiled)
-        view.addSubview(textView)
+        view.addSubview(imageView)
+        //view.addSubview(textView)
         
         let color = NSColor(hexString: "F46734")
         
-        let linkDic = ["《用户协议》": "http://api.irainone.com/app/iop/register.html",
-                       "《隐私政策》": "http://api.irainone.com/app/iop/register.html",]
+        let linkInfos = [
+            LinkInfo(key: "《用户协议》", value: "http://api.irainone.com/app/iop/register.html"),
+            LinkInfo(key: "《隐私政策》", value: "http://api.irainone.com/app/iop/register.html")
+        ]
         
         lablel.changeColors(with: [color, .blue], changeTexts: ["《用户协议》","《隐私政策》"])
         lablel.changeFonts(with: [.systemFont(ofSize: 20, weight: .bold)], changeTexts: ["《用户协议》","《隐私政策》"])
-        
-//        lablel.addTapAction(["《用户协议》","《隐私政策》"]) { title, range, index in
-//            TFYLog("\(title), \(range),\(index)")
-//        }
-        
+        lablel.changeLineSpace(with: 5)
         lablel.addGestureTap { reco in
-            reco.didTapAttributedText(linkDictionary: linkDic) { key, value, point, error in
-
-            }
+            reco.didTapLabelAttributedText(linkInfos, action: { key, value in
+                TFYLogger.log(key,value ?? "")
+            }, lineFragmentPadding: 5)
         }
-   
-        textView.clickableTexts = linkDic
-        textView.tapCallback = { key, value, index in
-            print("Clicked key: \(key), value: \(value), at index: \(index)")
+        
+        TFYSwiftUtils.getWiFiInfo {[weak self] info in
+            self?.textfiled.stringValue = "IP:\(info.ip ?? "未知")\nMac地址:\(info.macAddress ?? "未知")\nName:\(info.name ?? "未知")"
         }
-        textView.setupClickDetection()
+    
+        let address = TFYSwiftUtils.getIPAddress(preferIPv4: true)
+        TFYLogger.log(address)
+        
+        let qrImage = NSImage.generateQRCode(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300))
+        let qrWithLogoImage = NSImage.generateQRCodeWithLogo(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300), logoImageName: "mood_day_14", logoSize: CGSize(width: 50, height: 50))
+        let coloredQRImage = NSImage.generateColoredQRCode(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300), rgbColor: CIColor.red, backgroundColor: CIColor.white)
+        let circularDotsQRImage = NSImage.generateRandomPolygonDotsQRCode(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300))
+        
+        let qrWithImagePattern = NSImage.generateQRCodeWithImagePattern(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300), patternImage: NSImage(named: "mood_day_4")!)
+        
+        imageView.image = qrWithImagePattern
+        
     }
     
     @objc func onClick(btn:NSButton) {

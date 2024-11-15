@@ -107,14 +107,12 @@ public class TFYStatusItemWindowController: NSWindowController {
     func showStatusItemWindow() {
         // 如果动画正在运行，则直接返回
         if animationIsRunning { return }
-
         // 更新窗口框架
         updateWindowFrame()
         // 设置窗口的初始透明度为0
         window?.alphaValue = 0.0
         // 显示窗口
         showWindow(nil)
-
         // 执行窗口淡入动画
         animateWindow(window as! TFYStatusItemWindow, withFadeDirection:.fadeIn)
     }

@@ -18,7 +18,7 @@ Pod::Spec.new do |spec|
   
   spec.osx.deployment_target = "12.0"
   
-  spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => "#{spec.version}" }
+  spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => spec.version }
 
 
   spec.subspec 'macOScategory' do |ss|

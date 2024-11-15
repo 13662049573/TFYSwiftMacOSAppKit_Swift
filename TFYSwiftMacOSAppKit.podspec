@@ -20,11 +20,10 @@ Pod::Spec.new do |spec|
   
   spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => spec.version }
 
-
   spec.subspec 'macOScategory' do |ss|
     ss.source_files  = "TFYSwiftMacOSAppKit/macOScategory/**/*.{swift}"
-    ss.dependency "macOScontainer/macOSUtils"
-    ss.dependency "macOSfoundation"
+    ss.dependency "TFYSwiftMacOSAppKit/macOScontainer/macOSUtils"
+    ss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
   end
 
   spec.subspec 'macOSchain' do |ss|

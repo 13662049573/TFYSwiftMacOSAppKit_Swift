@@ -4,10 +4,10 @@ Pod::Spec.new do |spec|
 
   spec.version      = "1.1.2"
 
-  spec.summary      = "swift 版纯代码进行写macOS 开发，封装库。基本组件。最低支持Mac 12.0"
+  spec.summary      = "Swift code for macOS development, encapsulation library. Basic components. Minimum support Mac 12.0"
 
   spec.description  = <<-DESC
-                        swift 版纯代码进行写macOS 开发，封装库。基本组件。最低支持Mac 12.0
+                        Swift code for macOS development, encapsulation library. Basic components. Minimum support Mac 12.0
                    DESC
 
   spec.homepage     = "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift"
@@ -18,12 +18,10 @@ Pod::Spec.new do |spec|
   
   spec.osx.deployment_target = "12.0"
   
-  spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => spec.version }
+  spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => "#{spec.version}" }
 
   spec.subspec 'macOScategory' do |ss|
     ss.source_files  = "TFYSwiftMacOSAppKit/macOScategory/**/*.{swift}"
-    ss.dependency "TFYSwiftMacOSAppKit/macOScontainer/macOSUtils"
-    ss.dependency "TFYSwiftMacOSAppKit/macOSfoundation"
   end
 
   spec.subspec 'macOSchain' do |ss|

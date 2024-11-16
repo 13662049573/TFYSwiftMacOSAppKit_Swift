@@ -28,18 +28,18 @@ Pod::Spec.new do |spec|
 
   spec.subspec 'macOSchain' do |ss|
     ss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/**/*.{swift}"
-    ss.subspec 'macOSBase' do |sss|
-       sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSBase/**/*.{swift}"
-    end
-    ss.subspec 'macOSCALayer' do |sss|
-       sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSCALayer/**/*.{swift}"
-    end
-    ss.subspec 'macOSView' do |sss|
-       sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSView/**/*.{swift}"
-    end
-    ss.subspec 'macOSGesture' do |sss|
-       sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSGesture/**/*.{swift}"
-    end
+    # ss.subspec 'macOSBase' do |sss|
+    #    sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSBase/**/*.{swift}"
+    # end
+    # ss.subspec 'macOSCALayer' do |sss|
+    #    sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSCALayer/**/*.{swift}"
+    # end
+    # ss.subspec 'macOSView' do |sss|
+    #    sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSView/**/*.{swift}"
+    # end
+    # ss.subspec 'macOSGesture' do |sss|
+    #    sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSGesture/**/*.{swift}"
+    # end
   end
 
   spec.subspec 'macOSfoundation' do |ss|

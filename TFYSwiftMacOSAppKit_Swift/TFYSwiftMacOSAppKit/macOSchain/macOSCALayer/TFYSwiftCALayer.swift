@@ -409,3 +409,37 @@ public extension Chain where Base: CALayer {
         return self
     }
 }
+
+// MARK: - 常量定义
+
+public extension CALayer {
+    /// 内容对齐方式常量
+    struct ContentsGravity {
+        public static let center = CALayerContentsGravity.center
+        public static let top = CALayerContentsGravity.top
+        public static let bottom = CALayerContentsGravity.bottom
+        public static let left = CALayerContentsGravity.left
+        public static let right = CALayerContentsGravity.right
+        public static let topLeft = CALayerContentsGravity.topLeft
+        public static let topRight = CALayerContentsGravity.topRight
+        public static let bottomLeft = CALayerContentsGravity.bottomLeft
+        public static let bottomRight = CALayerContentsGravity.bottomRight
+        public static let resize = CALayerContentsGravity.resize
+        public static let resizeAspect = CALayerContentsGravity.resizeAspect
+        public static let resizeAspectFill = CALayerContentsGravity.resizeAspectFill
+    }
+    
+    /// 内容格式常量
+    struct ContentsFormat {
+        public static let RGBA8Uint = CALayerContentsFormat.RGBA8Uint
+        public static let RGBA16Float = CALayerContentsFormat.RGBA16Float
+        public static let gray8Uint = CALayerContentsFormat.gray8Uint
+    }
+    
+    /// 内容过滤器常量
+    struct ContentsFilter {
+        public static let linear = CALayerContentsFilter.linear
+        public static let nearest = CALayerContentsFilter.nearest
+        public static let trilinear = CALayerContentsFilter.trilinear
+    }
+}

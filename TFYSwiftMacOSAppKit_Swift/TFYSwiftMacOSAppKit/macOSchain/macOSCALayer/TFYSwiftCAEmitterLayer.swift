@@ -79,7 +79,7 @@ public extension Chain where Base: CAEmitterLayer {
     /// - Parameter value: 发射器形状
     /// - Returns: 链式调用对象
     @discardableResult
-    func emitterShape(_ value: String) -> Self {
+    func emitterShape(_ value: CAEmitterLayerEmitterShape) -> Self {
         base.emitterShape = value
         return self
     }
@@ -88,7 +88,7 @@ public extension Chain where Base: CAEmitterLayer {
     /// - Parameter value: 发射器模式
     /// - Returns: 链式调用对象
     @discardableResult
-    func emitterMode(_ value: String) -> Self {
+    func emitterMode(_ value: CAEmitterLayerEmitterMode) -> Self {
         base.emitterMode = value
         return self
     }
@@ -97,7 +97,7 @@ public extension Chain where Base: CAEmitterLayer {
     /// - Parameter value: 渲染模式
     /// - Returns: 链式调用对象
     @discardableResult
-    func renderMode(_ value: String) -> Self {
+    func renderMode(_ value: CAEmitterLayerRenderMode) -> Self {
         base.renderMode = value
         return self
     }
@@ -153,28 +153,28 @@ public extension Chain where Base: CAEmitterLayer {
 public extension CAEmitterLayer {
     /// 发射器形状常量
     struct EmitterShape {
-        public static let point = "point"           // 点形状
-        public static let line = "line"             // 线形状
-        public static let rectangle = "rectangle"    // 矩形形状
-        public static let cuboid = "cuboid"         // 立方体形状
-        public static let circle = "circle"         // 圆形形状
-        public static let sphere = "sphere"         // 球形形状
+        public static let point = CAEmitterLayerEmitterShape.point           // 点形状
+        public static let line = CAEmitterLayerEmitterShape.line             // 线形状
+        public static let rectangle = CAEmitterLayerEmitterShape.rectangle    // 矩形形状
+        public static let cuboid = CAEmitterLayerEmitterShape.cuboid         // 立方体形状
+        public static let circle = CAEmitterLayerEmitterShape.circle         // 圆形形状
+        public static let sphere = CAEmitterLayerEmitterShape.sphere         // 球形形状
     }
     
     /// 发射器模式常量
     struct EmitterMode {
-        public static let points = "points"         // 点模式
-        public static let outline = "outline"       // 轮廓模式
-        public static let surface = "surface"       // 表面模式
-        public static let volume = "volume"         // 体积模式
+        public static let points = CAEmitterLayerEmitterMode.points         // 点模式
+        public static let outline = CAEmitterLayerEmitterMode.outline       // 轮廓模式
+        public static let surface = CAEmitterLayerEmitterMode.surface       // 表面模式
+        public static let volume = CAEmitterLayerEmitterMode.volume         // 体积模式
     }
     
     /// 渲染模式常量
     struct RenderMode {
-        public static let unordered = "unordered"   // 无序渲染
-        public static let oldestFirst = "oldestFirst" // 最老的粒子先渲染
-        public static let oldestLast = "oldestLast"  // 最老的粒子后渲染
-        public static let backToFront = "backToFront" // 从后向前渲染
-        public static let additive = "additive"      // 叠加渲染
+        public static let unordered = CAEmitterLayerRenderMode.unordered   // 无序渲染
+        public static let oldestFirst = CAEmitterLayerRenderMode.oldestFirst // 最老的粒子先渲染
+        public static let oldestLast = CAEmitterLayerRenderMode.oldestLast  // 最老的粒子后渲染
+        public static let backToFront = CAEmitterLayerRenderMode.backToFront // 从后向前渲染
+        public static let additive = CAEmitterLayerRenderMode.additive      // 叠加渲染
     }
 }

@@ -48,3 +48,15 @@ public extension Chain where Base: CAScrollLayer {
         return self
     }
 }
+
+// MARK: - 常量定义
+
+public extension CAScrollLayer {
+    /// 滚动模式常量
+    struct ScrollMode {
+        public static let none = CAScrollLayerScrollMode.none
+        public static let vertically = CAScrollLayerScrollMode.vertically
+        public static let horizontally = CAScrollLayerScrollMode.horizontally
+        public static let both = CAScrollLayerScrollMode.both
+    }
+}

@@ -84,3 +84,24 @@ public extension Chain where Base: CATextLayer {
         return self
     }
 }
+
+// MARK: - 常量定义
+
+public extension CATextLayer {
+    /// 文本截断模式常量
+    struct TruncationMode {
+        public static let start = CATextLayerTruncationMode.start
+        public static let end = CATextLayerTruncationMode.end
+        public static let middle = CATextLayerTruncationMode.middle
+        public static let none = CATextLayerTruncationMode.none
+    }
+    
+    /// 文本对齐方式常量
+    struct AlignmentMode {
+        public static let natural = CATextLayerAlignmentMode.natural
+        public static let left = CATextLayerAlignmentMode.left
+        public static let right = CATextLayerAlignmentMode.right
+        public static let center = CATextLayerAlignmentMode.center
+        public static let justified = CATextLayerAlignmentMode.justified
+    }
+}

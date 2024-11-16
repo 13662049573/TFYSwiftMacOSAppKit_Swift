@@ -6,85 +6,78 @@
 //  Copyright © 2024 TFYSwift. All rights reserved.
 //
 
-import Cocoa
+import Foundation
 
 // MARK: - 基础协议
 
 /// 链式编程基础协议
 /// 所有需要支持链式调用的类型都需要遵循此协议
-public protocol TFYCompatible {
+public protocol ChainCompatible {
     /// 关联类型，用于指定实现类型
-    associatedtype ChainType
+    associatedtype ChainBaseType
 }
 
 // MARK: - NSObject 扩展
 
-/// 默认让所有 NSObject 子类都支持链式调用
-extension NSObject: TFYCompatible {
-    public typealias ChainType = NSObject
-}
-
-// MARK: - 属性兼容协议
-
-/// Swift属性兼容协议
-/// 用于处理回调和属性观察
-public protocol TFYSwiftPropertyCompatible {
-    /// 关联类型，用于定义回调中的数据类型
-    associatedtype ValueType
-    
-    /// 定义回调闭包类型
-    typealias SwiftCallBack = ((ValueType?) -> Void)
-    
-    /// 回调闭包属性
-    var swiftCallBack: SwiftCallBack? { get set }
-}
-
-// MARK: - 错误处理
-
-/// 链式调用错误枚举
-public enum ChainError: Error {
-    case invalidValue
-    case invalidOperation
-    case typeConversionFailed
-    
-    var localizedDescription: String {
-        switch self {
-        case .invalidValue:
-            return "无效的值"
-        case .invalidOperation:
-            return "无效的操作"
-        case .typeConversionFailed:
-            return "类型转换失败"
-        }
-    }
+extension NSObject: ChainCompatible {
+    /// 指定关联类型为自身
+    public typealias ChainBaseType = NSObject
 }
 
 // MARK: - 链式调用包装结构体
 
 /// 链式调用包装结构体
-/// - Parameter Base: 被包装的对象类型
 public struct Chain<Base> {
     /// 被包装的原始对象
     public let base: Base
     
+    /// 错误处理闭包
+    private var errorHandler: ((ChainError) -> Void)?
+    
+    /// 调试模式标志
+    private var isDebugEnabled: Bool = false
+    
     /// 构建并返回原始对象
-    /// 用于链式调用结束后获取原始对象
     public var build: Base {
         return base
     }
     
     /// 初始化方法
-    /// - Parameter base: 要包装的对象
     public init(_ base: Base) {
         self.base = base
+    }
+    
+    /// 设置错误处理器
+    /// - Parameter handler: 错误处理闭包
+    /// - Returns: 链式调用对象
+    @discardableResult
+    public func setErrorHandler(_ handler: @escaping (ChainError) -> Void) -> Self {
+        var copy = self
+        copy.errorHandler = handler
+        return copy
+    }
+    
+    /// 启用调试模式
+    /// - Returns: 链式调用对象
+    @discardableResult
+    public func enableDebug() -> Self {
+        var copy = self
+        copy.isDebugEnabled = true
+        return copy
     }
     
     /// 执行自定义操作
     /// - Parameter operation: 要执行的操作闭包
     /// - Returns: 链式调用对象
     @discardableResult
-    public func custom(_ operation: (Base) throws -> Void) rethrows -> Self {
-        try operation(base)
+    public func custom(_ operation: (Base) throws -> Void) -> Self {
+        do {
+            try operation(base)
+        } catch let error as ChainError {
+            handleError(error)
+        } catch {
+            handleError(.customError(error.localizedDescription))
+        }
         return self
     }
     
@@ -94,56 +87,12 @@ public struct Chain<Base> {
     ///   - operation: 满足条件时执行的操作
     /// - Returns: 链式调用对象
     @discardableResult
-    public func `if`(_ condition: Bool, _ operation: (Base) throws -> Void) rethrows -> Self {
-        if condition {
-            try operation(base)
-        }
-        return self
+    public func `if`(_ condition: Bool, _ operation: (Base) throws -> Void) -> Self {
+        guard condition else { return self }
+        return custom(operation)
     }
     
-    /// 获取原始对象的某个属性值
-    /// - Parameter keyPath: 属性路径
-    /// - Returns: 属性值
-    public func value<T>(_ keyPath: KeyPath<Base, T>) -> T {
-        return base[keyPath: keyPath]
-    }
-}
-
-// MARK: - TFYCompatible 协议扩展
-
-/// TFYCompatible 协议扩展
-/// 为遵循协议的类型提供链式调用支持
-extension TFYCompatible {
-    /// 静态链式调用入口
-    /// 用于类型方法的链式调用
-    static public var chain: Chain<Self>.Type {
-        get { Chain<Self>.self }
-        set {}
-    }
-    
-    /// 实例链式调用入口
-    /// 用于实例方法的链式调用
-    public var chain: Chain<Self> {
-        get { Chain(self) }
-        set {}
-    }
-}
-
-// MARK: - 实用工具扩展
-
-extension Chain {
-    /// 打印调试信息
-    /// - Parameter message: 调试信息
-    /// - Returns: 链式调用对象
-    @discardableResult
-    public func debug(_ message: String) -> Self {
-        #if DEBUG
-        print("Debug: \(message)")
-        #endif
-        return self
-    }
-    
-    /// 执行异步操作
+    /// 异步执行
     /// - Parameter operation: 异步操作闭包
     /// - Returns: 链式调用对象
     @discardableResult
@@ -153,12 +102,118 @@ extension Chain {
         }
         return self
     }
+    
+    /// 主线程执行
+    /// - Parameter operation: 主线程操作闭包
+    /// - Returns: 链式调用对象
+    @discardableResult
+    public func onMain(_ operation: @escaping (Base) -> Void) -> Self {
+        DispatchQueue.main.async {
+            operation(self.base)
+        }
+        return self
+    }
+    
+    /// 延迟执行
+    /// - Parameters:
+    ///   - seconds: 延迟秒数
+    ///   - operation: 要执行的操作
+    /// - Returns: 链式调用对象
+    @discardableResult
+    public func delay(_ seconds: Double, _ operation: @escaping (Base) -> Void) -> Self {
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds) {
+            operation(self.base)
+        }
+        return self
+    }
+    
+    /// 打印调试信息
+    /// - Parameter message: 调试信息
+    /// - Returns: 链式调用对象
+    @discardableResult
+    public func debug(_ message: String) -> Self {
+        if isDebugEnabled {
+            print("Debug [\(type(of: base))]: \(message)")
+        }
+        return self
+    }
+    
+    /// 处理错误
+    private func handleError(_ error: ChainError) {
+        errorHandler?(error)
+        if isDebugEnabled {
+            print("Error [\(type(of: base))]: \(error.localizedDescription)")
+        }
+    }
+}
+
+// MARK: - ChainCompatible 协议扩展
+
+public extension ChainCompatible {
+    /// 静态链式调用入口
+    static var chain: Chain<Self>.Type {
+        return Chain<Self>.self
+    }
+    
+    /// 实例链式调用入口
+    var chain: Chain<Self> {
+        return Chain(self)
+    }
+}
+
+// MARK: - 错误处理
+
+/// 链式调用错误类型
+public enum ChainError: Error {
+    case invalidValue(String)
+    case invalidOperation(String)
+    case typeConversionFailed(String)
+    case customError(String)
+    
+    public var localizedDescription: String {
+        switch self {
+        case .invalidValue(let message):
+            return "无效的值: \(message)"
+        case .invalidOperation(let message):
+            return "无效的操作: \(message)"
+        case .typeConversionFailed(let message):
+            return "类型转换失败: \(message)"
+        case .customError(let message):
+            return "自定义错误: \(message)"
+        }
+    }
+}
+
+// MARK: - 属性包装器
+
+/// 属性观察包装器
+@propertyWrapper
+public struct Observable<Value> {
+    private var value: Value
+    private var onChange: ((Value) -> Void)?
+    
+    public var wrappedValue: Value {
+        get { value }
+        set {
+            value = newValue
+            onChange?(newValue)
+        }
+    }
+    
+    public init(wrappedValue: Value) {
+        self.value = wrappedValue
+    }
+    
+    /// 设置属性变化回调
+    public mutating func setOnChange(_ callback: @escaping (Value) -> Void) {
+        onChange = callback
+    }
 }
 
 /**
  // 1. 基本使用
  class MyView: NSView {
-     var title: String = ""
+     @Observable var title: String = ""
  }
 
  extension Chain where Base: MyView {
@@ -171,6 +226,10 @@ extension Chain {
 
  let myView = MyView()
  myView.chain
+     .enableDebug()
+     .setErrorHandler { error in
+         print("Error occurred: \(error)")
+     }
      .setTitle("Hello")
      .debug("Title set")
      .custom { view in
@@ -178,29 +237,27 @@ extension Chain {
          view.title = view.title.uppercased()
      }
      .if(true) { view in
-         // 条件执行
          print("Current title: \(view.title)")
      }
 
  // 2. 异步操作
- myView.chain.async { view in
-     // 在后台线程执行
-     Thread.sleep(forTimeInterval: 1)
-     DispatchQueue.main.async {
+ myView.chain
+     .async { view in
+         // 后台线程操作
+         Thread.sleep(forTimeInterval: 1)
+     }
+     .onMain { view in
+         // 主线程更新 UI
          view.title = "Updated"
      }
- }
+     .delay(2.0) { view in
+         // 延迟执行
+         view.title = "Delayed"
+     }
 
  // 3. 属性观察
- class ObservableClass: NSObject, TFYSwiftPropertyCompatible {
-     typealias ValueType = String
-     var swiftCallBack: ((String?) -> Void)?
-     
-     var value: String = "" {
-         didSet {
-             swiftCallBack?(value)
-         }
-     }
+ var observation: Observable<String> = Observable(wrappedValue: "")
+ observation.setOnChange { newValue in
+     print("Value changed to: \(newValue)")
  }
  */
-

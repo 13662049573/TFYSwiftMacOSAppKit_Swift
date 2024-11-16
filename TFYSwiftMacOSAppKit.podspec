@@ -20,7 +20,7 @@ Pod::Spec.new do |spec|
 
   spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => spec.version }
 
-  spec.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/**/*.{swift}"
+  # spec.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/**/*.{swift}"
 
   spec.subspec 'macOScategory' do |ss|
     ss.source_files  = "TFYSwiftMacOSAppKit/macOScategory/**/*.{swift}"

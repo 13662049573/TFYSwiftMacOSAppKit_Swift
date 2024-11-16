@@ -128,15 +128,14 @@ public extension NSImage {
     /// - Parameters:
     ///   - string: 要编码的字符串内容
     ///   - size: 二维码大小
-    ///   - logoImageName: Logo图像的名称
+    ///   - logoImage: Logo图像
     ///   - logoSize: Logo的大小
     /// - Returns: 带Logo的二维码图像，如果生成失败则返回nil
     static func generateQRCodeWithLogo(from string: String,
                                      size: CGSize,
-                                     logoImageName: NSImage.Name,
+                                     logoImage: NSImage,
                                      logoSize: CGSize) -> NSImage? {
-        guard let qrImage = generateQRCode(from: string, size: size),
-              let logoImage = NSImage(named: logoImageName) else { return nil }
+        guard let qrImage = generateQRCode(from: string, size: size) else { return nil }
         return addLogo(to: qrImage, logo: logoImage, logoSize: logoSize)
     }
     

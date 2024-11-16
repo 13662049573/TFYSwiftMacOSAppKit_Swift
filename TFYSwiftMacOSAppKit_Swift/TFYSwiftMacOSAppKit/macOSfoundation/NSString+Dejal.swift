@@ -7,6 +7,8 @@
 //
 
 import Cocoa
+import CommonCrypto
+import CryptoKit
 
 public extension String {
     /// 日期格式化器，使用静态属性避免重复创建
@@ -100,12 +102,54 @@ public extension String {
     }
     
     /// 获取字符串的MD5值
-    var md5: String {
-        let data = Data(self.utf8)
-        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
-        _ = data.withUnsafeBytes { buffer in
-            CC_MD5(buffer.baseAddress, CC_LONG(data.count), &digest)
+   var md5: String {
+       let length = Int(CC_MD5_DIGEST_LENGTH)
+       let messageData = Data(self.utf8)
+       var digestData = Data(count: length)
+       
+       _ = digestData.withUnsafeMutableBytes { digestBytes -> UInt8 in
+           messageData.withUnsafeBytes { messageBytes -> UInt8 in
+               if let messageBytesBaseAddress = messageBytes.baseAddress,
+                  let digestBytesBlindMemory = digestBytes.bindMemory(to: UInt8.self).baseAddress {
+                   let messageLength = CC_LONG(messageData.count)
+                   CC_MD5(messageBytesBaseAddress, messageLength, digestBytesBlindMemory)
+               }
+               return 0
+           }
+       }
+       
+       return digestData.map { String(format: "%02hhx", $0) }.joined()
+   }
+    
+    /// 获取字符串的哈希值
+        /// - Returns: SHA-256 哈希值的十六进制字符串
+        var sha256: String {
+            guard let data = self.data(using: .utf8) else { return "" }
+            let hash = SHA256.hash(data: data)
+            return hash.compactMap { String(format: "%02x", $0) }.joined()
         }
-        return digest.map { String(format: "%02x", $0) }.joined()
-    }
+        
+        /// 获取字符串的哈希值（较短版本）
+        /// - Returns: SHA-256 哈希值的前16字节的十六进制字符串
+        var shortHash: String {
+            guard let data = self.data(using: .utf8) else { return "" }
+            let hash = SHA256.hash(data: data)
+            // 只取前16字节
+            return hash.prefix(16).compactMap { String(format: "%02x", $0) }.joined()
+        }
+        
+        /// 获取字符串的 HMAC 哈希值
+        /// - Parameter key: 密钥
+        /// - Returns: HMAC-SHA256 哈希值的十六进制字符串
+        func hmac(key: String) -> String {
+            guard let keyData = key.data(using: .utf8),
+                  let messageData = self.data(using: .utf8) else { return "" }
+            
+            let symmetricKey = SymmetricKey(data: keyData)
+            let signature = HMAC<SHA256>.authenticationCode(
+                for: messageData,
+                using: symmetricKey
+            )
+            return Data(signature).map { String(format: "%02x", $0) }.joined()
+        }
 }

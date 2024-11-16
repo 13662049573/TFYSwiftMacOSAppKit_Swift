@@ -111,7 +111,10 @@ class ViewController: NSViewController {
         
         let qrImage = NSImage.generateQRCode(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300))
        
-        imageView.image = qrImage
+        let qrImageLogo = NSImage.generateQRCodeWithLogo(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300), logoImage: NSImage(named: "mood_day_6")!, logoSize: CGSizeMake(60, 60))
+        
+        
+        imageView.image = qrImageLogo
         
     }
     

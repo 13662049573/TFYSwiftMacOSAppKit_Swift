@@ -24,8 +24,8 @@ public extension Chain where Base: CAShapeLayer {
     }
     
     @discardableResult
-    func fillRule(_ value:CAShapeLayerFillRule) -> Self {
-        base.fillRule = value
+    func fillRule(_ value:String) -> Self {
+        base.fillRule = CAShapeLayerFillRule(rawValue: value)
         return self
     }
     
@@ -60,14 +60,14 @@ public extension Chain where Base: CAShapeLayer {
     }
     
     @discardableResult
-    func lineCap(_ value:CAShapeLayerLineCap) -> Self {
-        base.lineCap = value
+    func lineCap(_ value:String) -> Self {
+        base.lineCap = CAShapeLayerLineCap(rawValue: value)
         return self
     }
     
     @discardableResult
-    func lineJoin(_ value:CAShapeLayerLineJoin) -> Self {
-        base.lineJoin = value
+    func lineJoin(_ value:String) -> Self {
+        base.lineJoin = CAShapeLayerLineJoin(rawValue: value)
         return self
     }
     

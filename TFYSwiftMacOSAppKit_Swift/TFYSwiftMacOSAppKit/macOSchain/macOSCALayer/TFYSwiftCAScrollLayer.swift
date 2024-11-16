@@ -30,8 +30,8 @@ public extension Chain where Base: CAScrollLayer {
     }
     
     @discardableResult
-    func scrollMode(_ value:CAScrollLayerScrollMode) -> Self {
-        base.scrollMode = value
+    func scrollMode(_ value:String) -> Self {
+        base.scrollMode = CAScrollLayerScrollMode(rawValue: value)
         return self
     }
 }

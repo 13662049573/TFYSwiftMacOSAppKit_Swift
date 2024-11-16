@@ -116,14 +116,6 @@ public extension NSImage {
         let polygonDotsImage = applyRandomPolygons(to: ciImage)
         return createHighResolutionImage(from: polygonDotsImage, size: size)
     }
-    
-    // Generate a QR code with an image pattern
-    static func generateQRCodeWithImagePattern(from string: String, size: CGSize, patternImage: NSImage) -> NSImage? {
-        guard let qrCIImage = generateCIImage(from: string),
-              let patternCIImage = CIImage(data: patternImage.tiffRepresentation!) else { return nil }
-        let patternedQRImage = applyImagePattern(to: qrCIImage, with: patternCIImage)
-        return createHighResolutionImage(from: patternedQRImage, size: size)
-    }
 
     // Private: Generate CIImage from string
     private static func generateCIImage(from string: String) -> CIImage? {
@@ -193,13 +185,4 @@ public extension NSImage {
         return kernel.apply(extent: ciImage.extent, roiCallback: { _, rect in rect }, arguments: [ciImage])!
     }
     
-    // Private: Apply an image pattern to QR code
-    private static func applyImagePattern(to qrImage: CIImage, with patternImage: CIImage) -> CIImage {
-        let blendFilter = CIFilter(name: "CIBlendWithMask", parameters: [
-            "inputImage": patternImage,
-            "inputBackgroundImage": qrImage,
-            "inputMaskImage": qrImage
-        ])
-        return blendFilter?.outputImage ?? qrImage
-    }
 }

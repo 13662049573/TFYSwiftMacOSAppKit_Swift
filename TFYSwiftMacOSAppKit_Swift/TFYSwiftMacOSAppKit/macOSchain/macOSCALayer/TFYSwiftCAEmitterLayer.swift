@@ -54,20 +54,20 @@ public extension Chain where Base: CAEmitterLayer {
     }
     
     @discardableResult
-    func emitterShape(_ value:CAEmitterLayerEmitterShape) -> Self {
-        base.emitterShape = value
+    func emitterShape(_ value:String) -> Self {
+        base.emitterShape = CAEmitterLayerEmitterShape(rawValue: value)
         return self
     }
     
     @discardableResult
-    func emitterMode(_ value:CAEmitterLayerEmitterMode) -> Self {
-        base.emitterMode = value
+    func emitterMode(_ value:String) -> Self {
+        base.emitterMode = CAEmitterLayerEmitterMode(rawValue: value)
         return self
     }
     
     @discardableResult
-    func renderMode(_ value:CAEmitterLayerRenderMode) -> Self {
-        base.renderMode = value
+    func renderMode(_ value:String) -> Self {
+        base.renderMode = CAEmitterLayerRenderMode(rawValue: value)
         return self
     }
     

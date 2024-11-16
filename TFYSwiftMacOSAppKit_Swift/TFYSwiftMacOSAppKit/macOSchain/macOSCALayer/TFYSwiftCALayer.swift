@@ -138,8 +138,8 @@ public extension Chain where Base: CALayer {
     }
     
     @discardableResult
-    func contentsGravity(_ value:String) -> Self {
-        base.contentsGravity = CALayerContentsGravity(rawValue: value)
+    func contentsGravity(_ value: CALayerContentsGravity) -> Self {
+        base.contentsGravity = value
         return self
     }
     
@@ -156,20 +156,20 @@ public extension Chain where Base: CALayer {
     }
     
     @discardableResult
-    func contentsFormat(_ value:String) -> Self {
-        base.contentsFormat = CALayerContentsFormat(rawValue: value)
+    func contentsFormat(_ value: CALayerContentsFormat) -> Self {
+        base.contentsFormat = value
         return self
     }
     
     @discardableResult
-    func minificationFilter(_ value:String) -> Self {
-        base.minificationFilter = CALayerContentsFilter(rawValue: value)
+    func minificationFilter(_ value: CALayerContentsFilter) -> Self {
+        base.minificationFilter = value
         return self
     }
     
     @discardableResult
-    func magnificationFilter(_ value:String) -> Self {
-        base.magnificationFilter = CALayerContentsFilter(rawValue: value)
+    func magnificationFilter(_ value: CALayerContentsFilter) -> Self {
+        base.magnificationFilter = value
         return self
     }
     

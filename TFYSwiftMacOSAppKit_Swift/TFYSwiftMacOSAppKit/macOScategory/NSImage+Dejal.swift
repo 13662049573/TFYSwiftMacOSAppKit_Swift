@@ -96,7 +96,7 @@ public extension NSImage {
     }
 
     // Generate a QR code with a logo
-    static func generateQRCodeWithLogo(from string: String, size: CGSize, logoImageName: String, logoSize: CGSize) -> NSImage? {
+    static func generateQRCodeWithLogo(from string: String, size: CGSize, logoImageName: NSImage.Name, logoSize: CGSize) -> NSImage? {
         guard let qrImage = generateQRCode(from: string, size: size),
               let logoImage = NSImage(named: logoImageName) else { return nil }
         

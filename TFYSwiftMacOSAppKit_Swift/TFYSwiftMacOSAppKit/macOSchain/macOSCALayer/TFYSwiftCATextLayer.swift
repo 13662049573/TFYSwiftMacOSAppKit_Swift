@@ -42,14 +42,14 @@ public extension Chain where Base: CATextLayer {
     }
     
     @discardableResult
-    func truncationMode(_ value:String) -> Self {
-        base.truncationMode = CATextLayerTruncationMode(rawValue: value)
+    func truncationMode(_ value:CATextLayerTruncationMode) -> Self {
+        base.truncationMode = value
         return self
     }
     
     @discardableResult
-    func alignmentMode(_ value:String) -> Self {
-        base.alignmentMode = CATextLayerAlignmentMode(rawValue: value)
+    func alignmentMode(_ value:CATextLayerAlignmentMode) -> Self {
+        base.alignmentMode = value
         return self
     }
     

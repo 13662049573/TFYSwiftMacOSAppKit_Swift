@@ -9,6 +9,13 @@
 /* Begin PBXBuildFile section */
 		18A7E3152CE6FD640069739E /* TFYSwiftMacOSAppKit-Swift-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 18A7E3142CE6FD640069739E /* TFYSwiftMacOSAppKit-Swift-Info.plist */; };
 		18A7E3172CE721830069739E /* TFYSwiftVPNManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A7E3162CE721830069739E /* TFYSwiftVPNManager.swift */; };
+		3636D18A2CECE91D002AA074 /* TFYProgressMacOSHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D1892CECE91D002AA074 /* TFYProgressMacOSHUD.swift */; };
+		3636D18C2CECE939002AA074 /* TFYProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D18B2CECE939002AA074 /* TFYProgressView.swift */; };
+		3636D18E2CECE94F002AA074 /* TFYAnimationEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D18D2CECE94F002AA074 /* TFYAnimationEnhancer.swift */; };
+		3636D1902CECE967002AA074 /* TFYGestureHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D18F2CECE967002AA074 /* TFYGestureHandler.swift */; };
+		3636D1922CECE97B002AA074 /* TFYLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D1912CECE97B002AA074 /* TFYLayoutManager.swift */; };
+		3636D1942CECE991002AA074 /* TFYThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D1932CECE991002AA074 /* TFYThemeManager.swift */; };
+		3636D1962CECE9A6002AA074 /* TFYProgressIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D1952CECE9A6002AA074 /* TFYProgressIndicator.swift */; };
 		36D89F9B2CE6457B00BD1A5D /* NSTextView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36D89F9A2CE6457B00BD1A5D /* NSTextView+Dejal.swift */; };
 		36EC0C9E2CDA4627003EBAD5 /* TFYSwiftLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0C9D2CDA4627003EBAD5 /* TFYSwiftLabel.swift */; };
 		36EC0CA02CDA4AE3003EBAD5 /* TFYSwiftButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0C9F2CDA4AE3003EBAD5 /* TFYSwiftButton.swift */; };
@@ -110,6 +117,13 @@
 /* Begin PBXFileReference section */
 		18A7E3142CE6FD640069739E /* TFYSwiftMacOSAppKit-Swift-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "TFYSwiftMacOSAppKit-Swift-Info.plist"; sourceTree = "<group>"; };
 		18A7E3162CE721830069739E /* TFYSwiftVPNManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftVPNManager.swift; sourceTree = "<group>"; };
+		3636D1892CECE91D002AA074 /* TFYProgressMacOSHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYProgressMacOSHUD.swift; sourceTree = "<group>"; };
+		3636D18B2CECE939002AA074 /* TFYProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYProgressView.swift; sourceTree = "<group>"; };
+		3636D18D2CECE94F002AA074 /* TFYAnimationEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYAnimationEnhancer.swift; sourceTree = "<group>"; };
+		3636D18F2CECE967002AA074 /* TFYGestureHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYGestureHandler.swift; sourceTree = "<group>"; };
+		3636D1912CECE97B002AA074 /* TFYLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYLayoutManager.swift; sourceTree = "<group>"; };
+		3636D1932CECE991002AA074 /* TFYThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYThemeManager.swift; sourceTree = "<group>"; };
+		3636D1952CECE9A6002AA074 /* TFYProgressIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYProgressIndicator.swift; sourceTree = "<group>"; };
 		36D89F9A2CE6457B00BD1A5D /* NSTextView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSTextView+Dejal.swift"; sourceTree = "<group>"; };
 		36EC0C9D2CDA4627003EBAD5 /* TFYSwiftLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftLabel.swift; sourceTree = "<group>"; };
 		36EC0C9F2CDA4AE3003EBAD5 /* TFYSwiftButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftButton.swift; sourceTree = "<group>"; };
@@ -221,6 +235,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3636D1882CECE900002AA074 /* macOSHUD */ = {
+			isa = PBXGroup;
+			children = (
+				3636D1892CECE91D002AA074 /* TFYProgressMacOSHUD.swift */,
+				3636D18B2CECE939002AA074 /* TFYProgressView.swift */,
+				3636D18D2CECE94F002AA074 /* TFYAnimationEnhancer.swift */,
+				3636D18F2CECE967002AA074 /* TFYGestureHandler.swift */,
+				3636D1912CECE97B002AA074 /* TFYLayoutManager.swift */,
+				3636D1932CECE991002AA074 /* TFYThemeManager.swift */,
+				3636D1952CECE9A6002AA074 /* TFYProgressIndicator.swift */,
+			);
+			path = macOSHUD;
+			sourceTree = "<group>";
+		};
 		36EC0CB22CDB9284003EBAD5 /* macOScategory */ = {
 			isa = PBXGroup;
 			children = (
@@ -302,6 +330,7 @@
 		3D04F74F2CDA0FAA009493BF /* macOScontainer */ = {
 			isa = PBXGroup;
 			children = (
+				3636D1882CECE900002AA074 /* macOSHUD */,
 				3D04F75B2CDAEA2D009493BF /* macOSStatusItem */,
 				3D04F74E2CDA0FAA009493BF /* macOSUtils */,
 			);
@@ -508,8 +537,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				3D04F8442CDCAF92009493BF /* TFYSwiftCAReplicatorLayer.swift in Sources */,
+				3636D1922CECE97B002AA074 /* TFYLayoutManager.swift in Sources */,
 				3D04F7542CDA1275009493BF /* TFYSwiftSecureTextFieldCell.swift in Sources */,
 				3D04F83E2CDCA803009493BF /* TFYSwiftCALayer.swift in Sources */,
+				3636D1902CECE967002AA074 /* TFYGestureHandler.swift in Sources */,
 				36EC0CB62CDB9EA4003EBAD5 /* NSView+Dejal.swift in Sources */,
 				3D04F7562CDA131D009493BF /* TFYSwiftTextField.swift in Sources */,
 				3D04F76C2CDB67DB009493BF /* NSObject+Dejal.swift in Sources */,
@@ -547,6 +578,7 @@
 				3D04F8172CDCA31F009493BF /* TFYSwiftNSBox.swift in Sources */,
 				3D04F8182CDCA31F009493BF /* TFYSwiftNSTabView.swift in Sources */,
 				3D04F8312CDCA3A0009493BF /* TFYSwiftNSGestureRecognizer.swift in Sources */,
+				3636D18C2CECE939002AA074 /* TFYProgressView.swift in Sources */,
 				3D04F8192CDCA31F009493BF /* TFYSwiftNSTableRowView.swift in Sources */,
 				3D04F81A2CDCA31F009493BF /* TFYSwiftNSProgressIndicator.swift in Sources */,
 				36EC0CBF2CDCF032003EBAD5 /* TFYStatusItemWindow.swift in Sources */,
@@ -564,12 +596,14 @@
 				3D04F8202CDCA31F009493BF /* TFYSwiftNSButton.swift in Sources */,
 				3D04F8212CDCA31F009493BF /* TFYSwiftNSLabel.swift in Sources */,
 				3D04F8222CDCA31F009493BF /* TFYSwiftNSTokenField.swift in Sources */,
+				3636D1942CECE991002AA074 /* TFYThemeManager.swift in Sources */,
 				3D04F8232CDCA31F009493BF /* TFYSwiftNSMatrix.swift in Sources */,
 				3D04F8242CDCA31F009493BF /* TFYSwiftNSScroller.swift in Sources */,
 				3D04F8252CDCA31F009493BF /* TFYSwiftHasText.swift in Sources */,
 				36EC0CBB2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift in Sources */,
 				36EC0CC32CDCF3B5003EBAD5 /* TFYStatusItemWindowController.swift in Sources */,
 				3D04F8422CDCAF21009493BF /* TFYSwiftCAGradientLayer.swift in Sources */,
+				3636D18E2CECE94F002AA074 /* TFYAnimationEnhancer.swift in Sources */,
 				3D04F8262CDCA31F009493BF /* TFYSwiftNSTableCellView.swift in Sources */,
 				3D04F8272CDCA31F009493BF /* TFYSwiftNSGridView.swift in Sources */,
 				18A7E3172CE721830069739E /* TFYSwiftVPNManager.swift in Sources */,
@@ -587,12 +621,14 @@
 				36EC0CC52CDCF457003EBAD5 /* TFYStatusItem.swift in Sources */,
 				3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */,
 				3D04F7522CDA1020009493BF /* TFYSwiftTextFieldCell.swift in Sources */,
+				3636D18A2CECE91D002AA074 /* TFYProgressMacOSHUD.swift in Sources */,
 				36EC0CA02CDA4AE3003EBAD5 /* TFYSwiftButton.swift in Sources */,
 				36EC0CAD2CDA6513003EBAD5 /* TFYSwiftGCD.swift in Sources */,
 				3D04F7B42CDC8D2F009493BF /* NSTextField+Dejal.swift in Sources */,
 				36EC0CB92CDCEAF0003EBAD5 /* TFYStatusItemContainerView.swift in Sources */,
 				36EC0CAF2CDA6600003EBAD5 /* TFYSwiftTimer.swift in Sources */,
 				3D04F7702CDB6DED009493BF /* NSString+Dejal.swift in Sources */,
+				3636D1962CECE9A6002AA074 /* TFYProgressIndicator.swift in Sources */,
 				3D04F8512CDCB66B009493BF /* TFYSwiftHomeController.swift in Sources */,
 				3D04F75A2CDA27B4009493BF /* TFYSwiftOpenPanel.swift in Sources */,
 				36EC0CA72CDA5812003EBAD5 /* TFYSwiftUtils.swift in Sources */,

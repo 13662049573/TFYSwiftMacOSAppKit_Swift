@@ -9,13 +9,14 @@
 import Cocoa
 import CoreImage
 
-public class TFYProgressIndicator: NSView {
-    
+class TFYProgressIndicator: NSView {
     // MARK: - Properties
-    public private(set) var progressIndicator: NSProgressIndicator
-    public var color: NSColor? {
+    private(set) var progressIndicator: NSProgressIndicator
+    var tintColor: NSColor? {
         didSet {
-            updateColor()
+            if let color = tintColor {
+                setColor(color)
+            }
         }
     }
     
@@ -32,6 +33,7 @@ public class TFYProgressIndicator: NSView {
         setupProgressIndicator()
     }
     
+    // MARK: - Setup
     private func setupProgressIndicator() {
         // Configure progress indicator
         progressIndicator.style = .spinning
@@ -50,10 +52,8 @@ public class TFYProgressIndicator: NSView {
         ])
     }
     
-    // MARK: - Color Management
-    private func updateColor() {
-        guard let color = color else { return }
-        
+    // MARK: - Public Methods
+    func setColor(_ color: NSColor) {
         // Method 1: Using Core Image filter
         let colorFilter = CIFilter(name: "CIColorMonochrome")
         colorFilter?.setDefaults()
@@ -64,22 +64,33 @@ public class TFYProgressIndicator: NSView {
         // Method 2: Set layer properties
         progressIndicator.layer?.backgroundColor = NSColor.clear.cgColor
         
-        // Method 3: Set appearance based on brightness
-        var brightness: CGFloat = 0
-        color.usingColorSpace(.sRGB)?.getHue(nil, saturation: nil, brightness: &brightness, alpha: nil)
-        progressIndicator.appearance = NSAppearance(named: brightness > 0.5 ? .aqua : .darkAqua)
+        // Method 3: Set appearance based on color brightness
+        if let brightness = color.usingColorSpace(.sRGB)?.brightnessComponent {
+            progressIndicator.appearance = brightness > 0.5 ?
+                NSAppearance(named: .aqua) :
+                NSAppearance(named: .darkAqua)
+        }
     }
     
-    // MARK: - Animation Control
-    public func startAnimation() {
+    func startAnimation() {
         DispatchQueue.main.async { [weak self] in
             self?.progressIndicator.startAnimation(nil)
         }
     }
     
-    public func stopAnimation() {
+    func stopAnimation() {
         DispatchQueue.main.async { [weak self] in
             self?.progressIndicator.stopAnimation(nil)
         }
+    }
+}
+
+// MARK: - NSColor Extension
+private extension NSColor {
+    var brightnessComponent: CGFloat {
+        guard let rgbColor = usingColorSpace(.sRGB) else { return 0 }
+        var brightness: CGFloat = 0
+        rgbColor.getHue(nil, saturation: nil, brightness: &brightness, alpha: nil)
+        return brightness
     }
 }

@@ -9,26 +9,31 @@
 import Cocoa
 import CoreImage
 
-public class TFYThemeManager {
-    
+class TFYThemeManager: NSObject {
     // MARK: - Properties
     private var themes: [String: [String: Any]] = [:]
-    private(set) var currentTheme: [String: Any] = [:]
+    private(set) var currentTheme: [String: Any]?
     private weak var currentHUD: TFYProgressMacOSHUD?
     
     // MARK: - Initialization
-    public init() {
+    override init() {
+        super.init()
         setupDefaultTheme()
     }
     
     // MARK: - Theme Setup
-    public func setupDefaultTheme() {
-        registerTheme(defaultLightTheme(), forName: "light")
-        registerTheme(defaultDarkTheme(), forName: "dark")
+    func setupDefaultTheme() {
+        // Register default light theme
+        registerTheme(defaultLightTheme, for: "light")
+        
+        // Register default dark theme
+        registerTheme(defaultDarkTheme, for: "dark")
+        
+        // Set initial theme
         applyTheme("light")
     }
     
-    private func defaultLightTheme() -> [String: Any] {
+    private var defaultLightTheme: [String: Any] {
         return [
             "backgroundColor": NSColor(white: 0.0, alpha: 0.35),
             "containerBackgroundColor": NSColor(white: 0.95, alpha: 1.0),
@@ -46,7 +51,7 @@ public class TFYThemeManager {
         ]
     }
     
-    private func defaultDarkTheme() -> [String: Any] {
+    private var defaultDarkTheme: [String: Any] {
         return [
             "backgroundColor": NSColor(white: 0.0, alpha: 0.35),
             "containerBackgroundColor": NSColor(white: 0.2, alpha: 1.0),
@@ -65,95 +70,81 @@ public class TFYThemeManager {
     }
     
     // MARK: - Theme Management
-    public func registerTheme(_ theme: [String: Any], forName name: String) {
+    func registerTheme(_ theme: [String: Any], for name: String) {
         themes[name] = theme
     }
     
-    public func theme(forName name: String) -> [String: Any]? {
+    func theme(for name: String) -> [String: Any]? {
         return themes[name]
     }
     
-    public func applyTheme(_ themeName: String) {
-        guard let theme = theme(forName: themeName) else { return }
+    func applyTheme(_ themeName: String) {
+        guard let theme = theme(for: themeName) else { return }
         currentTheme = theme
         if let hud = currentHUD {
             applyTheme(to: hud)
         }
     }
     
-    public func applyTheme(to hud: TFYProgressMacOSHUD) {
-        guard !currentTheme.isEmpty else { return }
+    func applyTheme(to hud: TFYProgressMacOSHUD) {
+        guard let theme = currentTheme else { return }
         
         currentHUD = hud
         
         // Configure main view
         hud.wantsLayer = true
-        if let backgroundColor = currentTheme["backgroundColor"] as? NSColor {
+        if let backgroundColor = theme["backgroundColor"] as? NSColor {
             hud.layer?.backgroundColor = backgroundColor.cgColor
         }
         
         // Configure container view
         hud.containerView.wantsLayer = true
-        if let containerBackgroundColor = currentTheme["containerBackgroundColor"] as? NSColor {
+        if let containerBackgroundColor = theme["containerBackgroundColor"] as? NSColor {
             hud.containerView.layer?.backgroundColor = containerBackgroundColor.cgColor
         }
         
         // Apply corner radius
-        if let cornerRadius = currentTheme["cornerRadius"] as? CGFloat {
+        if let cornerRadius = theme["cornerRadius"] as? CGFloat {
             hud.containerView.layer?.cornerRadius = cornerRadius
         }
         
         // Apply border
-        if let borderWidth = currentTheme["borderWidth"] as? CGFloat {
+        if let borderWidth = theme["borderWidth"] as? CGFloat {
             hud.containerView.layer?.borderWidth = borderWidth
         }
         
-        if let borderColor = currentTheme["borderColor"] as? NSColor {
+        if let borderColor = theme["borderColor"] as? NSColor {
             hud.containerView.layer?.borderColor = borderColor.cgColor
         }
         
-        // Apply shadow
-        if let shadowColor = currentTheme["shadowColor"] as? NSColor {
+        // Configure shadow
+        if let shadowColor = theme["shadowColor"] as? NSColor {
             hud.containerView.layer?.shadowColor = shadowColor.cgColor
         }
         
-        if let shadowRadius = currentTheme["shadowRadius"] as? CGFloat {
+        if let shadowRadius = theme["shadowRadius"] as? CGFloat {
             hud.containerView.layer?.shadowRadius = shadowRadius
         }
         
-        if let shadowOpacity = currentTheme["shadowOpacity"] as? Float {
+        if let shadowOpacity = theme["shadowOpacity"] as? Float {
             hud.containerView.layer?.shadowOpacity = shadowOpacity
         }
         
         hud.containerView.layer?.shadowOffset = NSSize(width: 0, height: -3)
         
         // Configure text color
-        if let textColor = currentTheme["textColor"] as? NSColor {
+        if let textColor = theme["textColor"] as? NSColor {
             hud.statusLabel.textColor = textColor
         }
         
-        // Configure progress indicators
-        if let progressColor = currentTheme["progressColor"] as? NSColor {
+        // Configure progress indicator color
+        if let progressColor = theme["progressColor"] as? NSColor {
             hud.progressView.progressColor = progressColor
-            hud.activityIndicator.color = progressColor
         }
-    }
-    
-    // MARK: - Spinner Color Update
-    public func updateSpinnerColor(_ color: NSColor, for hud: TFYProgressMacOSHUD) {
-        guard let rgbColor = color.usingColorSpace(.sRGB) else {
-            hud.activityIndicator.appearance = NSAppearance(named: .aqua)
-            return
-        }
-        
-        var brightness: CGFloat = 0
-        rgbColor.getHue(nil, saturation: nil, brightness: &brightness, alpha: nil)
-        
-        hud.activityIndicator.appearance = NSAppearance(named: brightness > 0.5 ? .aqua : .darkAqua)
     }
     
     // MARK: - System Theme Observation
-    public func observeSystemThemeChanges() {
+    func observeSystemThemeChanges() {
         DistributedNotificationCenter.default().addObserver(
             self,
             selector: #selector(handleSystemThemeChange),
@@ -168,10 +159,10 @@ public class TFYThemeManager {
     }
     
     // MARK: - Cleanup
-    public func cleanup() {
+    func cleanup() {
         DistributedNotificationCenter.default().removeObserver(self)
         themes.removeAll()
-        currentTheme.removeAll()
+        currentTheme = nil
         currentHUD = nil
     }
     

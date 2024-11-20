@@ -8,18 +8,19 @@
 
 import Cocoa
 
-// MARK: - Gesture Handler Delegate Protocol
-public protocol TFYGestureHandlerDelegate: AnyObject {
+// MARK: - Protocols
+protocol TFYGestureHandlerDelegate: AnyObject {
+    // Required
     func gestureHandler(_ handler: TFYGestureHandler, didRecognizeTapGesture gesture: NSGestureRecognizer)
     func gestureHandler(_ handler: TFYGestureHandler, didRecognizeSwipeGesture gesture: NSGestureRecognizer)
     
-    // Optional methods
+    // Optional
     func gestureHandler(_ handler: TFYGestureHandler, shouldRecognizeTapGesture gesture: NSGestureRecognizer) -> Bool
     func gestureHandler(_ handler: TFYGestureHandler, shouldRecognizeSwipeGesture gesture: NSGestureRecognizer) -> Bool
 }
 
-// Make optional methods actually optional
-public extension TFYGestureHandlerDelegate {
+// Default implementations for optional methods
+extension TFYGestureHandlerDelegate {
     func gestureHandler(_ handler: TFYGestureHandler, shouldRecognizeTapGesture gesture: NSGestureRecognizer) -> Bool {
         return true
     }
@@ -29,11 +30,10 @@ public extension TFYGestureHandlerDelegate {
     }
 }
 
-public class TFYGestureHandler: NSObject {
-    
+class TFYGestureHandler: NSObject {
     // MARK: - Properties
-    public weak var delegate: TFYGestureHandlerDelegate?
-    public var gesturesEnabled: Bool = true {
+    weak var delegate: TFYGestureHandlerDelegate?
+    var gesturesEnabled: Bool = true {
         didSet {
             if let targetView = targetView {
                 if gesturesEnabled {
@@ -57,7 +57,7 @@ public class TFYGestureHandler: NSObject {
     }
     
     // MARK: - Public Methods
-    public func setupGestures(for view: NSView) {
+    func setupGestures(for view: NSView) {
         targetView = view
         
         if gesturesEnabled {
@@ -66,35 +66,38 @@ public class TFYGestureHandler: NSObject {
         }
     }
     
-    public func addTapGesture(to view: NSView) {
+    func addTapGesture(to view: NSView) {
         if let existingGesture = tapGesture {
             view.removeGestureRecognizer(existingGesture)
         }
         
-        let gesture = NSClickGestureRecognizer(target: self, action: #selector(handleTapGesture(_:)))
-        view.addGestureRecognizer(gesture)
-        tapGesture = gesture
+        let newTapGesture = NSClickGestureRecognizer(target: self, action: #selector(handleTapGesture(_:)))
+        view.addGestureRecognizer(newTapGesture)
+        tapGesture = newTapGesture
     }
     
-    public func addSwipeGesture(to view: NSView) {
+    func addSwipeGesture(to view: NSView) {
         if let existingGesture = swipeGesture {
             view.removeGestureRecognizer(existingGesture)
         }
         
-        let gesture = NSPanGestureRecognizer(target: self, action: #selector(handleSwipeGesture(_:)))
-        view.addGestureRecognizer(gesture)
-        swipeGesture = gesture
+        let newSwipeGesture = NSPanGestureRecognizer(target: self, action: #selector(handleSwipeGesture(_:)))
+        view.addGestureRecognizer(newSwipeGesture)
+        swipeGesture = newSwipeGesture
     }
     
-    public func removeAllGestureRecognizers() {
-        guard let view = targetView else { return }
+    func removeAllGestureRecognizers() {
+        if let view = targetView {
+            for recognizer in view.gestureRecognizers {
+                view.removeGestureRecognizer(recognizer)
+            }
+        }
         
-        view.gestureRecognizers.forEach { view.removeGestureRecognizer($0) }
         tapGesture = nil
         swipeGesture = nil
     }
     
-    public func cleanup() {
+    func cleanup() {
         removeAllGestureRecognizers()
         delegate = nil
         targetView = nil
@@ -104,9 +107,7 @@ public class TFYGestureHandler: NSObject {
     @objc private func handleTapGesture(_ gesture: NSGestureRecognizer) {
         guard gesturesEnabled else { return }
         
-        if delegate?.gestureHandler(self, shouldRecognizeTapGesture: gesture) ?? true {
-            delegate?.gestureHandler(self, didRecognizeTapGesture: gesture)
-        }
+        delegate?.gestureHandler(self, didRecognizeTapGesture: gesture)
     }
     
     @objc private func handleSwipeGesture(_ gesture: NSPanGestureRecognizer) {
@@ -115,16 +116,14 @@ public class TFYGestureHandler: NSObject {
         if gesture.state == .ended {
             let velocity = gesture.velocity(in: targetView)
             
-            // Check if it's a valid swipe gesture (minimum velocity threshold)
+            // Check if it's a valid swipe gesture
             if abs(velocity.x) > 500 || abs(velocity.y) > 500 {
-                if delegate?.gestureHandler(self, shouldRecognizeSwipeGesture: gesture) ?? true {
-                    delegate?.gestureHandler(self, didRecognizeSwipeGesture: gesture)
-                }
+                delegate?.gestureHandler(self, didRecognizeSwipeGesture: gesture)
             }
         }
     }
     
-    // MARK: - Cleanup
+    // MARK: - Deinitializer
     deinit {
         cleanup()
     }

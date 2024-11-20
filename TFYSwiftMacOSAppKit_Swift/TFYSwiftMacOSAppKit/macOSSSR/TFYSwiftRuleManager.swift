@@ -7,6 +7,7 @@
 //
 
 import Foundation
+//import MaxMindDB
 
 class TFYSwiftRuleManager {
     enum RuleType: String, Codable {
@@ -41,6 +42,26 @@ class TFYSwiftRuleManager {
     private var rules: [Rule] = []
     private let queue = DispatchQueue(label: "com.tfyswift.rules")
     private let rulesPath: URL
+    
+    // 示例的 IP 范围到国家代码的映射
+    private let ipCountryMapping: [(range: ClosedRange<UInt32>, countryCode: String)] = [
+        (range: 167772160...184549375, countryCode: "US"), // 10.0.0.0/8
+        (range: 2886729728...2887778303, countryCode: "CN"), // 172.16.0.0/12
+        (range: 3232235520...3232301055, countryCode: "US"), // 192.168.0.0/16
+        (range: 2155905152...2170556415, countryCode: "JP"), // 128.0.0.0/8
+        (range: 167837696...167837951, countryCode: "FR"), // 10.1.0.0/24
+        (range: 167837952...167838207, countryCode: "DE"), // 10.1.1.0/24
+        (range: 167838208...167838463, countryCode: "GB"), // 10.1.2.0/24
+        (range: 167838464...167838719, countryCode: "AU"), // 10.1.3.0/24
+        (range: 167838720...167838975, countryCode: "IN"), // 10.1.4.0/24
+        (range: 167838976...167839231, countryCode: "BR"), // 10.1.5.0/24
+        (range: 167839232...167839487, countryCode: "RU"), // 10.1.6.0/24
+        (range: 167839488...167839743, countryCode: "ZA"), // 10.1.7.0/24
+        (range: 167839744...167839999, countryCode: "CA"), // 10.1.8.0/24
+        (range: 167840000...167840255, countryCode: "IT"), // 10.1.9.0/24
+        (range: 167840256...167840511, countryCode: "ES"), // 10.1.10.0/24
+        // 添加更多的 IP 范围和国家代码
+    ]
     
     init() throws {
         let fileManager = FileManager.default
@@ -175,15 +196,54 @@ class TFYSwiftRuleManager {
     
     // IP CIDR匹配
     private func matchIPCIDR(pattern: String, ip: String) -> Bool {
-        // 实现IP CIDR匹配逻辑
-        return false
+        let components = pattern.split(separator: "/")
+        guard components.count == 2,
+              let networkAddress = ipToUInt32(ip: String(components[0])),
+              let prefixLength = Int(components[1]),
+              let targetIP = ipToUInt32(ip: ip) else {
+            return false
+        }
+        let mask = UInt32.max << (32 - prefixLength)
+        return (networkAddress & mask) == (targetIP & mask)
+    }
+    
+    // 将 IP 地址转换为 UInt32
+    private func ipToUInt32(ip: String) -> UInt32? {
+        let components = ip.split(separator: ".").compactMap { UInt8($0) }
+        guard components.count == 4 else { return nil }
+        return (UInt32(components[0]) << 24) | (UInt32(components[1]) << 16) | (UInt32(components[2]) << 8) | UInt32(components[3])
     }
     
     // GeoIP匹配
     private func matchGeoIP(pattern: String, ip: String) -> Bool {
-        // 实现GeoIP匹配逻辑
+        guard let ipValue = ipToUInt32(ip: ip) else { return false }
+        
+        for mapping in ipCountryMapping {
+            if mapping.range.contains(ipValue) {
+                return mapping.countryCode == pattern
+            }
+        }
         return false
     }
+    
+    // GeoIP匹配 
+//    private func matchGeoIP(pattern: String, ip: String) -> Bool {
+//        guard let dbPath = Bundle.main.path(forResource: "GeoLite2-Country", ofType: "mmdb"),
+//              let reader = MMDBReader(url: URL(fileURLWithPath: dbPath)) else {
+//            return false
+//        }
+//        
+//        do {
+//            let result = try reader.lookup(ipAddress: ip)
+//            if let country = result?.country?.isoCode {
+//                return country == pattern
+//            }
+//        } catch {
+//            print("GeoIP lookup error: \(error)")
+//        }
+//        
+//        return false
+//    }
     
     // User-Agent匹配
     private func matchUserAgent(pattern: String, userAgent: String) -> Bool {

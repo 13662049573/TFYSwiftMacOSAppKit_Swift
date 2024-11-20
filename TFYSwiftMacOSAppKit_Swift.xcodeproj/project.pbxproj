@@ -30,6 +30,9 @@
 		18C7EDC82CEDDC2400914927 /* TFYSwiftLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDC32CEDDC2400914927 /* TFYSwiftLogger.swift */; };
 		18C7EDC92CEDDC2400914927 /* TFYSwiftPerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDC42CEDDC2400914927 /* TFYSwiftPerformanceMonitor.swift */; };
 		18C7EDCA2CEDDC2400914927 /* TFYSwiftRuleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDC52CEDDC2400914927 /* TFYSwiftRuleManager.swift */; };
+		18C7EDCE2CEDDD2F00914927 /* TFYSwiftConfigManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDCB2CEDDD2F00914927 /* TFYSwiftConfigManager.swift */; };
+		18C7EDCF2CEDDD2F00914927 /* TFYSwiftHotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDCC2CEDDD2F00914927 /* TFYSwiftHotkeyManager.swift */; };
+		18C7EDD02CEDDD2F00914927 /* TFYSwiftNetworkDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDCD2CEDDD2F00914927 /* TFYSwiftNetworkDiagnostics.swift */; };
 		3636D18A2CECE91D002AA074 /* TFYProgressMacOSHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D1892CECE91D002AA074 /* TFYProgressMacOSHUD.swift */; };
 		3636D18C2CECE939002AA074 /* TFYProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D18B2CECE939002AA074 /* TFYProgressView.swift */; };
 		3636D18E2CECE94F002AA074 /* TFYAnimationEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D18D2CECE94F002AA074 /* TFYAnimationEnhancer.swift */; };
@@ -159,6 +162,9 @@
 		18C7EDC42CEDDC2400914927 /* TFYSwiftPerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftPerformanceMonitor.swift; sourceTree = "<group>"; };
 		18C7EDC52CEDDC2400914927 /* TFYSwiftRuleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftRuleManager.swift; sourceTree = "<group>"; };
 		18C7EDC62CEDDC2400914927 /* TFYSwiftUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftUpdater.swift; sourceTree = "<group>"; };
+		18C7EDCB2CEDDD2F00914927 /* TFYSwiftConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftConfigManager.swift; sourceTree = "<group>"; };
+		18C7EDCC2CEDDD2F00914927 /* TFYSwiftHotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftHotkeyManager.swift; sourceTree = "<group>"; };
+		18C7EDCD2CEDDD2F00914927 /* TFYSwiftNetworkDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftNetworkDiagnostics.swift; sourceTree = "<group>"; };
 		3636D1892CECE91D002AA074 /* TFYProgressMacOSHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYProgressMacOSHUD.swift; sourceTree = "<group>"; };
 		3636D18B2CECE939002AA074 /* TFYProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYProgressView.swift; sourceTree = "<group>"; };
 		3636D18D2CECE94F002AA074 /* TFYAnimationEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYAnimationEnhancer.swift; sourceTree = "<group>"; };
@@ -280,6 +286,9 @@
 		18C7EDAA2CEDD3E100914927 /* macOSSSR */ = {
 			isa = PBXGroup;
 			children = (
+				18C7EDCB2CEDDD2F00914927 /* TFYSwiftConfigManager.swift */,
+				18C7EDCC2CEDDD2F00914927 /* TFYSwiftHotkeyManager.swift */,
+				18C7EDCD2CEDDD2F00914927 /* TFYSwiftNetworkDiagnostics.swift */,
 				18C7EDC32CEDDC2400914927 /* TFYSwiftLogger.swift */,
 				18C7EDC42CEDDC2400914927 /* TFYSwiftPerformanceMonitor.swift */,
 				18C7EDC52CEDDC2400914927 /* TFYSwiftRuleManager.swift */,
@@ -709,6 +718,9 @@
 				3D04F8382CDCA6F6009493BF /* TFYSwiftNSRotationGestureRecognizer.swift in Sources */,
 				3D04F7582CDA251A009493BF /* TFYSwiftSecureTextField.swift in Sources */,
 				3D04F8632CDDAE09009493BF /* NSControl+Dejal.swift in Sources */,
+				18C7EDCE2CEDDD2F00914927 /* TFYSwiftConfigManager.swift in Sources */,
+				18C7EDCF2CEDDD2F00914927 /* TFYSwiftHotkeyManager.swift in Sources */,
+				18C7EDD02CEDDD2F00914927 /* TFYSwiftNetworkDiagnostics.swift in Sources */,
 				36EC0CC52CDCF457003EBAD5 /* TFYStatusItem.swift in Sources */,
 				3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */,
 				3D04F7522CDA1020009493BF /* TFYSwiftTextFieldCell.swift in Sources */,

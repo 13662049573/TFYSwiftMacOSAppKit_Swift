@@ -23,7 +23,8 @@ class TFYSwiftPACManager {
     
     func start() throws {
         let parameters = NWParameters.tcp
-        parameters.setProtocolHandlers([HTTPHandler()])
+        let framerOptions = NWProtocolFramer.Options(definition: HTTPHandler.definition)
+        parameters.defaultProtocolStack.applicationProtocols.insert(framerOptions, at: 0)
         
         httpServer = try NWListener(using: parameters,
                                   on: NWEndpoint.Port(integerLiteral: config.globalSettings.pacPort))
@@ -93,15 +94,107 @@ class TFYSwiftPACManager {
 
 // HTTP 协议处理
 private class HTTPHandler: NWProtocolFramerImplementation {
+    
+    func handleOutput(framer: NWProtocolFramer.Instance, message: NWProtocolFramer.Message, messageLength: Int, isComplete: Bool) {
+        // 创建 HTTP 响应头
+        let responseHeader = """
+        HTTP/1.1 200 OK\r
+        Content-Type: application/x-ns-proxy-autoconfig\r
+        Content-Length: \(messageLength)\r
+        Connection: close\r
+        \r
+        """
+        
+        // 将响应头写入输出缓冲区
+        if let headerData = responseHeader.data(using: .utf8) {
+            let headerLength = headerData.count
+            
+            // 创建一个可变的 Data 对象来存储响应头
+            var headerBuffer = Data(count: headerLength)
+            
+            // 将响应头数据复制到缓冲区
+            headerBuffer.withUnsafeMutableBytes { rawBufferPointer in
+                headerData.withUnsafeBytes { dataBufferPointer in
+                    guard let destPtr = rawBufferPointer.baseAddress,
+                          let srcPtr = dataBufferPointer.baseAddress else {
+                        return
+                    }
+                    memcpy(destPtr, srcPtr, headerLength)
+                }
+            }
+            
+            // 写入输出
+            framer.writeOutput(data: headerBuffer)
+        }
+        
+        // 写入消息内容
+        if messageLength > 0 {
+            var messageBuffer = Data(count: messageLength)
+            framer.writeOutput(data: messageBuffer)
+        }
+        
+        print("HTTP response sent, length: \(messageLength), isComplete: \(isComplete)")
+    }
+    
+    // 定义协议标签
+    static let label: String = "com.tfyswift.pac.http"
+    
     static let definition = NWProtocolFramer.Definition(implementation: HTTPHandler.self)
     
     required init(framer: NWProtocolFramer.Instance) { }
     
-    func start(framer: NWProtocolFramer.Instance) -> NWProtocolFramer.StartResult { .ready }
-    func wakeup(framer: NWProtocolFramer.Instance) { }
-    func stop(framer: NWProtocolFramer.Instance) -> Bool { true }
+    // 启动协议帧处理
+    func start(framer: NWProtocolFramer.Instance) -> NWProtocolFramer.StartResult {
+        print("HTTPHandler started")
+        return .ready
+    }
     
-    func cleanup(framer: NWProtocolFramer.Instance) { }
+    // 处理输入数据
+    func handleInput(framer: NWProtocolFramer.Instance) -> Int {
+        // 读取数据
+        while true {
+            var parsedLength = 0
+            let result = framer.parseInput(minimumIncompleteLength: 1, maximumLength: Int.max) { buffer, isComplete in
+                guard let buffer = buffer,
+                      let request = String(bytes: buffer, encoding: .utf8) else {
+                    return 0
+                }
+                
+                // 简单解析 HTTP 请求
+                if request.starts(with: "GET") {
+                    // 处理 GET 请求
+                    let message = NWProtocolFramer.Message(definition: HTTPHandler.definition)
+                    if framer.deliverInputNoCopy(length: buffer.count, message: message, isComplete: true) {
+                        parsedLength = buffer.count
+                        return buffer.count
+                    }
+                }
+                return 0
+            }
+            
+            // 如果没有解析到数据，退出循环
+            if parsedLength == 0 {
+                break
+            }
+        }
+        return 0
+    }
+    
+    // 唤醒协议帧处理
+    func wakeup(framer: NWProtocolFramer.Instance) {
+        print("HTTPHandler wakeup")
+    }
+    
+    // 停止协议帧处理
+    func stop(framer: NWProtocolFramer.Instance) -> Bool {
+        print("HTTPHandler stopped")
+        return true
+    }
+    
+    // 清理协议帧处理
+    func cleanup(framer: NWProtocolFramer.Instance) {
+        print("HTTPHandler cleanup")
+    }
 }
 
 // PAC 连接处理
@@ -150,4 +243,4 @@ private class PACConnectionHandler {
             self?.connection.cancel()
         })
     }
-} 
+}

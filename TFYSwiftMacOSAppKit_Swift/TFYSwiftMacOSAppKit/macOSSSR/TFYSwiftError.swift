@@ -8,25 +8,36 @@
 
 import Foundation
 
-enum TFYSwiftError: Error {
-    case configurationError(String)
-    case connectionError(String)
-    case cryptoError(String)
-    case protocolError(String)
-    case systemError(String)
+/// 自定义错误类型
+enum TFYSwiftError: LocalizedError {
+    case configurationError(String)    // 配置错误
+    case connectionError(String)       // 连接错误
+    case protocolError(String)         // 协议错误
+    case authenticationError(String)   // 认证错误
+    case encryptionError(String)       // 加密错误
+    case decryptionError(String)       // 解密错误
+    case networkError(String)          // 网络错误
+    case invalidData(String)           // 无效数据
     
-    var localizedDescription: String {
+    /// 错误描述
+    var errorDescription: String? {
         switch self {
-        case .configurationError(let msg):
-            return "Configuration Error: \(msg)"
-        case .connectionError(let msg):
-            return "Connection Error: \(msg)"
-        case .cryptoError(let msg):
-            return "Crypto Error: \(msg)"
-        case .protocolError(let msg):
-            return "Protocol Error: \(msg)"
-        case .systemError(let msg):
-            return "System Error: \(msg)"
+        case .configurationError(let message):
+            return "配置错误: \(message)"
+        case .connectionError(let message):
+            return "连接错误: \(message)"
+        case .protocolError(let message):
+            return "协议错误: \(message)"
+        case .authenticationError(let message):
+            return "认证错误: \(message)"
+        case .encryptionError(let message):
+            return "加密错误: \(message)"
+        case .decryptionError(let message):
+            return "解密错误: \(message)"
+        case .networkError(let message):
+            return "网络错误: \(message)"
+        case .invalidData(let message):
+            return "数据错误: \(message)"
         }
     }
 } 

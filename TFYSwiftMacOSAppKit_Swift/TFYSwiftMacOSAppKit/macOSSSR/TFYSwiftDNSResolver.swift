@@ -20,6 +20,7 @@ class TFYSwiftDNSResolver {
         let timestamp: Date
     }
     
+    // 解析主机名
     func resolve(_ hostname: String, completion: @escaping ([String]?) -> Void) {
         // 首先检查缓存
         if let cached = getCachedResult(for: hostname) {
@@ -27,33 +28,50 @@ class TFYSwiftDNSResolver {
             return
         }
         
-        let host = NWEndpoint.Host(hostname)
-        let endpoint = NWEndpoint.hostPort(host: host, port: 0)
-        
-        NWConnection.extractPath(to: endpoint, options: .init()) { path in
-            guard let path = path else {
-                completion(nil)
-                return
-            }
-            
+        queue.async {
             var addresses: [String] = []
-            for endpoint in path.endpoints {
-                if case .hostPort(let host, _) = endpoint {
-                    addresses.append(host.debugDescription)
+            var hints = addrinfo(
+                ai_flags: AI_PASSIVE,
+                ai_family: AF_INET,
+                ai_socktype: SOCK_STREAM,
+                ai_protocol: IPPROTO_TCP,
+                ai_addrlen: 0,
+                ai_canonname: nil,
+                ai_addr: nil,
+                ai_next: nil
+            )
+            
+            var info: UnsafeMutablePointer<addrinfo>?
+            let result = getaddrinfo(hostname, nil, &hints, &info)
+            
+            if result == 0, let firstInfo = info {
+                var currentInfo: UnsafeMutablePointer<addrinfo>? = firstInfo
+                while let info = currentInfo {
+                    if let addr = info.pointee.ai_addr {
+                        var hostnameBuffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                        if getnameinfo(addr, socklen_t(info.pointee.ai_addrlen), &hostnameBuffer, socklen_t(hostnameBuffer.count), nil, 0, NI_NUMERICHOST) == 0 {
+                            let address = String(cString: hostnameBuffer)
+                            addresses.append(address)
+                        }
+                    }
+                    currentInfo = info.pointee.ai_next
                 }
+                freeaddrinfo(firstInfo)
             }
             
             self.cacheResult(addresses, for: hostname)
-            completion(addresses)
+            completion(addresses.isEmpty ? nil : addresses)
         }
     }
     
+    // 获取缓存结果
     private func getCachedResult(for hostname: String) -> [String]? {
         cacheLock.lock()
         defer { cacheLock.unlock() }
         return cache[hostname]
     }
     
+    // 缓存解析结果
     private func cacheResult(_ addresses: [String], for hostname: String) {
         cacheLock.lock()
         defer { cacheLock.unlock() }
@@ -67,6 +85,7 @@ class TFYSwiftDNSResolver {
         }
     }
     
+    // 清除缓存
     func clearCache() {
         cacheLock.lock()
         defer { cacheLock.unlock() }

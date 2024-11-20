@@ -10,140 +10,96 @@
 import Foundation
 import Network
 
+/// 远程连接类
 class TFYSwiftConnection {
-    enum ConnectionState {
-        case disconnected
-        case connecting
-        case connected
-        case error(Error)
-    }
+    // MARK: - 属性
+    
+    private let host: String
+    private let port: UInt16
+    private let password: String
+    private let method: TFYSwiftConfig.CryptoMethod
     
     private var connection: NWConnection?
-    private let queue = DispatchQueue(label: "com.tfyswift.network")
-    private var stateHandler: ((ConnectionState) -> Void)?
-    private var readBuffer = Data()
-    private var isReading = false
+    private let queue = DispatchQueue(label: "com.tfyswift.connection")
     
-    // 重试相关
-    private var retryCount = 0
-    private let maxRetries = 3
-    private let retryInterval: TimeInterval = 5
+    var onData: ((Data) -> Void)?
     
-    init(stateHandler: ((ConnectionState) -> Void)? = nil) {
-        self.stateHandler = stateHandler
+    // MARK: - 初始化方法
+    
+    /// 初始化远程连接
+    /// - Parameters:
+    ///   - host: 服务器地址
+    ///   - port: 服务器端口
+    ///   - password: 连接密码
+    ///   - method: 加密方法
+    init(host: String, 
+         port: UInt16, 
+         password: String, 
+         method: TFYSwiftConfig.CryptoMethod) {
+        self.host = host
+        self.port = port
+        self.password = password
+        self.method = method
     }
     
-    func connect(to host: String, port: UInt16, tls: Bool = true) throws {
-        let endpoint = NWEndpoint.hostPort(
-            host: NWEndpoint.Host(host),
-            port: NWEndpoint.Port(integerLiteral: port)
-        )
+    /// 连接到远程服务器
+    /// - Parameter completion: 完成回调，返回可能的错误
+    func connect(completion: @escaping (Error?) -> Void) {
+        let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(host),
+                                         port: NWEndpoint.Port(integerLiteral: port))
         
-        let parameters: NWParameters
-        if tls {
-            parameters = NWParameters.tls
-            let options = NWProtocolTLS.Options()
-            sec_protocol_options_set_verify_block(options.securityProtocolOptions, { _, _, complete in
-                complete(true) // 允许自签名证书
-            }, queue)
-            parameters.defaultProtocolStack.applicationProtocols = ["http/1.1"]
-        } else {
-            parameters = NWParameters.tcp
-        }
+        connection = NWConnection(to: endpoint, using: .tcp)
         
-        connection = NWConnection(to: endpoint, using: parameters)
         connection?.stateUpdateHandler = { [weak self] state in
-            self?.handleConnectionState(state)
+            switch state {
+            case .ready:
+                completion(nil)
+            case .failed(let error):
+                completion(error)
+            case .cancelled:
+                completion(TFYSwiftError.connectionError("连接已取消"))
+            default:
+                break
+            }
         }
         
-        stateHandler?(.connecting)
         connection?.start(queue: queue)
     }
     
-    private func handleConnectionState(_ state: NWConnection.State) {
-        switch state {
-        case .ready:
-            retryCount = 0
-            stateHandler?(.connected)
-            startReading()
-        case .failed(let error):
-            handleConnectionError(error)
-        case .waiting(let error):
-            print("Connection waiting: \(error)")
-        case .cancelled:
-            stateHandler?(.disconnected)
-        default:
-            break
-        }
+    /// 发送数据
+    /// - Parameters:
+    ///   - data: 要发送的数据
+    ///   - completion: 完成回调，返回可能的错误
+    func send(data: Data, completion: @escaping (Error?) -> Void) {
+        connection?.send(content: data, completion: .contentProcessed { error in
+            completion(error)
+        })
     }
     
-    private func handleConnectionError(_ error: Error) {
-        if retryCount < maxRetries {
-            retryCount += 1
-            queue.asyncAfter(deadline: .now() + retryInterval) { [weak self] in
-                guard let self = self else { return }
-                if let connection = self.connection,
-                   let endpoint = connection.endpoint,
-                   let parameters = connection.parameters {
-                    self.connection = NWConnection(to: endpoint, using: parameters)
-                    self.connection?.stateUpdateHandler = { [weak self] state in
-                        self?.handleConnectionState(state)
-                    }
-                    self.connection?.start(queue: self.queue)
-                }
-            }
-        } else {
-            stateHandler?(.error(error))
-        }
+    /// 断开连接
+    func disconnect() {
+        connection?.cancel()
+        connection = nil
     }
     
-    private func startReading() {
-        guard !isReading else { return }
-        isReading = true
-        readNextChunk()
-    }
-    
-    private func readNextChunk() {
+    /// 开始接收数据
+    private func startReceiving() {
         connection?.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] content, _, isComplete, error in
             guard let self = self else { return }
             
             if let error = error {
-                self.stateHandler?(.error(error))
-                self.isReading = false
+                print("接收数据错误: \(error.localizedDescription)")
                 return
             }
             
             if let data = content {
-                self.readBuffer.append(data)
-                self.processReadBuffer()
+                self.onData?(data)
             }
             
             if !isComplete {
-                self.readNextChunk()
-            } else {
-                self.isReading = false
+                self.startReceiving()
             }
         }
-    }
-    
-    private func processReadBuffer() {
-        // 实现数据处理逻辑
-    }
-    
-    func send(_ data: Data) {
-        connection?.send(content: data, completion: .contentProcessed { [weak self] error in
-            if let error = error {
-                self?.stateHandler?(.error(error))
-            }
-        })
-    }
-    
-    func disconnect() {
-        connection?.cancel()
-        connection = nil
-        isReading = false
-        readBuffer.removeAll()
-        stateHandler?(.disconnected)
     }
     
     deinit {

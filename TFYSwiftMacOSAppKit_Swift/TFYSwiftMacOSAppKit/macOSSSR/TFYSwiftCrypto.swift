@@ -16,21 +16,20 @@ class TFYSwiftCrypto {
     private var ivCache: [String: Data] = [:]
     private let ivCacheLock = NSLock()
     
-    init(password: String, method: TFYSwiftConfig.CryptoMethod) throws {
-        self.method = method
+    init(password: String, method: TFYSwiftConfig.CryptoMethod) {
+        // 获取密钥长度
+        let keySize = method.keySize
+        let ivSize = method.ivSize
         
         // 生成密钥
-        let salt = "TFYSwift".data(using: .utf8)!
-        let passwordData = password.data(using: .utf8)!
-        let keyLength = method.keySize
+        self.key = TFYSwiftCrypto.generateKey(from: password, size: keySize)
         
-        // 使用 PBKDF2 生成密钥
-        let keyData = try Self.deriveKey(password: passwordData, 
-                                       salt: salt, 
-                                       length: keyLength,
-                                       rounds: 10000)
+        // 如果需要，生成 IV
+        if method.requiresIV {
+            self.iv = TFYSwiftCrypto.generateIV(size: ivSize)
+        }
         
-        self.key = SymmetricKey(data: keyData)
+        self.method = method
     }
     
     // PBKDF2 密钥派生

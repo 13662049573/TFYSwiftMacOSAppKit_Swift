@@ -45,35 +45,77 @@ class TFYSwiftConfig: Codable {
         case rc4 = "rc4"
         case none = "none"
         
-        /// 获取密钥长度
-        var keyLength: Int {
+        /// 获取密钥长度（字节）
+        var keySize: Int {
             switch self {
             case .aes128CFB:
-                return 16
+                return 16  // 128位 = 16字节
             case .aes192CFB:
-                return 24
+                return 24  // 192位 = 24字节
             case .aes256CFB:
-                return 32
+                return 32  // 256位 = 32字节
             case .chacha20, .salsa20:
-                return 32
+                return 32  // 256位 = 32字节
             case .rc4MD5, .rc4:
-                return 16
+                return 16  // 128位 = 16字节
             case .none:
                 return 0
             }
         }
         
-        /// 获取 IV 长度
-        var ivLength: Int {
+        /// 获取初始化向量长度（字节）
+        var ivSize: Int {
             switch self {
             case .aes128CFB, .aes192CFB, .aes256CFB:
-                return 16
+                return 16  // AES 使用 16 字节 IV
             case .chacha20, .salsa20:
-                return 8
+                return 8   // ChaCha20/Salsa20 使用 8 字节 IV
             case .rc4MD5, .rc4:
-                return 16
+                return 16  // RC4 使用 16 字节 IV
             case .none:
                 return 0
+            }
+        }
+        
+        /// 获取加密块大小（字节）
+        var blockSize: Int {
+            switch self {
+            case .aes128CFB, .aes192CFB, .aes256CFB:
+                return 16  // AES 块大小为 16 字节
+            case .chacha20, .salsa20:
+                return 64  // ChaCha20/Salsa20 块大小为 64 字节
+            case .rc4MD5, .rc4:
+                return 16  // RC4 块大小为 16 字节
+            case .none:
+                return 0
+            }
+        }
+        
+        /// 是否需要 IV
+        var requiresIV: Bool {
+            switch self {
+            case .none:
+                return false
+            default:
+                return true
+            }
+        }
+        
+        /// 获取加密器类型
+        var cryptoType: TFYSwiftCrypto.Type? {
+            switch self {
+            case .aes128CFB, .aes192CFB, .aes256CFB:
+                return TFYSwiftAESCrypto.self
+            case .chacha20:
+                return TFYSwiftChaCha20Crypto.self
+            case .salsa20:
+                return TFYSwiftSalsa20Crypto.self
+            case .rc4MD5:
+                return TFYSwiftRC4MD5Crypto.self
+            case .rc4:
+                return TFYSwiftRC4Crypto.self
+            case .none:
+                return nil
             }
         }
     }

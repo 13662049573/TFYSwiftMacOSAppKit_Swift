@@ -14,6 +14,8 @@
 		18C7EDA12CEDAF5D00914927 /* Timer+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDA02CEDAF5D00914927 /* Timer+Dejal.swift */; };
 		18C7EDA32CEDB04800914927 /* NotificationCenter+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDA22CEDB04800914927 /* NotificationCenter+Dejal.swift */; };
 		18C7EDA52CEDB13200914927 /* Bundle+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDA42CEDB13200914927 /* Bundle+Dejal.swift */; };
+		18C7EDA82CEDC00B00914927 /* TFYStatusItemNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDA72CEDC00B00914927 /* TFYStatusItemNotifications.swift */; };
+		18C7EDA92CEDC00B00914927 /* TFYStatusItemError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDA62CEDC00B00914927 /* TFYStatusItemError.swift */; };
 		3636D18A2CECE91D002AA074 /* TFYProgressMacOSHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D1892CECE91D002AA074 /* TFYProgressMacOSHUD.swift */; };
 		3636D18C2CECE939002AA074 /* TFYProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D18B2CECE939002AA074 /* TFYProgressView.swift */; };
 		3636D18E2CECE94F002AA074 /* TFYAnimationEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D18D2CECE94F002AA074 /* TFYAnimationEnhancer.swift */; };
@@ -127,6 +129,8 @@
 		18C7EDA02CEDAF5D00914927 /* Timer+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Timer+Dejal.swift"; sourceTree = "<group>"; };
 		18C7EDA22CEDB04800914927 /* NotificationCenter+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationCenter+Dejal.swift"; sourceTree = "<group>"; };
 		18C7EDA42CEDB13200914927 /* Bundle+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Dejal.swift"; sourceTree = "<group>"; };
+		18C7EDA62CEDC00B00914927 /* TFYStatusItemError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStatusItemError.swift; sourceTree = "<group>"; };
+		18C7EDA72CEDC00B00914927 /* TFYStatusItemNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStatusItemNotifications.swift; sourceTree = "<group>"; };
 		3636D1892CECE91D002AA074 /* TFYProgressMacOSHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYProgressMacOSHUD.swift; sourceTree = "<group>"; };
 		3636D18B2CECE939002AA074 /* TFYProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYProgressView.swift; sourceTree = "<group>"; };
 		3636D18D2CECE94F002AA074 /* TFYAnimationEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYAnimationEnhancer.swift; sourceTree = "<group>"; };
@@ -245,6 +249,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		18C7EDAA2CEDD3E100914927 /* macOSSSR */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = macOSSSR;
+			sourceTree = "<group>";
+		};
 		3636D1882CECE900002AA074 /* macOSHUD */ = {
 			isa = PBXGroup;
 			children = (
@@ -313,6 +324,7 @@
 				3D04F7722CDB74FE009493BF /* macOSchain */,
 				3D04F76A2CDB675E009493BF /* macOSfoundation */,
 				3D04F74F2CDA0FAA009493BF /* macOScontainer */,
+				18C7EDAA2CEDD3E100914927 /* macOSSSR */,
 			);
 			path = TFYSwiftMacOSAppKit;
 			sourceTree = "<group>";
@@ -350,6 +362,8 @@
 		3D04F75B2CDAEA2D009493BF /* macOSStatusItem */ = {
 			isa = PBXGroup;
 			children = (
+				18C7EDA62CEDC00B00914927 /* TFYStatusItemError.swift */,
+				18C7EDA72CEDC00B00914927 /* TFYStatusItemNotifications.swift */,
 				36EC0CB82CDCEAF0003EBAD5 /* TFYStatusItemContainerView.swift */,
 				36EC0CBA2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift */,
 				36EC0CBC2CDCEF5E003EBAD5 /* TFYStatusItemWindowBackgroundView.swift */,
@@ -580,6 +594,8 @@
 				3D04F8AC2CDF2E51009493BF /* NSPopover+Dejal.swift in Sources */,
 				3D04F8A42CDEEA40009493BF /* NSMenu+Dejal.swift in Sources */,
 				3D04F84A2CDCB269009493BF /* TFYSwiftCATextLayer.swift in Sources */,
+				18C7EDA82CEDC00B00914927 /* TFYStatusItemNotifications.swift in Sources */,
+				18C7EDA92CEDC00B00914927 /* TFYStatusItemError.swift in Sources */,
 				3D04F80F2CDCA31F009493BF /* TFYSwiftNSTextField.swift in Sources */,
 				3D04F8102CDCA31F009493BF /* TFYSwiftNSColorWell.swift in Sources */,
 				36D89F9B2CE6457B00BD1A5D /* NSTextView+Dejal.swift in Sources */,
@@ -802,7 +818,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.0.0;
-				DEVELOPMENT_TEAM = QH95759TSS;
+				DEVELOPMENT_TEAM = F4KS7L3WPA;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "TFYSwiftMacOSAppKit-Swift-Info.plist";
@@ -832,7 +848,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.0.0;
-				DEVELOPMENT_TEAM = QH95759TSS;
+				DEVELOPMENT_TEAM = F4KS7L3WPA;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "TFYSwiftMacOSAppKit-Swift-Info.plist";

@@ -10,75 +10,122 @@ import Cocoa
 
 public class TFYStatusItemWindow: NSPanel {
     
-    private var _configuration: TFYStatusItemWindowConfiguration?
+    // MARK: - Properties
+    
+    private var configuration: TFYStatusItemWindowConfiguration?
     private var userContentView: NSView?
     private var backgroundView: TFYStatusItemWindowBackgroundView?
-
-    public class func statusItemWindowWithConfiguration(configuration: TFYStatusItemWindowConfiguration) -> TFYStatusItemWindow {
-        return TFYStatusItemWindow(contentRect:.zero, styleMask:.nonactivatingPanel, backing:.buffered, defer: true, configuration: configuration)
+    
+    // MARK: - Initialization
+    
+    public class func statusItemWindowWithConfiguration(
+        configuration: TFYStatusItemWindowConfiguration
+    ) -> TFYStatusItemWindow {
+        return TFYStatusItemWindow(
+            contentRect: .zero,
+            styleMask: .nonactivatingPanel,
+            backing: .buffered,
+            defer: true,
+            configuration: configuration
+        )
     }
-
-    public init(contentRect: NSRect, styleMask: NSWindow.StyleMask, backing bufferingType: NSWindow.BackingStoreType, defer flag: Bool, configuration: TFYStatusItemWindowConfiguration) {
-        _configuration = configuration
-        super.init(contentRect: contentRect, styleMask: styleMask, backing: bufferingType, defer: flag)
+    
+    public init(
+        contentRect: NSRect,
+        styleMask: NSWindow.StyleMask,
+        backing: NSWindow.BackingStoreType,
+        defer flag: Bool,
+        configuration: TFYStatusItemWindowConfiguration
+    ) {
+        self.configuration = configuration
+        super.init(contentRect: contentRect, styleMask: styleMask, backing: backing, defer: flag)
+        setupWindow()
+    }
+    
+    // MARK: - Setup
+    
+    private func setupWindow() {
         isOpaque = false
         hasShadow = true
-        level = NSWindow.Level.statusBar
+        level = .statusBar
         backgroundColor = .clear
-        collectionBehavior = [.canJoinAllSpaces,.ignoresCycle]
+        collectionBehavior = [.canJoinAllSpaces, .ignoresCycle]
+        
         if #available(macOS 12.0, *) {
-            // 使用 +currentDrawingAppearance 来获取当前绘制外观并设置给窗口
             appearance = NSAppearance.currentDrawing()
         } else {
-            // 在macOS 12.0以下版本，仍使用原来的方式
             appearance = NSAppearance.current
         }
     }
-
-    // 重写 canBecomeKey 属性
-    public override var canBecomeKey: Bool {
-        return true
-    }
+    
+    // MARK: - Overrides
+    
+    public override var canBecomeKey: Bool { true }
     
     public override var contentView: NSView? {
-        set {
-            guard let contentView = newValue else { return }
-            if userContentView === contentView { return }
-            let userContentView = contentView
-            let bounds = userContentView.bounds
-            let antialiasingMask: CAEdgeAntialiasingMask = [.layerLeftEdge,.layerRightEdge,.layerBottomEdge,.layerTopEdge]
-
-            if backgroundView == nil {
-                backgroundView = TFYStatusItemWindowBackgroundView(frame: bounds, windowConfiguration: _configuration!)
-                backgroundView?.wantsLayer = true
-                backgroundView?.layer?.frame = bounds
-                backgroundView?.layer?.cornerRadius = TFYDefaultCornerRadius
-                backgroundView?.layer?.masksToBounds = true
-                backgroundView?.layer?.edgeAntialiasingMask = antialiasingMask
-                super.contentView = backgroundView
-            }
-
-            if let oldContentView = self.userContentView {
-                oldContentView.removeFromSuperview()
-            }
-
-            self.userContentView = userContentView
-            userContentView.frame = contentRect(forFrameRect: bounds)
-            userContentView.autoresizingMask = [.width,.height]
-            userContentView.wantsLayer = true
-            userContentView.layer?.frame = bounds
-            userContentView.layer?.cornerRadius = TFYDefaultCornerRadius
-            userContentView.layer?.masksToBounds = true
-            userContentView.layer?.edgeAntialiasingMask = antialiasingMask
-
-            backgroundView?.addSubview(userContentView)
-        }
-        get {
-            return userContentView
-        }
+        get { userContentView }
+        set { setupContentView(newValue) }
     }
-
+    
     public override func frameRect(forContentRect contentRect: NSRect) -> NSRect {
-        return NSRect(x: contentRect.minX, y: contentRect.minY, width: contentRect.width, height: contentRect.height + TFYDefaultArrowHeight)
+        return NSRect(
+            x: contentRect.minX,
+            y: contentRect.minY,
+            width: contentRect.width,
+            height: contentRect.height + TFYDefaultConstants.arrowHeight
+        )
+    }
+    
+    // MARK: - Private Methods
+    
+    private func setupContentView(_ contentView: NSView?) {
+        guard let contentView = contentView,
+              userContentView !== contentView,
+              let configuration = configuration else { return }
+        
+        let bounds = contentView.bounds
+        setupBackgroundViewIfNeeded(with: bounds)
+        
+        if let oldContentView = userContentView {
+            oldContentView.removeFromSuperview()
+        }
+        
+        userContentView = contentView
+        configureUserContentView(contentView, bounds: bounds)
+        backgroundView?.addSubview(contentView)
+    }
+    
+    private func setupBackgroundViewIfNeeded(with bounds: NSRect) {
+        guard backgroundView == nil else { return }
+        
+        backgroundView = TFYStatusItemWindowBackgroundView(
+            frame: bounds,
+            windowConfiguration: configuration!
+        )
+        configureBackgroundView(backgroundView!, bounds: bounds)
+        super.contentView = backgroundView
+    }
+    
+    private func configureView(_ view: NSView, bounds: NSRect) {
+        view.wantsLayer = true
+        view.layer?.frame = bounds
+        view.layer?.cornerRadius = TFYDefaultConstants.cornerRadius
+        view.layer?.masksToBounds = true
+        view.layer?.edgeAntialiasingMask = [
+            .layerLeftEdge,
+            .layerRightEdge,
+            .layerBottomEdge,
+            .layerTopEdge
+        ]
+    }
+    
+    private func configureBackgroundView(_ view: NSView, bounds: NSRect) {
+        configureView(view, bounds: bounds)
+    }
+    
+    private func configureUserContentView(_ view: NSView, bounds: NSRect) {
+        view.frame = contentRect(forFrameRect: bounds)
+        view.autoresizingMask = [.width, .height]
+        configureView(view, bounds: bounds)
     }
 }

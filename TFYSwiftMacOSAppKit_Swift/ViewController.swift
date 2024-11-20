@@ -120,7 +120,10 @@ class ViewController: NSViewController {
         
         let showVc:TFYSwiftHomeController = TFYSwiftHomeController()
         showVc.preferredContentSize = NSSize(width: 400, height: 600)
-        TFYStatusItem.sharedInstance.presentStatusItemWithView(itemView: btn, contentViewController: showVc)
+        TFYStatusItem.shared.configureSafely(with: .init(
+            customView: btn,
+            viewController: showVc
+        ))
     }
 
 }

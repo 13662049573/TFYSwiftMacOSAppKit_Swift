@@ -18,9 +18,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let view:NSView = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 30))
         view.wantsLayer = true
         view.layer?.backgroundColor = NSColor.orange.cgColor
-        TFYStatusItem.sharedInstance.presentStatusItemWithView(itemView: view, contentViewController: showVc)
-        
-//        TFYStatusItem.sharedInstance.presentStatusItemWithImage(itemImage: NSImage(named: "mood_analysis_select_5")!, contentViewController: showVc)
+
+        // 配置图片和视图控制器
+        TFYStatusItem.shared.configureSafely(with: .init(
+            image: NSImage(named: "mood_analysis_select_5"),
+            viewController: showVc
+        ))
+
+        // 配置自定义视图和视图控制器
+        TFYStatusItem.shared.configureSafely(with: .init(
+            customView: view,
+            viewController: showVc
+        ))
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {

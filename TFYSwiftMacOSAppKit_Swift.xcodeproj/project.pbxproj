@@ -9,6 +9,11 @@
 /* Begin PBXBuildFile section */
 		18A7E3152CE6FD640069739E /* TFYSwiftMacOSAppKit-Swift-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 18A7E3142CE6FD640069739E /* TFYSwiftMacOSAppKit-Swift-Info.plist */; };
 		18A7E3172CE721830069739E /* TFYSwiftVPNManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A7E3162CE721830069739E /* TFYSwiftVPNManager.swift */; };
+		18C7ED9D2CEDAC7B00914927 /* NSKeyedUnarchiver+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7ED9C2CEDAC7B00914927 /* NSKeyedUnarchiver+Dejal.swift */; };
+		18C7ED9F2CEDAEB300914927 /* Array+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7ED9E2CEDAEB300914927 /* Array+Dejal.swift */; };
+		18C7EDA12CEDAF5D00914927 /* Timer+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDA02CEDAF5D00914927 /* Timer+Dejal.swift */; };
+		18C7EDA32CEDB04800914927 /* NotificationCenter+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDA22CEDB04800914927 /* NotificationCenter+Dejal.swift */; };
+		18C7EDA52CEDB13200914927 /* Bundle+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDA42CEDB13200914927 /* Bundle+Dejal.swift */; };
 		3636D18A2CECE91D002AA074 /* TFYProgressMacOSHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D1892CECE91D002AA074 /* TFYProgressMacOSHUD.swift */; };
 		3636D18C2CECE939002AA074 /* TFYProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D18B2CECE939002AA074 /* TFYProgressView.swift */; };
 		3636D18E2CECE94F002AA074 /* TFYAnimationEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D18D2CECE94F002AA074 /* TFYAnimationEnhancer.swift */; };
@@ -117,6 +122,11 @@
 /* Begin PBXFileReference section */
 		18A7E3142CE6FD640069739E /* TFYSwiftMacOSAppKit-Swift-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "TFYSwiftMacOSAppKit-Swift-Info.plist"; sourceTree = "<group>"; };
 		18A7E3162CE721830069739E /* TFYSwiftVPNManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftVPNManager.swift; sourceTree = "<group>"; };
+		18C7ED9C2CEDAC7B00914927 /* NSKeyedUnarchiver+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSKeyedUnarchiver+Dejal.swift"; sourceTree = "<group>"; };
+		18C7ED9E2CEDAEB300914927 /* Array+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Dejal.swift"; sourceTree = "<group>"; };
+		18C7EDA02CEDAF5D00914927 /* Timer+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Timer+Dejal.swift"; sourceTree = "<group>"; };
+		18C7EDA22CEDB04800914927 /* NotificationCenter+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationCenter+Dejal.swift"; sourceTree = "<group>"; };
+		18C7EDA42CEDB13200914927 /* Bundle+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Dejal.swift"; sourceTree = "<group>"; };
 		3636D1892CECE91D002AA074 /* TFYProgressMacOSHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYProgressMacOSHUD.swift; sourceTree = "<group>"; };
 		3636D18B2CECE939002AA074 /* TFYProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYProgressView.swift; sourceTree = "<group>"; };
 		3636D18D2CECE94F002AA074 /* TFYAnimationEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYAnimationEnhancer.swift; sourceTree = "<group>"; };
@@ -353,10 +363,15 @@
 		3D04F76A2CDB675E009493BF /* macOSfoundation */ = {
 			isa = PBXGroup;
 			children = (
+				18C7ED9C2CEDAC7B00914927 /* NSKeyedUnarchiver+Dejal.swift */,
 				3D04F76B2CDB67DB009493BF /* NSObject+Dejal.swift */,
 				3D04F76F2CDB6DED009493BF /* NSString+Dejal.swift */,
 				3D04F86A2CDE1AD5009493BF /* NSColor+Dejal.swift */,
 				3D04F89F2CDEE720009493BF /* CAGradientLayer+Dejal.swift */,
+				18C7ED9E2CEDAEB300914927 /* Array+Dejal.swift */,
+				18C7EDA02CEDAF5D00914927 /* Timer+Dejal.swift */,
+				18C7EDA22CEDB04800914927 /* NotificationCenter+Dejal.swift */,
+				18C7EDA42CEDB13200914927 /* Bundle+Dejal.swift */,
 			);
 			path = macOSfoundation;
 			sourceTree = "<group>";
@@ -598,14 +613,18 @@
 				3D04F8222CDCA31F009493BF /* TFYSwiftNSTokenField.swift in Sources */,
 				3636D1942CECE991002AA074 /* TFYThemeManager.swift in Sources */,
 				3D04F8232CDCA31F009493BF /* TFYSwiftNSMatrix.swift in Sources */,
+				18C7ED9F2CEDAEB300914927 /* Array+Dejal.swift in Sources */,
 				3D04F8242CDCA31F009493BF /* TFYSwiftNSScroller.swift in Sources */,
 				3D04F8252CDCA31F009493BF /* TFYSwiftHasText.swift in Sources */,
 				36EC0CBB2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift in Sources */,
+				18C7EDA32CEDB04800914927 /* NotificationCenter+Dejal.swift in Sources */,
 				36EC0CC32CDCF3B5003EBAD5 /* TFYStatusItemWindowController.swift in Sources */,
 				3D04F8422CDCAF21009493BF /* TFYSwiftCAGradientLayer.swift in Sources */,
+				18C7ED9D2CEDAC7B00914927 /* NSKeyedUnarchiver+Dejal.swift in Sources */,
 				3636D18E2CECE94F002AA074 /* TFYAnimationEnhancer.swift in Sources */,
 				3D04F8262CDCA31F009493BF /* TFYSwiftNSTableCellView.swift in Sources */,
 				3D04F8272CDCA31F009493BF /* TFYSwiftNSGridView.swift in Sources */,
+				18C7EDA12CEDAF5D00914927 /* Timer+Dejal.swift in Sources */,
 				18A7E3172CE721830069739E /* TFYSwiftVPNManager.swift in Sources */,
 				3D04F8282CDCA31F009493BF /* TFYSwiftNSScrubber.swift in Sources */,
 				3D04F8292CDCA31F009493BF /* TFYSwiftNSSwitch.swift in Sources */,
@@ -630,6 +649,7 @@
 				3D04F7702CDB6DED009493BF /* NSString+Dejal.swift in Sources */,
 				3636D1962CECE9A6002AA074 /* TFYProgressIndicator.swift in Sources */,
 				3D04F8512CDCB66B009493BF /* TFYSwiftHomeController.swift in Sources */,
+				18C7EDA52CEDB13200914927 /* Bundle+Dejal.swift in Sources */,
 				3D04F75A2CDA27B4009493BF /* TFYSwiftOpenPanel.swift in Sources */,
 				36EC0CA72CDA5812003EBAD5 /* TFYSwiftUtils.swift in Sources */,
 				36EC0C9E2CDA4627003EBAD5 /* TFYSwiftLabel.swift in Sources */,

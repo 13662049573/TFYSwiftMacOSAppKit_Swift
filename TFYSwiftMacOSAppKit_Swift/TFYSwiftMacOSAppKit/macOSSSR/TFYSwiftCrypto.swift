@@ -13,22 +13,28 @@ import CommonCrypto
 class TFYSwiftCrypto {
     private let key: SymmetricKey
     private let method: TFYSwiftConfig.CryptoMethod
+    private var ivCache: [String: Data] = [:]
+    private let ivCacheLock = NSLock()
     
     init(password: String, method: TFYSwiftConfig.CryptoMethod) throws {
-        // 首先生成密钥
+        self.method = method
+        
+        // 生成密钥
         let salt = "TFYSwift".data(using: .utf8)!
         let passwordData = password.data(using: .utf8)!
+        let keyLength = method.keySize
         
-        // 使用临时方法生成密钥数据
-        let keyData = try Self.deriveKey(password: passwordData, salt: salt, length: 32)
+        // 使用 PBKDF2 生成密钥
+        let keyData = try Self.deriveKey(password: passwordData, 
+                                       salt: salt, 
+                                       length: keyLength,
+                                       rounds: 10000)
         
-        // 初始化成员变量
         self.key = SymmetricKey(data: keyData)
-        self.method = method
     }
     
-    // 将 deriveKey 改为静态方法
-    private static func deriveKey(password: Data, salt: Data, length: Int) throws -> Data {
+    // PBKDF2 密钥派生
+    private static func deriveKey(password: Data, salt: Data, length: Int, rounds: UInt32) throws -> Data {
         var result = Data(count: length)
         let status = result.withUnsafeMutableBytes { resultBytes in
             salt.withUnsafeBytes { saltBytes in
@@ -40,7 +46,7 @@ class TFYSwiftCrypto {
                         saltBytes.baseAddress?.assumingMemoryBound(to: UInt8.self),
                         salt.count,
                         CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
-                        10000,
+                        rounds,
                         resultBytes.baseAddress?.assumingMemoryBound(to: UInt8.self),
                         length
                     )
@@ -49,27 +55,34 @@ class TFYSwiftCrypto {
         }
         
         guard status == kCCSuccess else {
-            throw TFYSwiftError.cryptoError("Key derivation failed")
+            throw TFYSwiftError.cryptoError("Key derivation failed with status: \(status)")
         }
         
         return result
     }
     
-    func encrypt(_ data: Data) throws -> Data {
+    // 加密方法
+    func encrypt(_ data: Data, sessionId: String? = nil) throws -> Data {
         switch method {
-        case .aes256CFB:
-            return try encryptAES256CFB(data)
-        case .chacha20:
-            return try encryptChacha20(data)
-        default:
-            throw TFYSwiftError.cryptoError("Unsupported method")
+        case .aes256CFB, .aes128CFB:
+            return try encryptAES(data, sessionId: sessionId)
+        case .chacha20, .chacha20IETF:
+            return try encryptChacha20(data, sessionId: sessionId)
+        case .rc4MD5:
+            return try encryptRC4MD5(data, sessionId: sessionId)
+        case .salsa20:
+            return try encryptSalsa20(data, sessionId: sessionId)
         }
     }
     
-    private func encryptAES256CFB(_ data: Data) throws -> Data {
-        let iv = generateIV(size: 16)
+    // AES 加密
+    private func encryptAES(_ data: Data, sessionId: String?) throws -> Data {
+        let iv = try getIV(forSession: sessionId, size: method.ivSize)
         var encrypted = Data()
-        encrypted.append(iv)
+        
+        if sessionId == nil {
+            encrypted.append(iv)
+        }
         
         let sealedBox = try AES.GCM.seal(data,
                                         using: key,
@@ -80,10 +93,14 @@ class TFYSwiftCrypto {
         return encrypted
     }
     
-    private func encryptChacha20(_ data: Data) throws -> Data {
-        let nonce = generateIV(size: 12)
+    // ChaCha20 加密
+    private func encryptChacha20(_ data: Data, sessionId: String?) throws -> Data {
+        let nonce = try getIV(forSession: sessionId, size: method.ivSize)
         var encrypted = Data()
-        encrypted.append(nonce)
+        
+        if sessionId == nil {
+            encrypted.append(nonce)
+        }
         
         let sealedBox = try ChaChaPoly.seal(data,
                                            using: key,
@@ -94,33 +111,58 @@ class TFYSwiftCrypto {
         return encrypted
     }
     
-    private func generateIV(size: Int) -> Data {
-        var iv = Data(count: size)
-        _ = iv.withUnsafeMutableBytes { ptr in
-            SecRandomCopyBytes(kSecRandomDefault, size, ptr.baseAddress!)
-        }
-        return iv
+    // RC4-MD5 加密
+    private func encryptRC4MD5(_ data: Data, sessionId: String?) throws -> Data {
+        // RC4-MD5 实现
+        throw TFYSwiftError.cryptoError("RC4-MD5 not implemented yet")
     }
     
-    func decrypt(_ data: Data) throws -> Data {
+    // Salsa20 加密
+    private func encryptSalsa20(_ data: Data, sessionId: String?) throws -> Data {
+        // Salsa20 实现
+        throw TFYSwiftError.cryptoError("Salsa20 not implemented yet")
+    }
+    
+    // 解密方法
+    func decrypt(_ data: Data, sessionId: String? = nil) throws -> Data {
         switch method {
-        case .aes256CFB:
-            return try decryptAES256CFB(data)
-        case .chacha20:
-            return try decryptChacha20(data)
-        default:
-            throw TFYSwiftError.cryptoError("Unsupported method")
+        case .aes256CFB, .aes128CFB:
+            return try decryptAES(data, sessionId: sessionId)
+        case .chacha20, .chacha20IETF:
+            return try decryptChacha20(data, sessionId: sessionId)
+        case .rc4MD5:
+            return try decryptRC4MD5(data, sessionId: sessionId)
+        case .salsa20:
+            return try decryptSalsa20(data, sessionId: sessionId)
         }
     }
     
-    private func decryptAES256CFB(_ data: Data) throws -> Data {
-        guard data.count >= 16 + 16 else { // IV + TAG 最小长度
-            throw TFYSwiftError.cryptoError("Invalid encrypted data")
+    // AES 解密
+    private func decryptAES(_ data: Data, sessionId: String?) throws -> Data {
+        let ivSize = method.ivSize
+        let tagSize = 16
+        
+        guard data.count >= ivSize + tagSize else {
+            throw TFYSwiftError.cryptoError("Invalid encrypted data size")
         }
         
-        let iv = data.prefix(16)
-        let ciphertext = data.dropFirst(16).dropLast(16)
-        let tag = data.suffix(16)
+        let iv: Data
+        let ciphertext: Data
+        let tag: Data
+        
+        if let sessionId = sessionId, let cachedIV = getCachedIV(forSession: sessionId) {
+            iv = cachedIV
+            ciphertext = data.dropLast(tagSize)
+            tag = data.suffix(tagSize)
+        } else {
+            iv = data.prefix(ivSize)
+            ciphertext = data.dropFirst(ivSize).dropLast(tagSize)
+            tag = data.suffix(tagSize)
+            
+            if let sessionId = sessionId {
+                cacheIV(iv, forSession: sessionId)
+            }
+        }
         
         let sealedBox = try AES.GCM.SealedBox(
             nonce: try AES.GCM.Nonce(data: iv),
@@ -131,14 +173,32 @@ class TFYSwiftCrypto {
         return try AES.GCM.open(sealedBox, using: key)
     }
     
-    private func decryptChacha20(_ data: Data) throws -> Data {
-        guard data.count >= 12 + 16 else { // Nonce + TAG 最小长度
-            throw TFYSwiftError.cryptoError("Invalid encrypted data")
+    // ChaCha20 解密
+    private func decryptChacha20(_ data: Data, sessionId: String?) throws -> Data {
+        let nonceSize = method.ivSize
+        let tagSize = 16
+        
+        guard data.count >= nonceSize + tagSize else {
+            throw TFYSwiftError.cryptoError("Invalid encrypted data size")
         }
         
-        let nonce = data.prefix(12)
-        let ciphertext = data.dropFirst(12).dropLast(16)
-        let tag = data.suffix(16)
+        let nonce: Data
+        let ciphertext: Data
+        let tag: Data
+        
+        if let sessionId = sessionId, let cachedNonce = getCachedIV(forSession: sessionId) {
+            nonce = cachedNonce
+            ciphertext = data.dropLast(tagSize)
+            tag = data.suffix(tagSize)
+        } else {
+            nonce = data.prefix(nonceSize)
+            ciphertext = data.dropFirst(nonceSize).dropLast(tagSize)
+            tag = data.suffix(tagSize)
+            
+            if let sessionId = sessionId {
+                cacheIV(nonce, forSession: sessionId)
+            }
+        }
         
         let sealedBox = try ChaChaPoly.SealedBox(
             nonce: try ChaChaPoly.Nonce(data: nonce),
@@ -147,5 +207,52 @@ class TFYSwiftCrypto {
         )
         
         return try ChaChaPoly.open(sealedBox, using: key)
+    }
+    
+    // RC4-MD5 解密
+    private func decryptRC4MD5(_ data: Data, sessionId: String?) throws -> Data {
+        // RC4-MD5 实现
+        throw TFYSwiftError.cryptoError("RC4-MD5 not implemented yet")
+    }
+    
+    // Salsa20 解密
+    private func decryptSalsa20(_ data: Data, sessionId: String?) throws -> Data {
+        // Salsa20 实现
+        throw TFYSwiftError.cryptoError("Salsa20 not implemented yet")
+    }
+    
+    // IV 管理
+    private func getIV(forSession sessionId: String?, size: Int) throws -> Data {
+        if let sessionId = sessionId, let cachedIV = getCachedIV(forSession: sessionId) {
+            return cachedIV
+        }
+        return generateIV(size: size)
+    }
+    
+    private func generateIV(size: Int) -> Data {
+        var iv = Data(count: size)
+        _ = iv.withUnsafeMutableBytes { ptr in
+            SecRandomCopyBytes(kSecRandomDefault, size, ptr.baseAddress!)
+        }
+        return iv
+    }
+    
+    private func cacheIV(_ iv: Data, forSession sessionId: String) {
+        ivCacheLock.lock()
+        defer { ivCacheLock.unlock() }
+        ivCache[sessionId] = iv
+    }
+    
+    private func getCachedIV(forSession sessionId: String) -> Data? {
+        ivCacheLock.lock()
+        defer { ivCacheLock.unlock() }
+        return ivCache[sessionId]
+    }
+    
+    // 清理缓存
+    func clearCache() {
+        ivCacheLock.lock()
+        defer { ivCacheLock.unlock() }
+        ivCache.removeAll()
     }
 } 

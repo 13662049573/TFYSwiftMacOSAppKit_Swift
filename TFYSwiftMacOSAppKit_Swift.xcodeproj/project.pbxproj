@@ -21,6 +21,15 @@
 		18C7EDB62CEDD5BE00914927 /* TFYSwiftError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDAE2CEDD5BE00914927 /* TFYSwiftError.swift */; };
 		18C7EDB72CEDD5BE00914927 /* TFYSwiftCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDAD2CEDD5BE00914927 /* TFYSwiftCrypto.swift */; };
 		18C7EDB82CEDD5BE00914927 /* TFYSwiftProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDB02CEDD5BE00914927 /* TFYSwiftProxy.swift */; };
+		18C7EDBA2CEDDA0400914927 /* TFYSwiftProxyConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDB92CEDDA0400914927 /* TFYSwiftProxyConnection.swift */; };
+		18C7EDBF2CEDDAA700914927 /* TFYSwiftSubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDBD2CEDDAA700914927 /* TFYSwiftSubscriptionManager.swift */; };
+		18C7EDC02CEDDAA700914927 /* TFYSwiftPACManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDBC2CEDDAA700914927 /* TFYSwiftPACManager.swift */; };
+		18C7EDC12CEDDAA700914927 /* TFYSwiftTrafficManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDBE2CEDDAA700914927 /* TFYSwiftTrafficManager.swift */; };
+		18C7EDC22CEDDAA700914927 /* TFYSwiftDNSResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDBB2CEDDAA700914927 /* TFYSwiftDNSResolver.swift */; };
+		18C7EDC72CEDDC2400914927 /* TFYSwiftUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDC62CEDDC2400914927 /* TFYSwiftUpdater.swift */; };
+		18C7EDC82CEDDC2400914927 /* TFYSwiftLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDC32CEDDC2400914927 /* TFYSwiftLogger.swift */; };
+		18C7EDC92CEDDC2400914927 /* TFYSwiftPerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDC42CEDDC2400914927 /* TFYSwiftPerformanceMonitor.swift */; };
+		18C7EDCA2CEDDC2400914927 /* TFYSwiftRuleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7EDC52CEDDC2400914927 /* TFYSwiftRuleManager.swift */; };
 		3636D18A2CECE91D002AA074 /* TFYProgressMacOSHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D1892CECE91D002AA074 /* TFYProgressMacOSHUD.swift */; };
 		3636D18C2CECE939002AA074 /* TFYProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D18B2CECE939002AA074 /* TFYProgressView.swift */; };
 		3636D18E2CECE94F002AA074 /* TFYAnimationEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3636D18D2CECE94F002AA074 /* TFYAnimationEnhancer.swift */; };
@@ -141,6 +150,15 @@
 		18C7EDAD2CEDD5BE00914927 /* TFYSwiftCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCrypto.swift; sourceTree = "<group>"; };
 		18C7EDAE2CEDD5BE00914927 /* TFYSwiftError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftError.swift; sourceTree = "<group>"; };
 		18C7EDB02CEDD5BE00914927 /* TFYSwiftProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftProxy.swift; sourceTree = "<group>"; };
+		18C7EDB92CEDDA0400914927 /* TFYSwiftProxyConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftProxyConnection.swift; sourceTree = "<group>"; };
+		18C7EDBB2CEDDAA700914927 /* TFYSwiftDNSResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftDNSResolver.swift; sourceTree = "<group>"; };
+		18C7EDBC2CEDDAA700914927 /* TFYSwiftPACManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftPACManager.swift; sourceTree = "<group>"; };
+		18C7EDBD2CEDDAA700914927 /* TFYSwiftSubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftSubscriptionManager.swift; sourceTree = "<group>"; };
+		18C7EDBE2CEDDAA700914927 /* TFYSwiftTrafficManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftTrafficManager.swift; sourceTree = "<group>"; };
+		18C7EDC32CEDDC2400914927 /* TFYSwiftLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftLogger.swift; sourceTree = "<group>"; };
+		18C7EDC42CEDDC2400914927 /* TFYSwiftPerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftPerformanceMonitor.swift; sourceTree = "<group>"; };
+		18C7EDC52CEDDC2400914927 /* TFYSwiftRuleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftRuleManager.swift; sourceTree = "<group>"; };
+		18C7EDC62CEDDC2400914927 /* TFYSwiftUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftUpdater.swift; sourceTree = "<group>"; };
 		3636D1892CECE91D002AA074 /* TFYProgressMacOSHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYProgressMacOSHUD.swift; sourceTree = "<group>"; };
 		3636D18B2CECE939002AA074 /* TFYProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYProgressView.swift; sourceTree = "<group>"; };
 		3636D18D2CECE94F002AA074 /* TFYAnimationEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYAnimationEnhancer.swift; sourceTree = "<group>"; };
@@ -262,6 +280,15 @@
 		18C7EDAA2CEDD3E100914927 /* macOSSSR */ = {
 			isa = PBXGroup;
 			children = (
+				18C7EDC32CEDDC2400914927 /* TFYSwiftLogger.swift */,
+				18C7EDC42CEDDC2400914927 /* TFYSwiftPerformanceMonitor.swift */,
+				18C7EDC52CEDDC2400914927 /* TFYSwiftRuleManager.swift */,
+				18C7EDC62CEDDC2400914927 /* TFYSwiftUpdater.swift */,
+				18C7EDBB2CEDDAA700914927 /* TFYSwiftDNSResolver.swift */,
+				18C7EDBC2CEDDAA700914927 /* TFYSwiftPACManager.swift */,
+				18C7EDBD2CEDDAA700914927 /* TFYSwiftSubscriptionManager.swift */,
+				18C7EDBE2CEDDAA700914927 /* TFYSwiftTrafficManager.swift */,
+				18C7EDB92CEDDA0400914927 /* TFYSwiftProxyConnection.swift */,
 				18C7EDAB2CEDD5BE00914927 /* TFYSwiftConfig.swift */,
 				18C7EDAC2CEDD5BE00914927 /* TFYSwiftConnection.swift */,
 				18C7EDAD2CEDD5BE00914927 /* TFYSwiftCrypto.swift */,
@@ -582,6 +609,10 @@
 			files = (
 				3D04F8442CDCAF92009493BF /* TFYSwiftCAReplicatorLayer.swift in Sources */,
 				3636D1922CECE97B002AA074 /* TFYLayoutManager.swift in Sources */,
+				18C7EDBF2CEDDAA700914927 /* TFYSwiftSubscriptionManager.swift in Sources */,
+				18C7EDC02CEDDAA700914927 /* TFYSwiftPACManager.swift in Sources */,
+				18C7EDC12CEDDAA700914927 /* TFYSwiftTrafficManager.swift in Sources */,
+				18C7EDC22CEDDAA700914927 /* TFYSwiftDNSResolver.swift in Sources */,
 				3D04F7542CDA1275009493BF /* TFYSwiftSecureTextFieldCell.swift in Sources */,
 				3D04F83E2CDCA803009493BF /* TFYSwiftCALayer.swift in Sources */,
 				3636D1902CECE967002AA074 /* TFYGestureHandler.swift in Sources */,
@@ -645,8 +676,13 @@
 				36EC0CBD2CDCEF5E003EBAD5 /* TFYStatusItemWindowBackgroundView.swift in Sources */,
 				3D04F8482CDCB135009493BF /* TFYSwiftCAShapeLayer.swift in Sources */,
 				3D04F8202CDCA31F009493BF /* TFYSwiftNSButton.swift in Sources */,
+				18C7EDC72CEDDC2400914927 /* TFYSwiftUpdater.swift in Sources */,
+				18C7EDC82CEDDC2400914927 /* TFYSwiftLogger.swift in Sources */,
+				18C7EDC92CEDDC2400914927 /* TFYSwiftPerformanceMonitor.swift in Sources */,
+				18C7EDCA2CEDDC2400914927 /* TFYSwiftRuleManager.swift in Sources */,
 				3D04F8212CDCA31F009493BF /* TFYSwiftNSLabel.swift in Sources */,
 				3D04F8222CDCA31F009493BF /* TFYSwiftNSTokenField.swift in Sources */,
+				18C7EDBA2CEDDA0400914927 /* TFYSwiftProxyConnection.swift in Sources */,
 				3636D1942CECE991002AA074 /* TFYThemeManager.swift in Sources */,
 				3D04F8232CDCA31F009493BF /* TFYSwiftNSMatrix.swift in Sources */,
 				18C7ED9F2CEDAEB300914927 /* Array+Dejal.swift in Sources */,

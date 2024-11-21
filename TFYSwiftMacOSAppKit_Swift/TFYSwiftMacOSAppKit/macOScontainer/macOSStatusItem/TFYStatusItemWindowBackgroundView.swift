@@ -45,7 +45,7 @@ public class TFYStatusItemWindowBackgroundView: NSView {
     /// 创建窗口路径
     private func createWindowPath(in rect: NSRect) -> NSBezierPath {
         let arrowHeight = TFYDefaultConstants.arrowHeight
-        let arrowWidth = TFYDefaultConstants.arrowWidth
+        //let arrowWidth = TFYDefaultConstants.arrowWidth
         let cornerRadius = TFYDefaultConstants.cornerRadius
         
         let backgroundRect = NSRect(

@@ -8,12 +8,16 @@
 
 import Foundation
 
-class TFYSwiftUpdater {
+/// 更新管理器类 - 负责检查和下载软件更新
+public class TFYSwiftUpdater {
+    /// 版本号结构体 - 用于版本比较
     struct Version: Comparable {
-        let major: Int
-        let minor: Int
-        let patch: Int
+        let major: Int      // 主版本号
+        let minor: Int      // 次版本号
+        let patch: Int      // 补丁版本号
         
+        /// 从字符串初始化版本号
+        /// - Parameter string: 版本号字符串，格式如："1.2.3"
         init?(_ string: String) {
             let components = string.split(separator: ".").compactMap { Int($0) }
             guard components.count == 3 else { return nil }
@@ -22,6 +26,7 @@ class TFYSwiftUpdater {
             self.patch = components[2]
         }
         
+        /// 版本号比较实现
         static func < (lhs: Version, rhs: Version) -> Bool {
             if lhs.major != rhs.major { return lhs.major < rhs.major }
             if lhs.minor != rhs.minor { return lhs.minor < rhs.minor }
@@ -29,26 +34,35 @@ class TFYSwiftUpdater {
         }
     }
     
+    /// 更新信息结构体
     struct UpdateInfo: Codable {
-        let version: String
-        let minSystemVersion: String
-        let url: String
-        let releaseNotes: String
-        let mandatory: Bool
+        let version: String     // 新版本号
+        let url: String        // 更新包下载地址
+        let notes: String      // 更新说明
     }
     
+    /// 当前版本号
     private let currentVersion: Version
-    private let updateCheckURL: URL
+    /// 更新检查地址
+    private let checkURL: URL
+    /// 用于同步更新操作的串行队列
     private let queue = DispatchQueue(label: "com.tfyswift.updater")
-    private var updateTimer: Timer?
+    /// 自动检查定时器
+    private var timer: Timer?
     
-    init(currentVersion: String, updateCheckURL: URL) {
-        self.currentVersion = Version(currentVersion) ?? Version("1.0.0")!
-        self.updateCheckURL = updateCheckURL
+    /// 初始化更新管理器
+    /// - Parameters:
+    ///   - currentVersion: 当前版本号字符串
+    ///   - checkURL: 更新检查地址
+    init(currentVersion: String, checkURL: URL) {
+        self.currentVersion = Version(currentVersion) ?? Version("0.0.0")!
+        self.checkURL = checkURL
     }
     
+    /// 检查更新
+    /// - Parameter completion: 完成回调，返回更新信息或错误
     func checkForUpdates(completion: @escaping (Result<UpdateInfo?, Error>) -> Void) {
-        let task = URLSession.shared.dataTask(with: updateCheckURL) { [weak self] data, response, error in
+        let task = URLSession.shared.dataTask(with: checkURL) { [weak self] data, response, error in
             guard let self = self else { return }
             
             if let error = error {
@@ -58,75 +72,59 @@ class TFYSwiftUpdater {
                 return
             }
             
-            guard let data = data else {
+            guard let data = data,
+                  let updateInfo = try? JSONDecoder().decode(UpdateInfo.self, from: data),
+                  let newVersion = Version(updateInfo.version) else {
                 self.queue.async {
-                    completion(.failure(TFYSwiftError.systemError("No data received")))
+                    completion(.failure(TFYSwiftError.invalidData("更新数据无效")))
                 }
                 return
             }
             
-            do {
-                let updateInfo = try JSONDecoder().decode(UpdateInfo.self, from: data)
-                guard let newVersion = Version(updateInfo.version) else {
-                    throw TFYSwiftError.systemError("Invalid version format")
-                }
-                
-                self.queue.async {
-                    if newVersion > self.currentVersion {
-                        completion(.success(updateInfo))
-                    } else {
-                        completion(.success(nil))
-                    }
-                }
-            } catch {
-                self.queue.async {
-                    completion(.failure(error))
+            self.queue.async {
+                if newVersion > self.currentVersion {
+                    completion(.success(updateInfo))
+                } else {
+                    completion(.success(nil))
                 }
             }
         }
-        
         task.resume()
     }
     
+    /// 开始自动检查更新
+    /// - Parameter interval: 检查间隔（秒），默认3600秒
     func startAutoCheck(interval: TimeInterval = 3600) {
-        updateTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self?.checkForUpdates { result in
-                switch result {
-                case .success(let updateInfo):
-                    if let updateInfo = updateInfo {
-                        logInfo("New version available: \(updateInfo.version)")
-                        NotificationCenter.default.post(
-                            name: NSNotification.Name("TFYSwiftUpdateAvailable"),
-                            object: nil,
-                            userInfo: ["updateInfo": updateInfo]
-                        )
-                    }
-                case .failure(let error):
-                    logError("Update check failed: \(error.localizedDescription)")
-                }
-            }
+        stopAutoCheck()
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            self?.checkForUpdates { _ in }
         }
     }
     
+    /// 停止自动检查更新
     func stopAutoCheck() {
-        updateTimer?.invalidate()
-        updateTimer = nil
+        timer?.invalidate()
+        timer = nil
     }
     
-    func downloadUpdate(_ updateInfo: UpdateInfo, progress: @escaping (Float) -> Void, completion: @escaping (Result<URL, Error>) -> Void) {
+    /// 下载更新包
+    /// - Parameters:
+    ///   - updateInfo: 更新信息
+    ///   - completion: 完成回调，返回下载文件的本地URL或错误
+    func downloadUpdate(_ updateInfo: UpdateInfo, completion: @escaping (Result<URL, Error>) -> Void) {
         guard let url = URL(string: updateInfo.url) else {
-            completion(.failure(TFYSwiftError.systemError("Invalid download URL")))
+            completion(.failure(TFYSwiftError.invalidData("下载地址无效")))
             return
         }
         
-        let downloadTask = URLSession.shared.downloadTask(with: url) { localURL, response, error in
+        let task = URLSession.shared.downloadTask(with: url) { localURL, _, error in
             if let error = error {
                 completion(.failure(error))
                 return
             }
             
             guard let localURL = localURL else {
-                completion(.failure(TFYSwiftError.systemError("Download failed")))
+                completion(.failure(TFYSwiftError.systemError("下载失败")))
                 return
             }
             
@@ -147,9 +145,10 @@ class TFYSwiftUpdater {
             }
         }
         
-        downloadTask.resume()
+        task.resume()
     }
     
+    /// 析构函数 - 确保停止自动检查
     deinit {
         stopAutoCheck()
     }

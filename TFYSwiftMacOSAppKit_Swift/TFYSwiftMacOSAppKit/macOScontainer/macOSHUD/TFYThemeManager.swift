@@ -9,7 +9,7 @@
 import Cocoa
 import CoreImage
 
-class TFYThemeManager: NSObject {
+public class TFYThemeManager: NSObject {
     // MARK: - Properties
     private var themes: [String: [String: Any]] = [:]
     private(set) var currentTheme: [String: Any]?

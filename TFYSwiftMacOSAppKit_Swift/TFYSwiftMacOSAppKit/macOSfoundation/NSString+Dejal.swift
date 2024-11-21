@@ -137,18 +137,13 @@ public extension String {
 
 // MARK: - String 扩展
 extension String {
-    
-    // MARK: - 哈希函数
-    
     /// 计算 MD5 哈希值
     var md5String: String? {
         guard let data = self.data(using: .utf8) else { return nil }
         var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
-        
         _ = data.withUnsafeBytes { buffer in
             CC_MD5(buffer.baseAddress, CC_LONG(data.count), &digest)
         }
-        
         return digest.reduce("") { $0 + String(format: "%02x", $1) }
     }
     

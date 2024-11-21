@@ -1,7 +1,7 @@
 import Foundation
 
-/// 订阅节点结构
-struct SubscriptionNode: Codable {
+/// 订阅节点结构 - 用于解析和存储单个SSR节点的配置信息
+public struct SubscriptionNode: Codable {
     let server: String          // 服务器地址
     let server_port: Int        // 服务器端口
     let password: String        // 密码
@@ -28,238 +28,124 @@ struct SubscriptionNode: Codable {
     }
 }
 
-/// 订阅管理器类
-class TFYSwiftSubscriptionManager {
-    // 将 config 改为可变属性
-    private var config: TFYSwiftConfig
-    // 专用队列用于处理订阅更新
+/// 订阅管理器类 - 负责处理SSR订阅的更新和解析
+public class TFYSwiftSubscriptionManager {
+    /// 用于同步订阅操作的串行队列
     private let queue = DispatchQueue(label: "com.tfyswift.subscription")
-    // 自动更新定时器
-    private var updateTimer: Timer?
+    /// 配置管理器实例
+    private let configManager: TFYSwiftConfigManager
     
     /// 初始化订阅管理器
-    /// - Parameter config: 配置对象
-    init(config: TFYSwiftConfig) {
-        self.config = config
+    /// - Parameter configManager: 配置管理器实例
+    init(configManager: TFYSwiftConfigManager) {
+        self.configManager = configManager
     }
     
-    /// 添加订阅
-    /// - Parameter url: 订阅URL
-    func addSubscription(_ url: String) {
-        // 创建新的配置副本
-        var newConfig = config
-        if !newConfig.subscribeUrls.contains(url) {
-            // 添加新的订阅URL
-            newConfig.subscribeUrls.append(url)
-            // 更新配置
-            config = newConfig
-            // 保存配置
-            try? config.save()
-            print("已添加订阅: \(url)")
-        }
-    }
-    
-    /// 移除订阅
-    /// - Parameter url: 要移除的订阅URL
-    func removeSubscription(_ url: String) {
-        var newConfig = config
-        if let index = newConfig.subscribeUrls.firstIndex(of: url) {
-            // 移除指定的订阅URL
-            newConfig.subscribeUrls.remove(at: index)
-            // 更新配置
-            config = newConfig
-            // 保存配置
-            try? config.save()
-            print("已移除订阅: \(url)")
-        }
-    }
-    
-    /// 更新所有订阅
-    /// - Parameter completion: 完成回调，返回可能的错误
-    func updateSubscriptions(completion: @escaping (Error?) -> Void) {
-        let group = DispatchGroup()
-        var errors: [Error] = []
-        
-        // 遍历所有订阅URL进行更新
-        for url in config.subscribeUrls {
-            group.enter()
-            updateSubscription(url) { error in
-                if let error = error {
-                    errors.append(error)
-                }
-                group.leave()
-            }
-        }
-        
-        // 所有更新完成后的处理
-        group.notify(queue: queue) {
-            completion(errors.first)
-            try? self.config.save()
-        }
-    }
-    
-    /// 更新单个订阅
+    /// 更新订阅
     /// - Parameters:
-    ///   - url: 订阅URL
-    ///   - completion: 完成回调
-    private func updateSubscription(_ url: String, completion: @escaping (Error?) -> Void) {
-        guard let subscriptionURL = URL(string: url) else {
-            completion(TFYSwiftError.configurationError("无效的订阅URL"))
-            return
-        }
-        
-        // 发起网络请求获取订阅内容
-        let task = URLSession.shared.dataTask(with: subscriptionURL) { [weak self] data, response, error in
+    ///   - url: 订阅地址URL
+    ///   - completion: 完成回调，返回解析后的服务器配置数组或错误
+    func updateSubscription(_ url: URL, completion: @escaping (Result<[ServerConfig], Error>) -> Void) {
+        let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            guard let self = self else { return }
+            
             if let error = error {
-                completion(error)
+                self.queue.async {
+                    completion(.failure(error))
+                }
                 return
             }
             
-            // 解码Base64数据
             guard let data = data,
-                  let base64Decoded = Data(base64Encoded: data),
-                  let configString = String(data: base64Decoded, encoding: .utf8) else {
-                completion(TFYSwiftError.configurationError("无效的订阅数据"))
+                  let content = String(data: data, encoding: .utf8) else {
+                self.queue.async {
+                    completion(.failure(TFYSwiftError.invalidData("订阅数据无效")))
+                }
                 return
             }
             
-            self?.parseSubscriptionConfig(configString, completion: completion)
+            self.queue.async {
+                do {
+                    let configs = try self.parseSubscription(content)
+                    completion(.success(configs))
+                } catch {
+                    completion(.failure(error))
+                }
+            }
         }
-        
         task.resume()
     }
     
-    /// 解析订阅配置
-    /// - Parameters:
-    ///   - configString: 配置字符串
-    ///   - completion: 完成回调
-    private func parseSubscriptionConfig(_ configString: String, completion: @escaping (Error?) -> Void) {
-        queue.async { [weak self] in
-            guard let self = self else { return }
-            
-            // 分割多行配置
-            let lines = configString.components(separatedBy: .newlines)
-            var newNodes: [SubscriptionNode] = []
-            
-            for line in lines {
-                // 跳过空行
-                guard !line.trimmingCharacters(in: .whitespaces).isEmpty else {
-                    continue
-                }
-                
-                do {
-                    // 尝试解析 SSR URL
-                    if let node = try self.parseSSRURL(line) {
-                        newNodes.append(node)
-                    }
-                } catch {
-                    print("解析节点失败: \(error.localizedDescription)")
-                }
-            }
-            
-            if newNodes.isEmpty {
-                completion(TFYSwiftError.configurationError("未找到有效的节点配置"))
-                return
-            }
-            
-            // 更新配置
-            self.updateConfig(with: newNodes)
-            completion(nil)
+    /// 解析订阅内容
+    /// - Parameter content: Base64编码的订阅内容
+    /// - Returns: 服务器配置数组
+    private func parseSubscription(_ content: String) throws -> [ServerConfig] {
+        guard let data = Data(base64Encoded: content.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            throw TFYSwiftError.invalidData("Base64数据无效")
         }
+        
+        guard let decodedString = String(data: data, encoding: .utf8) else {
+            throw TFYSwiftError.invalidData("订阅内容解码失败")
+        }
+        
+        return try decodedString
+            .components(separatedBy: .newlines)
+            .filter { !$0.isEmpty }
+            .map { try parseServerConfig($0) }
     }
     
-    /// 解析 SSR URL
-    /// - Parameter url: SSR URL 字符串
-    /// - Returns: 解析后的节点配置
-    private func parseSSRURL(_ url: String) throws -> SubscriptionNode? {
-        // 验证 URL 格式
-        guard url.hasPrefix("ssr://") else {
-            return nil
+    /// 解析单个服务器配置
+    /// - Parameter uri: SSR URI字符串
+    /// - Returns: 服务器配置对象
+    private func parseServerConfig(_ uri: String) throws -> ServerConfig {
+        guard uri.hasPrefix("ssr://") else {
+            throw TFYSwiftError.invalidData("无效的SSR URI")
         }
         
-        // 移除 "ssr://" 前缀
-        let base64String = String(url.dropFirst(6))
-        
-        // Base64 解码
-        guard let decodedData = Data(base64Encoded: base64String.padding(toLength: ((base64String.count + 3) / 4) * 4,
-                                                                        withPad: "=",
-                                                                        startingAt: 0)),
-              let decodedString = String(data: decodedData, encoding: .utf8) else {
-            throw TFYSwiftError.configurationError("无效的 Base64 编码")
+        let base64String = String(uri.dropFirst(6))
+        guard let data = Data(base64Encoded: base64String.padding(toLength: ((base64String.count + 3) / 4) * 4,
+                                                                withPad: "=",
+                                                                startingAt: 0)),
+              let content = String(data: data, encoding: .utf8) else {
+            throw TFYSwiftError.invalidData("Base64内容无效")
         }
         
-        // 解析 SSR 参数
-        let components = decodedString.components(separatedBy: ":")
+        let components = content.components(separatedBy: ":")
         guard components.count >= 6 else {
-            throw TFYSwiftError.configurationError("无效的 SSR 配置格式")
+            throw TFYSwiftError.invalidData("SSR配置格式无效")
         }
         
-        // 解析主要参数
-        let server = components[0]
-        let port = Int(components[1]) ?? 0
-        let protocolType = components[2]  // 使用新的变量名
-        let method = components[3]
-        let obfs = components[4]
-        
-        // 解析剩余参数
-        let remainingBase64 = components[5].components(separatedBy: "/?")
-        guard let passwordData = Data(base64Encoded: remainingBase64[0].padding(toLength: ((remainingBase64[0].count + 3) / 4) * 4,
-                                                                              withPad: "=",
-                                                                              startingAt: 0)),
-              let password = String(data: passwordData, encoding: .utf8) else {
-            throw TFYSwiftError.configurationError("无效的密码编码")
-        }
+        let mainParts = components[0...5].map { $0 }
         
         // 解析附加参数
-        var remarks: String?
-        var protocolParam: String?
-        var obfsParam: String?
-        var group: String?
-        
-        if remainingBase64.count > 1 {
-            let params = remainingBase64[1].components(separatedBy: "&")
-            for param in params {
-                let keyValue = param.components(separatedBy: "=")
-                if keyValue.count == 2 {
-                    let key = keyValue[0]
-                    let value = keyValue[1]
-                    
-                    if let decodedValue = decodeBase64URL(value) {
-                        switch key {
-                        case "remarks":
-                            remarks = decodedValue
-                        case "protoparam":
-                            protocolParam = decodedValue
-                        case "obfsparam":
-                            obfsParam = decodedValue
-                        case "group":
-                            group = decodedValue
-                        default:
-                            break
-                        }
-                    }
+        var params: [String: String] = [:]
+        if components.count > 1 {
+            let queryItems = components[1].components(separatedBy: "&")
+            for item in queryItems {
+                let pair = item.components(separatedBy: "=")
+                if pair.count == 2 {
+                    params[pair[0]] = pair[1]
                 }
             }
         }
         
-        // 创建节点配置
-        return SubscriptionNode(
-            server: server,
-            server_port: port,
-            password: password,
-            method: method,
-            protocolType: protocolType,
-            protocol_param: protocolParam,
-            obfs: obfs,
-            obfs_param: obfsParam,
-            remarks: remarks,
-            group: group
+        return ServerConfig(
+            server: mainParts[0],
+            serverPort: UInt16(mainParts[1]) ?? 0,
+            method: mainParts[3],
+            password: decodeBase64URL(mainParts[5]) ?? "",
+            protocolType: mainParts[2],
+            protocolParam: decodeBase64URL(params["protoparam"] ?? ""),
+            obfs: mainParts[4],
+            obfsParam: decodeBase64URL(params["obfsparam"] ?? ""),
+            remarks: decodeBase64URL(params["remarks"] ?? ""),
+            group: decodeBase64URL(params["group"] ?? "")
         )
     }
     
-    /// 解码 Base64 URL 编码的字符串
-    /// - Parameter string: Base64 URL 编码的字符串
-    /// - Returns: 解码后的字符串
+    /// 解码Base64URL编码的字符串
+    /// - Parameter string: Base64URL编码的字符串
+    /// - Returns: 解码后的字符串，失败返回nil
     private func decodeBase64URL(_ string: String) -> String? {
         let base64 = string
             .replacingOccurrences(of: "-", with: "+")
@@ -273,39 +159,5 @@ class TFYSwiftSubscriptionManager {
         }
         
         return String(data: data, encoding: .utf8)
-    }
-    
-    /// 更新配置
-    /// - Parameter nodes: 新的节点列表
-    private func updateConfig(with nodes: [SubscriptionNode]) {
-        var newConfig = config
-        
-        // 更新节点配置
-        // TODO: 根据实际需求更新配置
-        // 例如：更新服务器列表、更新分组信息等
-        
-        // 保存更新后的配置
-        config = newConfig
-        try? config.save()
-        
-        print("成功更新 \(nodes.count) 个节点")
-    }
-    
-    /// 开始自动更新
-    /// - Parameter interval: 更新间隔（秒）
-    func startAutoUpdate(interval: TimeInterval = 3600) {
-        updateTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self?.updateSubscriptions { _ in }
-        }
-    }
-    
-    /// 停止自动更新
-    func stopAutoUpdate() {
-        updateTimer?.invalidate()
-        updateTimer = nil
-    }
-    
-    deinit {
-        stopAutoUpdate()
     }
 } 

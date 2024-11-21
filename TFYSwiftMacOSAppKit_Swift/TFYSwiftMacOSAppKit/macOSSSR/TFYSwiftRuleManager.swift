@@ -9,243 +9,151 @@
 import Foundation
 //import MaxMindDB
 
-class TFYSwiftRuleManager {
-    enum RuleType: String, Codable {
-        case domain      // 域名规则
-        case ipCIDR     // IP CIDR规则
-        case geoIP      // GeoIP规则
-        case userAgent  // User-Agent规则
-        case final      // 最终规则
+/// 规则管理器类 - 负责管理和匹配代理规则
+public class TFYSwiftRuleManager {
+    /// 规则类型枚举
+    enum RuleType {
+        case domain(String)      // 域名规则，如：*.example.com
+        case ipRange(String)     // IP范围规则，如：192.168.1.0/24
+        case userAgent(String)   // User-Agent规则，用于匹配浏览器标识
     }
     
-    enum RuleAction: String, Codable {
-        case proxy      // 使用代理
-        case direct     // 直接连接
-        case reject     // 拒绝连接
-        case bypassSSL  // 绕过SSL
+    /// 规则动作枚举
+    enum RuleAction {
+        case proxy              // 使用代理访问
+        case direct             // 直接访问
+        case reject             // 拒绝访问
     }
     
-    struct Rule: Codable {
-        let type: RuleType
-        let pattern: String
-        let action: RuleAction
-        let enabled: Bool
-        
-        init(type: RuleType, pattern: String, action: RuleAction, enabled: Bool = true) {
-            self.type = type
-            self.pattern = pattern
-            self.action = action
-            self.enabled = enabled
-        }
+    /// 规则结构体 - 定义单条规则的结构
+    struct Rule {
+        let type: RuleType      // 规则类型
+        let action: RuleAction  // 规则动作
+        let description: String // 规则描述
     }
     
+    /// 用于同步规则操作的串行队列
+    private let queue = DispatchQueue(label: "com.tfyswift.rulemanager")
+    /// 存储所有规则的数组
     private var rules: [Rule] = []
-    private let queue = DispatchQueue(label: "com.tfyswift.rules")
-    private let rulesPath: URL
     
-    // 示例的 IP 范围到国家代码的映射
-    private let ipCountryMapping: [(range: ClosedRange<UInt32>, countryCode: String)] = [
-        (range: 167772160...184549375, countryCode: "US"), // 10.0.0.0/8
-        (range: 2886729728...2887778303, countryCode: "CN"), // 172.16.0.0/12
-        (range: 3232235520...3232301055, countryCode: "US"), // 192.168.0.0/16
-        (range: 2155905152...2170556415, countryCode: "JP"), // 128.0.0.0/8
-        (range: 167837696...167837951, countryCode: "FR"), // 10.1.0.0/24
-        (range: 167837952...167838207, countryCode: "DE"), // 10.1.1.0/24
-        (range: 167838208...167838463, countryCode: "GB"), // 10.1.2.0/24
-        (range: 167838464...167838719, countryCode: "AU"), // 10.1.3.0/24
-        (range: 167838720...167838975, countryCode: "IN"), // 10.1.4.0/24
-        (range: 167838976...167839231, countryCode: "BR"), // 10.1.5.0/24
-        (range: 167839232...167839487, countryCode: "RU"), // 10.1.6.0/24
-        (range: 167839488...167839743, countryCode: "ZA"), // 10.1.7.0/24
-        (range: 167839744...167839999, countryCode: "CA"), // 10.1.8.0/24
-        (range: 167840000...167840255, countryCode: "IT"), // 10.1.9.0/24
-        (range: 167840256...167840511, countryCode: "ES"), // 10.1.10.0/24
-        // 添加更多的 IP 范围和国家代码
-    ]
-    
-    init() throws {
-        let fileManager = FileManager.default
-        let appSupport = try fileManager.url(for: .applicationSupportDirectory,
-                                           in: .userDomainMask,
-                                           appropriateFor: nil,
-                                           create: true)
-        rulesPath = appSupport.appendingPathComponent("TFYSwift/rules.json")
-        loadRules()
-    }
-    
-    // 加载规则
-    private func loadRules() {
-        do {
-            let data = try Data(contentsOf: rulesPath)
-            rules = try JSONDecoder().decode([Rule].self, from: data)
-        } catch {
-            // 加载默认规则
-            rules = defaultRules()
-            try? saveRules()
-        }
-    }
-    
-    // 保存规则
-    private func saveRules() throws {
-        let data = try JSONEncoder().encode(rules)
-        try data.write(to: rulesPath)
-    }
-    
-    // 默认规则
-    private func defaultRules() -> [Rule] {
-        return [
-            Rule(type: .domain, pattern: "*.local", action: .direct),
-            Rule(type: .ipCIDR, pattern: "192.168.0.0/16", action: .direct),
-            Rule(type: .ipCIDR, pattern: "10.0.0.0/8", action: .direct),
-            Rule(type: .ipCIDR, pattern: "172.16.0.0/12", action: .direct),
-            Rule(type: .geoIP, pattern: "CN", action: .direct),
-            Rule(type: .final, pattern: "*", action: .proxy)
-        ]
-    }
-    
-    // 添加规则
-    func addRule(_ rule: Rule) throws {
+    /// 从文件加载规则
+    /// - Parameter url: 规则文件的URL
+    /// - Throws: 加载失败时抛出错误
+    func loadRules(from url: URL) throws {
+        let content = try String(contentsOf: url, encoding: .utf8)
+        let newRules = try parseRules(content)
+        
         queue.sync {
-            rules.append(rule)
-            try? saveRules()
+            self.rules = newRules
         }
     }
     
-    // 删除规则
-    func removeRule(at index: Int) throws {
-        queue.sync {
-            guard index < rules.count else { return }
-            rules.remove(at: index)
-            try? saveRules()
+    /// 解析规则文本内容
+    /// - Parameter content: 规则文本内容
+    /// - Returns: 解析后的规则数组
+    private func parseRules(_ content: String) throws -> [Rule] {
+        return content.components(separatedBy: .newlines)
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") } // 过滤空行和注释
+            .compactMap { line -> Rule? in
+                let components = line.components(separatedBy: ",")
+                guard components.count >= 3 else { return nil }
+                
+                let typeStr = components[0].trimmingCharacters(in: .whitespaces)
+                let pattern = components[1].trimmingCharacters(in: .whitespaces)
+                let actionStr = components[2].trimmingCharacters(in: .whitespaces)
+                
+                guard let type = parseRuleType(typeStr, pattern: pattern),
+                      let action = parseRuleAction(actionStr) else {
+                    return nil
+                }
+                
+                return Rule(
+                    type: type,
+                    action: action,
+                    description: components.count > 3 ? components[3] : ""
+                )
+            }
+    }
+    
+    /// 解析规则类型
+    /// - Parameters:
+    ///   - type: 规则类型字符串
+    ///   - pattern: 规则匹配模式
+    /// - Returns: 规则类型枚举值
+    private func parseRuleType(_ type: String, pattern: String) -> RuleType? {
+        switch type.lowercased() {
+        case "domain":
+            return .domain(pattern)
+        case "ip":
+            return .ipRange(pattern)
+        case "useragent":
+            return .userAgent(pattern)
+        default:
+            return nil
         }
     }
     
-    // 更新规则
-    func updateRule(at index: Int, with rule: Rule) throws {
-        queue.sync {
-            guard index < rules.count else { return }
-            rules[index] = rule
-            try? saveRules()
+    /// 解析规则动作
+    /// - Parameter action: 规则动作字符串
+    /// - Returns: 规则动作枚举值
+    private func parseRuleAction(_ action: String) -> RuleAction? {
+        switch action.lowercased() {
+        case "proxy":
+            return .proxy
+        case "direct":
+            return .direct
+        case "reject":
+            return .reject
+        default:
+            return nil
         }
     }
     
-    // 匹配规则
-    func matchRules(domain: String? = nil, ip: String? = nil, userAgent: String? = nil) -> RuleAction {
+    /// 匹配规则
+    /// - Parameters:
+    ///   - domain: 域名
+    ///   - ip: IP地址
+    ///   - userAgent: 用户代理字符串
+    /// - Returns: 匹配到的规则动作
+    func matchRule(domain: String? = nil, ip: String? = nil, userAgent: String? = nil) -> RuleAction {
         return queue.sync {
-            for rule in rules where rule.enabled {
-                if let match = matchRule(rule, domain: domain, ip: ip, userAgent: userAgent) {
-                    return match
+            for rule in rules {
+                switch rule.type {
+                case .domain(let pattern):
+                    if let domain = domain, matchDomain(pattern: pattern, domain: domain) {
+                        return rule.action
+                    }
+                case .ipRange(let pattern):
+                    if let ip = ip, matchIP(pattern: pattern, ip: ip) {
+                        return rule.action
+                    }
+                case .userAgent(let pattern):
+                    if let userAgent = userAgent, matchUserAgent(pattern: pattern, userAgent: userAgent) {
+                        return rule.action
+                    }
                 }
             }
-            return .proxy // 默认使用代理
+            return .direct  // 默认直连
         }
     }
     
-    // 规则匹配逻辑
-    private func matchRule(_ rule: Rule, domain: String?, ip: String?, userAgent: String?) -> RuleAction? {
-        switch rule.type {
-        case .domain:
-            guard let domain = domain else { return nil }
-            if matchDomain(pattern: rule.pattern, domain: domain) {
-                return rule.action
-            }
-            
-        case .ipCIDR:
-            guard let ip = ip else { return nil }
-            if matchIPCIDR(pattern: rule.pattern, ip: ip) {
-                return rule.action
-            }
-            
-        case .geoIP:
-            guard let ip = ip else { return nil }
-            if matchGeoIP(pattern: rule.pattern, ip: ip) {
-                return rule.action
-            }
-            
-        case .userAgent:
-            guard let userAgent = userAgent else { return nil }
-            if matchUserAgent(pattern: rule.pattern, userAgent: userAgent) {
-                return rule.action
-            }
-            
-        case .final:
-            return rule.action
-        }
-        
-        return nil
-    }
-    
-    // 域名匹配
+    /// 域名匹配
     private func matchDomain(pattern: String, domain: String) -> Bool {
-        let patternParts = pattern.split(separator: ".")
-        let domainParts = domain.split(separator: ".")
-        
-        guard patternParts.count <= domainParts.count else { return false }
-        
-        let patternReversed = Array(patternParts.reversed())
-        let domainReversed = Array(domainParts.reversed())
-        
-        for i in 0..<patternReversed.count {
-            if patternReversed[i] != "*" && patternReversed[i] != domainReversed[i] {
-                return false
-            }
+        if pattern.hasPrefix("*.") {
+            let suffix = pattern.dropFirst(2)
+            return domain.hasSuffix(suffix)
         }
-        
-        return true
+        return pattern == domain
     }
     
-    // IP CIDR匹配
-    private func matchIPCIDR(pattern: String, ip: String) -> Bool {
-        let components = pattern.split(separator: "/")
-        guard components.count == 2,
-              let networkAddress = ipToUInt32(ip: String(components[0])),
-              let prefixLength = Int(components[1]),
-              let targetIP = ipToUInt32(ip: ip) else {
-            return false
-        }
-        let mask = UInt32.max << (32 - prefixLength)
-        return (networkAddress & mask) == (targetIP & mask)
+    /// IP匹配
+    private func matchIP(pattern: String, ip: String) -> Bool {
+        // 简单IP匹配，可以根据需要扩展CIDR匹配
+        return pattern == ip
     }
     
-    // 将 IP 地址转换为 UInt32
-    private func ipToUInt32(ip: String) -> UInt32? {
-        let components = ip.split(separator: ".").compactMap { UInt8($0) }
-        guard components.count == 4 else { return nil }
-        return (UInt32(components[0]) << 24) | (UInt32(components[1]) << 16) | (UInt32(components[2]) << 8) | UInt32(components[3])
-    }
-    
-    // GeoIP匹配
-    private func matchGeoIP(pattern: String, ip: String) -> Bool {
-        guard let ipValue = ipToUInt32(ip: ip) else { return false }
-        
-        for mapping in ipCountryMapping {
-            if mapping.range.contains(ipValue) {
-                return mapping.countryCode == pattern
-            }
-        }
-        return false
-    }
-    
-    // GeoIP匹配 
-//    private func matchGeoIP(pattern: String, ip: String) -> Bool {
-//        guard let dbPath = Bundle.main.path(forResource: "GeoLite2-Country", ofType: "mmdb"),
-//              let reader = MMDBReader(url: URL(fileURLWithPath: dbPath)) else {
-//            return false
-//        }
-//        
-//        do {
-//            let result = try reader.lookup(ipAddress: ip)
-//            if let country = result?.country?.isoCode {
-//                return country == pattern
-//            }
-//        } catch {
-//            print("GeoIP lookup error: \(error)")
-//        }
-//        
-//        return false
-//    }
-    
-    // User-Agent匹配
+    /// User-Agent匹配
     private func matchUserAgent(pattern: String, userAgent: String) -> Bool {
         return userAgent.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
     }

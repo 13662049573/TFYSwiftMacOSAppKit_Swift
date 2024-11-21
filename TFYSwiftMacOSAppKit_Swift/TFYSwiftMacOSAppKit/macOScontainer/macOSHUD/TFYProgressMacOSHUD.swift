@@ -17,7 +17,7 @@ enum TFYHUDMode {
     case loading         // 加载模式
 }
 
-class TFYProgressMacOSHUD: NSView {
+public class TFYProgressMacOSHUD: NSView {
     // MARK: - Properties
     private(set) var containerView: NSView
     private(set) var statusLabel: NSTextField

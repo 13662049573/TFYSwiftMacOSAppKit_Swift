@@ -80,8 +80,7 @@ public class TFYStatusItemWindow: NSPanel {
     
     private func setupContentView(_ contentView: NSView?) {
         guard let contentView = contentView,
-              userContentView !== contentView,
-              let configuration = configuration else { return }
+              userContentView !== contentView else { return }
         
         let bounds = contentView.bounds
         setupBackgroundViewIfNeeded(with: bounds)

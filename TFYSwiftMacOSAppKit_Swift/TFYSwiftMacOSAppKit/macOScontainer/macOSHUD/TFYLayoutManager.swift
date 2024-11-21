@@ -11,7 +11,7 @@ import Cocoa
 // MARK: - Type Aliases
 typealias TFYLayoutBlock = (TFYProgressMacOSHUD) -> Void
 
-class TFYLayoutManager: NSObject {
+public class TFYLayoutManager: NSObject {
     // MARK: - Properties
     private var layouts: [Int: TFYLayoutBlock] = [:]
     private weak var currentHUD: TFYProgressMacOSHUD?

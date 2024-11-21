@@ -9,7 +9,7 @@
 import Cocoa
 import QuartzCore
 
-class TFYAnimationEnhancer: NSObject {
+public class TFYAnimationEnhancer: NSObject {
     // MARK: - Properties
     var duration: CGFloat = 0.0
     var springDamping: CGFloat = 0.0

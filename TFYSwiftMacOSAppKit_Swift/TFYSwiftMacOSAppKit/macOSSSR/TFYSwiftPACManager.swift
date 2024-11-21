@@ -9,224 +9,116 @@
 import Foundation
 import Network
 
-class TFYSwiftPACManager {
+/// PAC代理自动配置管理器类 - 负责处理PAC文件的分发和管理
+public class TFYSwiftPACManager {
+    /// HTTP服务器监听器
     private var httpServer: NWListener?
+    /// 用于同步PAC操作的串行队列
     private let queue = DispatchQueue(label: "com.tfyswift.pac")
+    /// 全局配置对象
     private let config: TFYSwiftConfig
+    /// PAC文件内容
     private var pacContent: String
     
+    /// 初始化PAC管理器
+    /// - Parameter config: 全局配置对象
     init(config: TFYSwiftConfig) {
         self.config = config
         self.pacContent = ""
         loadDefaultPAC()
     }
     
+    /// 加载默认PAC文件
+    private func loadDefaultPAC() {
+        if let path = Bundle.main.path(forResource: "default", ofType: "pac"),
+           let content = try? String(contentsOfFile: path, encoding: .utf8) {
+            pacContent = content
+        }
+    }
+    
+    /// 启动PAC服务器
+    /// - Throws: 启动失败时抛出错误
     func start() throws {
+        let port = NWEndpoint.Port(integerLiteral: UInt16(config.globalSettings.pacPort))
         let parameters = NWParameters.tcp
-        let framerOptions = NWProtocolFramer.Options(definition: HTTPHandler.definition)
-        parameters.defaultProtocolStack.applicationProtocols.insert(framerOptions, at: 0)
         
-        httpServer = try NWListener(using: parameters,
-                                  on: NWEndpoint.Port(integerLiteral: config.globalSettings.pacPort))
-        
+        // 创建并配置HTTP服务器
+        httpServer = try NWListener(using: parameters, on: port)
         httpServer?.stateUpdateHandler = { [weak self] state in
-            self?.handleListenerState(state)
+            switch state {
+            case .ready:
+                logInfo("PAC服务器已启动，端口: \(self?.config.globalSettings.pacPort ?? 0)")
+            case .failed(let error):
+                logError("PAC服务器启动失败: \(error)")
+            case .cancelled:
+                logInfo("PAC服务器已停止")
+            default:
+                break
+            }
         }
         
+        // 设置新连接处理器
         httpServer?.newConnectionHandler = { [weak self] connection in
-            self?.handleNewConnection(connection)
+            self?.handleConnection(connection)
         }
         
+        // 在指定队列上启动服务器
         httpServer?.start(queue: queue)
     }
     
+    /// 停止PAC服务器
     func stop() {
         httpServer?.cancel()
         httpServer = nil
     }
     
-    private func loadDefaultPAC() {
-        let defaultPAC = """
-        function FindProxyForURL(url, host) {
-            var direct = 'DIRECT';
-            var proxy = 'SOCKS5 127.0.0.1:\(config.globalSettings.socksPort)';
-            
-            // 本地地址直连
-            if (isPlainHostName(host) ||
-                isInNet(host, "10.0.0.0", "255.0.0.0") ||
-                isInNet(host, "172.16.0.0", "255.240.0.0") ||
-                isInNet(host, "192.168.0.0", "255.255.0.0") ||
-                isInNet(host, "127.0.0.0", "255.0.0.0")) {
-                return direct;
-            }
-            
-            // 自定义规则
-            var bypassList = \(config.bypassList.map { "\"\($0)\"" });
-            for (var i = 0; i < bypassList.length; i++) {
-                if (shExpMatch(host, bypassList[i])) {
-                    return direct;
-                }
-            }
-            
-            return proxy;
-        }
-        """
-        
-        pacContent = defaultPAC
-    }
-    
-    private func handleListenerState(_ state: NWListener.State) {
-        switch state {
-        case .ready:
-            print("PAC server ready")
-        case .failed(let error):
-            print("PAC server failed: \(error)")
-        default:
-            break
-        }
-    }
-    
-    private func handleNewConnection(_ connection: NWConnection) {
-        let handler = PACConnectionHandler(connection: connection, pacContent: pacContent)
-        handler.start()
-    }
-}
-
-// HTTP 协议处理
-private class HTTPHandler: NWProtocolFramerImplementation {
-    
-    func handleOutput(framer: NWProtocolFramer.Instance, message: NWProtocolFramer.Message, messageLength: Int, isComplete: Bool) {
-        // 创建 HTTP 响应头
-        let responseHeader = """
-        HTTP/1.1 200 OK\r
-        Content-Type: application/x-ns-proxy-autoconfig\r
-        Content-Length: \(messageLength)\r
-        Connection: close\r
-        \r
-        """
-        
-        // 将响应头写入输出缓冲区
-        if let headerData = responseHeader.data(using: .utf8) {
-            let headerLength = headerData.count
-            
-            // 创建一个可变的 Data 对象来存储响应头
-            var headerBuffer = Data(count: headerLength)
-            
-            // 将响应头数据复制到缓冲区
-            headerBuffer.withUnsafeMutableBytes { rawBufferPointer in
-                headerData.withUnsafeBytes { dataBufferPointer in
-                    guard let destPtr = rawBufferPointer.baseAddress,
-                          let srcPtr = dataBufferPointer.baseAddress else {
-                        return
-                    }
-                    memcpy(destPtr, srcPtr, headerLength)
-                }
-            }
-            
-            // 写入输出
-            framer.writeOutput(data: headerBuffer)
-        }
-        
-        // 写入消息内容
-        if messageLength > 0 {
-            var messageBuffer = Data(count: messageLength)
-            framer.writeOutput(data: messageBuffer)
-        }
-        
-        print("HTTP response sent, length: \(messageLength), isComplete: \(isComplete)")
-    }
-    
-    // 定义协议标签
-    static let label: String = "com.tfyswift.pac.http"
-    
-    static let definition = NWProtocolFramer.Definition(implementation: HTTPHandler.self)
-    
-    required init(framer: NWProtocolFramer.Instance) { }
-    
-    // 启动协议帧处理
-    func start(framer: NWProtocolFramer.Instance) -> NWProtocolFramer.StartResult {
-        print("HTTPHandler started")
-        return .ready
-    }
-    
-    // 处理输入数据
-    func handleInput(framer: NWProtocolFramer.Instance) -> Int {
-        // 读取数据
-        while true {
-            var parsedLength = 0
-            let result = framer.parseInput(minimumIncompleteLength: 1, maximumLength: Int.max) { buffer, isComplete in
-                guard let buffer = buffer,
-                      let request = String(bytes: buffer, encoding: .utf8) else {
-                    return 0
-                }
-                
-                // 简单解析 HTTP 请求
-                if request.starts(with: "GET") {
-                    // 处理 GET 请求
-                    let message = NWProtocolFramer.Message(definition: HTTPHandler.definition)
-                    if framer.deliverInputNoCopy(length: buffer.count, message: message, isComplete: true) {
-                        parsedLength = buffer.count
-                        return buffer.count
-                    }
-                }
-                return 0
-            }
-            
-            // 如果没有解析到数据，退出循环
-            if parsedLength == 0 {
+    /// 处理新的网络连接
+    /// - Parameter connection: 网络连接对象
+    private func handleConnection(_ connection: NWConnection) {
+        connection.stateUpdateHandler = { [weak self] state in
+            switch state {
+            case .ready:
+                self?.handleRequest(connection)
+            case .failed(let error):
+                logError("连接失败: \(error)")
+                connection.cancel()
+            case .cancelled:
+                break
+            default:
                 break
             }
         }
-        return 0
-    }
-    
-    // 唤醒协议帧处理
-    func wakeup(framer: NWProtocolFramer.Instance) {
-        print("HTTPHandler wakeup")
-    }
-    
-    // 停止协议帧处理
-    func stop(framer: NWProtocolFramer.Instance) -> Bool {
-        print("HTTPHandler stopped")
-        return true
-    }
-    
-    // 清理协议帧处理
-    func cleanup(framer: NWProtocolFramer.Instance) {
-        print("HTTPHandler cleanup")
-    }
-}
-
-// PAC 连接处理
-private class PACConnectionHandler {
-    private let connection: NWConnection
-    private let pacContent: String
-    
-    init(connection: NWConnection, pacContent: String) {
-        self.connection = connection
-        self.pacContent = pacContent
-    }
-    
-    func start() {
-        connection.stateUpdateHandler = { [weak self] state in
-            self?.handleConnectionState(state)
-        }
         
-        connection.start(queue: .global())
+        connection.start(queue: queue)
     }
     
-    private func handleConnectionState(_ state: NWConnection.State) {
-        switch state {
-        case .ready:
-            sendPACResponse()
-        case .failed, .cancelled:
-            connection.cancel()
-        default:
-            break
+    /// 处理HTTP请求
+    /// - Parameter connection: 网络连接对象
+    private func handleRequest(_ connection: NWConnection) {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] content, _, isComplete, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                logError("接收请求失败: \(error)")
+                connection.cancel()
+                return
+            }
+            
+            // 检查是否为GET请求
+            if let content = content,
+               let request = String(data: content, encoding: .utf8),
+               request.contains("GET") {
+                self.sendPACResponse(connection)
+            } else {
+                connection.cancel()
+            }
         }
     }
     
-    private func sendPACResponse() {
+    /// 发送PAC文件响应
+    /// - Parameter connection: 网络连接对象
+    private func sendPACResponse(_ connection: NWConnection) {
+        // 构建HTTP响应
         let response = """
         HTTP/1.1 200 OK\r
         Content-Type: application/x-ns-proxy-autoconfig\r
@@ -236,11 +128,17 @@ private class PACConnectionHandler {
         \(pacContent)
         """
         
-        connection.send(content: response.data(using: .utf8), completion: .contentProcessed { [weak self] error in
+        // 发送响应
+        connection.send(content: response.data(using: .utf8), completion: .contentProcessed { error in
             if let error = error {
-                print("Failed to send PAC response: \(error)")
+                logError("发送PAC响应失败: \(error)")
             }
-            self?.connection.cancel()
+            connection.cancel()
         })
+    }
+    
+    /// 析构函数 - 确保服务器被正确关闭
+    deinit {
+        stop()
     }
 }

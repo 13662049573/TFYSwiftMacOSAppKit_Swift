@@ -9,7 +9,7 @@
 import Cocoa
 import CoreImage
 
-class TFYProgressIndicator: NSView {
+public class TFYProgressIndicator: NSView {
     // MARK: - Properties
     private(set) var progressIndicator: NSProgressIndicator
     var tintColor: NSColor? {

@@ -15,7 +15,7 @@ enum TFYProgressViewStyle {
     case horizontal
 }
 
-class TFYProgressView: NSView {
+public class TFYProgressView: NSView {
     // MARK: - Properties
     private var progressLayer: CAShapeLayer
     private var trackLayer: CAShapeLayer
@@ -91,7 +91,7 @@ class TFYProgressView: NSView {
     }
     
     // MARK: - Layout
-    override func layout() {
+    public override func layout() {
         super.layout()
         updatePaths()
     }

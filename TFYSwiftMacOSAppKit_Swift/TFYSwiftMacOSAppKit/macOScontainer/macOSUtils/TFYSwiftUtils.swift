@@ -17,9 +17,9 @@ import IOKit
 // MARK: - Network Utilities Class
 public final class TFYSwiftUtils: NSObject, CLLocationManagerDelegate {
     
-    static let IOS_CELLULAR = "pdp_ip0"
-    static let IOS_WIFI = "en0"
-    static let IOS_VPN = "utun0"
+    static let MACOS_CELLULAR = "pdp_ip0"
+    static let MACOS_WIFI = "en1"
+    static let MACOS_VPN = "utun0"
     static let IP_ADDR_IPv4 = "ipv4"
     static let IP_ADDR_IPv6 = "ipv6"
     
@@ -202,13 +202,10 @@ public final class TFYSwiftUtils: NSObject, CLLocationManagerDelegate {
     // MARK: - Get Device Current Network IP Address
         static func getIPAddress(preferIPv4: Bool) -> String {
             let searchArray = preferIPv4 ?
-                [IOS_VPN + "/" + IP_ADDR_IPv4, IOS_VPN + "/" + IP_ADDR_IPv6, IOS_WIFI + "/" + IP_ADDR_IPv4, IOS_WIFI + "/" + IP_ADDR_IPv6, IOS_CELLULAR + "/" + IP_ADDR_IPv4, IOS_CELLULAR + "/" + IP_ADDR_IPv6] :
-                [IOS_VPN + "/" + IP_ADDR_IPv6, IOS_VPN + "/" + IP_ADDR_IPv4, IOS_WIFI + "/" + IP_ADDR_IPv6, IOS_WIFI + "/" + IP_ADDR_IPv4, IOS_CELLULAR + "/" + IP_ADDR_IPv6, IOS_CELLULAR + "/" + IP_ADDR_IPv4]
+                [MACOS_VPN + "/" + IP_ADDR_IPv4, MACOS_VPN + "/" + IP_ADDR_IPv6, MACOS_WIFI + "/" + IP_ADDR_IPv4, MACOS_WIFI + "/" + IP_ADDR_IPv6, MACOS_CELLULAR + "/" + IP_ADDR_IPv4, MACOS_CELLULAR + "/" + IP_ADDR_IPv6] :
+                [MACOS_VPN + "/" + IP_ADDR_IPv6, MACOS_VPN + "/" + IP_ADDR_IPv4, MACOS_WIFI + "/" + IP_ADDR_IPv6, MACOS_WIFI + "/" + IP_ADDR_IPv4, MACOS_CELLULAR + "/" + IP_ADDR_IPv6, MACOS_CELLULAR + "/" + IP_ADDR_IPv4]
 
-            guard let addresses = getIPAddresses() else {
-                TFYLogger.log("没有找到IP地址。")
-                return ""
-            }
+            let addresses = getAllIPAddresses()
             for key in searchArray {
                 if let address = addresses[key], isValidatIP(ipAddress: address) {
                     TFYLogger.log("找到有效IP: \(address)")
@@ -228,42 +225,69 @@ public final class TFYSwiftUtils: NSObject, CLLocationManagerDelegate {
             return false
         }
 
-        static func getIPAddresses() -> [String: String]? {
+    static func getAllIPAddresses() -> [String: String] {
             var addresses = [String: String]()
             var ifaddr: UnsafeMutablePointer<ifaddrs>?
+            
             guard getifaddrs(&ifaddr) == 0 else {
-                TFYLogger.log("日志含义获取网络接口失败。")
-                return nil
+                return addresses
             }
-            var ptr = ifaddr
-            while ptr != nil {
-                defer { ptr = ptr?.pointee.ifa_next }
-
-                let interface = ptr!.pointee
-                let addrFamily = interface.ifa_addr.pointee.sa_family
-                if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
-                    let flags = Int32(interface.ifa_flags)
-                    if (flags & IFF_UP) == 0 {
-                        continue // Interface is not up
-                    }
-
-                    var addr = interface.ifa_addr.pointee
+            
+            guard let firstAddr = ifaddr else {
+                return addresses
+            }
+            
+            var ptr = firstAddr
+            while true {
+                defer { ptr = ptr.pointee.ifa_next }
+                
+                let flags = Int32(ptr.pointee.ifa_flags)
+                guard (flags & IFF_UP) == IFF_UP else {
+                    guard ptr.pointee.ifa_next != nil else { break }
+                    continue
+                }
+                
+                guard let addr = ptr.pointee.ifa_addr else {
+                    guard ptr.pointee.ifa_next != nil else { break }
+                    continue
+                }
+                
+                let family = addr.pointee.sa_family
+                
+                if family == UInt8(AF_INET) || family == UInt8(AF_INET6) {
+                    let name = String(cString: ptr.pointee.ifa_name)
                     var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                    if getnameinfo(&addr, socklen_t(interface.ifa_addr.pointee.sa_len), &hostname, socklen_t(hostname.count), nil, 0, NI_NUMERICHOST) == 0 {
-                        let address = String(cString: hostname)
-                        let name = String(cString: interface.ifa_name)
-                        let type = addrFamily == UInt8(AF_INET) ? IP_ADDR_IPv4 : IP_ADDR_IPv6
-                        let key = name + "/" + type
-                        addresses[key] = address
-                        TFYLogger.log("接口： \(name) 地址： \(address)")
+                    
+                    // 修正这里：使用 MemoryLayout 获取结构体大小
+                    let sockaddrSize: socklen_t
+                    if family == UInt8(AF_INET) {
+                        sockaddrSize = socklen_t(MemoryLayout<sockaddr_in>.size)
+                    } else {
+                        sockaddrSize = socklen_t(MemoryLayout<sockaddr_in6>.size)
+                    }
+                    
+                    if getnameinfo(ptr.pointee.ifa_addr,
+                                  sockaddrSize,
+                                  &hostname,
+                                  socklen_t(hostname.count),
+                                  nil,
+                                  0,
+                                  NI_NUMERICHOST) == 0 {
+                        
+                        let ip = String(cString: hostname)
+                        if family == UInt8(AF_INET) {
+                            addresses[name] = ip
+                        } else if family == UInt8(AF_INET6) {
+                            addresses["\(name)-IPv6"] = ip
+                        }
                     }
                 }
+                
+                guard ptr.pointee.ifa_next != nil else { break }
             }
+            
             freeifaddrs(ifaddr)
-            if addresses.isEmpty {
-                TFYLogger.log("没有IP地址被填充。")
-            }
-            return addresses.isEmpty ? nil : addresses
+            return addresses
         }
     
     // Fetch the raw device model string using sysctlbyname

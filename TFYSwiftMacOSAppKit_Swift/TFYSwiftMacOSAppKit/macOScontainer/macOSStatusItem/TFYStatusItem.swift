@@ -94,7 +94,6 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     @Published private(set) var isStatusItemWindowVisible: Bool = true
     
     // MARK: - 初始化方法
-    
     private override init() {
         pbChangeCount = NSPasteboard.general.changeCount
         super.init()

@@ -30,7 +30,7 @@ public class TFYThemeManager: NSObject {
         registerTheme(defaultDarkTheme, for: "dark")
         
         // Set initial theme
-        applyTheme("light")
+        applyTheme("dark")
     }
     
     private var defaultLightTheme: [String: Any] {
@@ -43,10 +43,10 @@ public class TFYThemeManager: NSObject {
             "errorColor": NSColor.systemRed,
             "shadowColor": NSColor(white: 0, alpha: 0.1),
             "borderColor": NSColor(white: 0.8, alpha: 1.0),
-            "cornerRadius": 10.0,
-            "borderWidth": 1.0,
-            "shadowRadius": 20.0,
-            "shadowOpacity": 0.2,
+            "cornerRadius": CGFloat(10.0),
+            "borderWidth": CGFloat(1.0),
+            "shadowRadius": CGFloat(20.0),
+            "shadowOpacity": CGFloat(0.4),
             "blurEffect": "light"
         ]
     }
@@ -61,10 +61,10 @@ public class TFYThemeManager: NSObject {
             "errorColor": NSColor.systemRed,
             "shadowColor": NSColor(white: 0, alpha: 0.3),
             "borderColor": NSColor(white: 0.3, alpha: 1.0),
-            "cornerRadius": 10.0,
-            "borderWidth": 1.0,
-            "shadowRadius": 20.0,
-            "shadowOpacity": 0.4,
+            "cornerRadius": CGFloat(10.0),
+            "borderWidth": CGFloat(1.0),
+            "shadowRadius": CGFloat(20.0),
+            "shadowOpacity": CGFloat(0.4),
             "blurEffect": "dark"
         ]
     }
@@ -140,6 +140,7 @@ public class TFYThemeManager: NSObject {
         // Configure progress indicator color
         if let progressColor = theme["progressColor"] as? NSColor {
             hud.progressView.progressColor = progressColor
+            hud.activityIndicator.setColor(progressColor)
         }
     }
     

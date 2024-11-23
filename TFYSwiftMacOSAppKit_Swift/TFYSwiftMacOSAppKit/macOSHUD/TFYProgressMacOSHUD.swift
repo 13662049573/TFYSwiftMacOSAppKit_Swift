@@ -46,7 +46,6 @@ public class TFYProgressMacOSHUD: NSView {
         layoutManager = TFYLayoutManager()
         themeManager = TFYThemeManager()
         animation = TFYAnimationEnhancer()
-        
         super.init(frame: frame)
         commonInit()
     }
@@ -60,7 +59,6 @@ public class TFYProgressMacOSHUD: NSView {
         layoutManager = TFYLayoutManager()
         themeManager = TFYThemeManager()
         animation = TFYAnimationEnhancer()
-        
         super.init(coder: coder)
         commonInit()
     }
@@ -115,7 +113,6 @@ public class TFYProgressMacOSHUD: NSView {
         isHidden = true
         wantsLayer = true
         layer?.masksToBounds = true
-        
         themeManager.setupDefaultTheme()
         themeManager.applyTheme(to: self)
     }
@@ -134,15 +131,6 @@ public class TFYProgressMacOSHUD: NSView {
         return hud
     }
     
-    /// 隐藏HUD
-    public static func hideHUD(for view: NSView) -> Bool {
-        if let hud = self.HUD(for: view) {
-            hud.hideAnimated(true)
-            return true
-        }
-        return false
-    }
-    
     /// 获取视图上的HUD
     public static func HUD(for view: NSView) -> TFYProgressMacOSHUD? {
         return view.subviews.first { $0 is TFYProgressMacOSHUD } as? TFYProgressMacOSHUD
@@ -153,67 +141,6 @@ public class TFYProgressMacOSHUD: NSView {
         return view.subviews.compactMap { $0 as? TFYProgressMacOSHUD }
     }
     
-    // MARK: - 便捷显示方法
-    
-    /// 显示成功状态
-    public static func showSuccess(_ status: String?) {
-        showHUDInMainWindow { hud in
-            hud.mode = .customView
-            hud.customImageView.image = createSuccessImage()
-            hud.showStatus(status)
-            hud.hideAnimated(true, afterDelay: 2.0)
-        }
-    }
-    
-    /// 显示错误状态
-    public static func showError(_ status: String?) {
-        showHUDInMainWindow { hud in
-            hud.mode = .customView
-            hud.customImageView.image = createErrorImage()
-            hud.showStatus(status)
-            hud.hideAnimated(true, afterDelay: 2.0)
-        }
-    }
-    
-    /// 显示信息状态
-    public static func showInfo(_ status: String?) {
-        showHUDInMainWindow { hud in
-            hud.mode = .customView
-            hud.customImageView.image = createInfoImage()
-            hud.showStatus(status)
-            hud.hideAnimated(true, afterDelay: 2.0)
-        }
-    }
-    
-    /// 显示消息
-    public static func showMessage(_ status: String?) {
-        showHUDInMainWindow { hud in
-            hud.mode = .text
-            hud.showStatus(status)
-            hud.hideAnimated(true, afterDelay: 2.0)
-        }
-    }
-    
-    /// 显示加载状态
-    public static func showLoading(_ status: String?) {
-        showHUDInMainWindow { hud in
-            hud.mode = .indeterminate
-            hud.showStatus(status)
-        }
-    }
-    
-    /// 显示进度
-    public static func showProgress(_ progress: Float, status: String?) {
-        showHUDInMainWindow { hud in
-            hud.mode = .determinate
-            hud.progress = progress
-            hud.showStatus(status)
-        }
-    }
-    
-    
-    // MARK: - 私有辅助方法
-    
     /// 在主窗口显示HUD
     private static func showHUDInMainWindow(_ configure: @escaping (TFYProgressMacOSHUD) -> Void) {
         DispatchQueue.main.async {
@@ -222,110 +149,6 @@ public class TFYProgressMacOSHUD: NSView {
             let hud = showHUD(addedTo: contentView)
             configure(hud)
         }
-    }
-    
-    
-    // MARK: - 显示和隐藏方法
-    
-    /// 显示HUD
-    /// - Parameters:
-    ///   - animated: 是否使用动画
-    public func show(animated: Bool) {
-        if graceTime > 0 {
-            // 如果设置了延迟显示时间，创建定时器
-            graceTimer = Timer.scheduledTimer(withTimeInterval: graceTime, repeats: false) { [weak self] _ in
-                self?.showUsingAnimation(animated)
-            }
-        } else {
-            showUsingAnimation(animated)
-        }
-    }
-    
-    /// 使用动画显示HUD
-    /// - Parameter animated: 是否使用动画
-    private func showUsingAnimation(_ animated: Bool) {
-        isHidden = false
-        
-        if animated {
-            // 配置动画
-            animation.setup(view: self)
-            NSAnimationContext.runAnimationGroup({ context in
-                context.duration = fadeInDuration
-                self.animator().alphaValue = 1.0
-            }, completionHandler: nil)
-        } else {
-            // 直接显示
-            alphaValue = 1.0
-        }
-        
-        // 如果设置了最小显示时间，创建定时器
-        if minShowTime > 0 {
-            minShowTimer = Timer.scheduledTimer(withTimeInterval: minShowTime, repeats: false) { [weak self] _ in
-                self?.minShowTimer = nil
-            }
-        }
-    }
-    
-    /// 隐藏HUD
-    /// - Parameter animated: 是否使用动画
-    public func hideAnimated(_ animated: Bool) {
-        hideAnimated(animated, afterDelay: 0)
-    }
-    
-    /// 延迟隐藏HUD
-    /// - Parameters:
-    ///   - animated: 是否使用动画
-    ///   - delay: 延迟时间
-    public func hideAnimated(_ animated: Bool, afterDelay delay: TimeInterval) {
-        // 创建隐藏动作
-        let hideBlock = { [weak self] in
-            guard let self = self else { return }
-            
-            // 检查是否需要等待最小显示时间
-            let hideNow = { [weak self] in
-                guard let self = self else { return }
-                
-                if animated {
-                    // 使用动画隐藏
-                    NSAnimationContext.runAnimationGroup({ context in
-                        context.duration = self.fadeOutDuration
-                        self.animator().alphaValue = 0.0
-                    }, completionHandler: {
-                        self.done()
-                    })
-                } else {
-                    // 直接隐藏
-                    self.alphaValue = 0.0
-                    self.done()
-                }
-            }
-            
-            // 如果最小显示时间定时器存在，等待它完成
-            if let minShowTimer = self.minShowTimer {
-                DispatchQueue.main.asyncAfter(deadline: .now() + minShowTimer.fireDate.timeIntervalSinceNow) {
-                    hideNow()
-                }
-            } else {
-                hideNow()
-            }
-        }
-        
-        // 处理延迟隐藏
-        if delay > 0 {
-            fadeOutTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
-                hideBlock()
-            }
-        } else {
-            hideBlock()
-        }
-    }
-    
-    /// HUD完成显示后的清理工作
-    private func done() {
-        // 调用完成回调
-        completionBlock?()
-        // 从父视图移除
-        removeFromSuperview()
     }
     
     private func updateForMode() {
@@ -363,25 +186,6 @@ public class TFYProgressMacOSHUD: NSView {
         
         layoutManager.invalidateLayout()
         layoutManager.setupHUDConstraints(self)
-    }
-    
-    // MARK: - Public Static Methods
-    static func showHUD(addedTo view: NSView) -> TFYProgressMacOSHUD {
-        let hud = TFYProgressMacOSHUD(frame: view.bounds)
-        view.addSubview(hud)
-        return hud
-    }
-    
-    static func hideHUD(for view: NSView) -> Bool {
-        if let hud = allHUDs(for: view).first {
-            hud.hide()
-            return true
-        }
-        return false
-    }
-    
-    static func allHUDs(for view: NSView) -> [TFYProgressMacOSHUD] {
-        return view.subviews.compactMap { $0 as? TFYProgressMacOSHUD }
     }
     
     // MARK: - Convenience Methods
@@ -447,6 +251,16 @@ public class TFYProgressMacOSHUD: NSView {
         }
     }
     
+    static func showImage(_ image:NSImage , status:String?) {
+        DispatchQueue.main.async {
+            let hud = shared
+            hud.mode = .customView
+            hud.customImageView.image = image
+            hud.statusLabel.stringValue = status ?? ""
+            hud.show()
+        }
+    }
+    
     static func hideHUD() {
         DispatchQueue.main.async {
             shared.hide()
@@ -464,6 +278,7 @@ public class TFYProgressMacOSHUD: NSView {
         isHidden = false
         animation.setup(with: self)
         animation.applyAnimation(to: self)
+        superview?.addSubview(self, positioned: .above, relativeTo: nil)
     }
     
     private func hide() {
@@ -486,7 +301,7 @@ public class TFYProgressMacOSHUD: NSView {
               let contentView = window.contentView else {
             fatalError("No main window found")
         }
-        
+
         contentView.wantsLayer = true
         let hud = TFYProgressMacOSHUD(frame: contentView.bounds)
         hud.autoresizingMask = [.width, .height]
@@ -507,6 +322,7 @@ public class TFYProgressMacOSHUD: NSView {
 
 // MARK: - Helper Methods for Creating Images
 extension TFYProgressMacOSHUD {
+    
     static func createSuccessImage() -> NSImage {
         let image = NSImage(size: NSSize(width: 32, height: 32))
         image.lockFocus()

@@ -275,6 +275,7 @@ public class TFYProgressMacOSHUD: NSView {
         }
     }
     
+    
     // MARK: - 私有辅助方法
     
     /// 在主窗口显示HUD
@@ -286,6 +287,7 @@ public class TFYProgressMacOSHUD: NSView {
             configure(hud)
         }
     }
+    
     
     // MARK: - 显示和隐藏方法
     

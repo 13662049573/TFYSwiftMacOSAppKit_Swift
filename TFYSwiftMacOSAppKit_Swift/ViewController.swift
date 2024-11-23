@@ -73,6 +73,17 @@ class ViewController: NSViewController {
         return image
     }()
     
+    lazy var popbuttom: NSPopUpButton = {
+        let pop = NSPopUpButton(frame: NSRect(x: 200, y: 300, width: self.view.macos_width-400, height: 60))
+        pop.chain
+            .pullsDown(false)
+            .autoenablesItems(false)
+            .preferredEdge(.maxY)
+            .addItems(["显示纯文本提示", "显示错误提示", "显示信息提示", "显示多行文本提示", "模拟文件上传场景", "显示加载中", "显示进度条", "模拟网络请求场景","模拟登录场景","连续提示示例","添加图片"])
+            .selectItem(0)
+            .addTarget(self, action: #selector(popUpButtonAction(pop:)))
+        return pop
+    }()
     
     var clickGesture: NSClickGestureRecognizer!
     
@@ -122,6 +133,161 @@ class ViewController: NSViewController {
         showVc.preferredContentSize = NSSize(width: 400, height: 600)
         TFYStatusItem.sharedInstance.presentStatusItemWithView(itemView: btn, contentViewController: showVc)
     }
+    
+    @objc func popUpButtonAction(pop:NSPopUpButton) {
+        let selectedIndex = pop.indexOfSelectedItem
+        switch (selectedIndex) {
+            case 0:
+            showTextMessage()
+                break;
+            case 1:
+            showErrorMessage()
+                break;
+            case 2:
+            showSuccessMessage()
+                break;
+            case 3:
+            showMultiLineMessage()
+                break;
+            case 4:///自定义动画
+            simulateFileUpload()
+                break;
+            case 5:
+            showLoadingMessage()
+                break;
+            case 6:
+            showProgressMessage()
+                break;
+            case 7:
+            simulateNetworkRequest()
+                break;
+            case 8:
+            simulateLogin()
+                break;
+            case 9:
+            showSequentialMessages()
+                break;
+            case 10:
+            showImageMessage()
+                break;
+            default:
+                break;
+        }
+    }
+    
+    // 1. 显示纯文本提示
+    func showTextMessage() {
+        TFYProgressMacOSHUD.showMessage("这是一条纯文本提示消息")
+    }
 
+    // 2. 显示多行文本提示
+    func showMultiLineMessage() {
+        TFYProgressMacOSHUD.showMessage("""
+            感谢您信任并使用雷电加速器!我们非常重视您的隐私保护和个人信息保护。请认真阅读 《用户协议》和《隐私政策》的所有条款。
+            1.为向您提供网络加速、用户注册登录等相关服务，我们会根据您使用服务的具体功能需要，收集必要的用户信息。
+            2.为保障您的账号与使用安全，提升加速体验，您需要授权我们读取相关设备信息。您有权拒绝或取消授权。
+            3.未经您授权，我们不会与第一方共享或对外提供您的信息。
+            您点击"同意"即表示您已经阅读并同意以上协议的全部内容。
+            """)
+    }
+
+    // MARK: - 状态提示框
+
+    func showSuccessMessage() {
+        TFYProgressMacOSHUD.showSuccess("操作成功！")
+    }
+
+    func showErrorMessage() {
+        TFYProgressMacOSHUD.showError("操作失败，请重试")
+    }
+
+    func showInfoMessage() {
+        TFYProgressMacOSHUD.showInfo("请注意这条重要信息")
+    }
+
+    // MARK: - 加载提示框
+
+    func showLoadingMessage() {
+        TFYProgressMacOSHUD.showLoading("正在加载中...")
+        
+        // 模拟延迟操作
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            TFYProgressMacOSHUD.hideHUD()
+        }
+    }
+
+    func showProgressMessage() {
+        // 模拟进度更新
+        var progress: Float = 0.0
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+            progress += 0.01
+            TFYProgressMacOSHUD.showProgress(progress, status: "上传中 \(Int(progress * 100))%")
+            
+            if progress >= 1.0 {
+                timer.invalidate()
+                TFYProgressMacOSHUD.showSuccess("上传完成！")
+            }
+        }
+    }
+
+    // MARK: - 复杂场景示例
+
+    func simulateNetworkRequest() {
+        TFYProgressMacOSHUD.showLoading("正在请求数据...")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            // 随机模拟成功或失败
+            if Bool.random() {
+                TFYProgressMacOSHUD.showSuccess("数据加载成功！")
+            } else {
+                TFYProgressMacOSHUD.showError("网络连接失败，请检查网络设置")
+            }
+        }
+    }
+
+    func simulateFileUpload() {
+        TFYProgressMacOSHUD.showLoading("准备上传文件...")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            var progress: Float = 0.0
+            Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+                progress += 0.02
+                
+                if progress <= 1.0 {
+                    TFYProgressMacOSHUD.showProgress(progress, status: "正在上传 \(Int(progress * 100))%")
+                } else {
+                    timer.invalidate()
+                    TFYProgressMacOSHUD.showSuccess("文件上传成功！")
+                }
+            }
+        }
+    }
+
+    func simulateLogin() {
+        TFYProgressMacOSHUD.showLoading("正在登录...")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            TFYProgressMacOSHUD.showSuccess("登录成功！")
+            TFYProgressMacOSHUD.hideHUD(afterDelay: 1.5)
+        }
+    }
+
+    func showSequentialMessages() {
+        TFYProgressMacOSHUD.showInfo("正在检查更新...")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            TFYProgressMacOSHUD.showLoading("发现新版本，正在下载...")
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                TFYProgressMacOSHUD.showSuccess("更新完成！")
+            }
+        }
+    }
+
+    func showImageMessage() {
+        if let image = NSImage(named: "mood_min_1") {
+            TFYProgressMacOSHUD.showImage(image, status: "极速发生本菲卡是本菲卡设备开发必胜客被罚款部分卡包卡包")
+        }
+    }
 }
 

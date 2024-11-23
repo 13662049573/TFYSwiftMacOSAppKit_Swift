@@ -67,9 +67,14 @@ class ViewController: NSViewController {
         return textView
     }()
     
+    lazy var textsView: TFYSwiftTextFieldView = {
+        let view = TFYSwiftTextFieldView(frame: NSRect(x: 200, y: 50, width: self.view.macos_width-400, height: 40))
+        view.placeholderString = "请输入密码"
+        return view
+    }()
+    
     lazy var imageView: NSImageView = {
         let image = NSImageView(frame: NSMakeRect(1200, 100, 300, 300))
-        
         return image
     }()
     
@@ -87,7 +92,6 @@ class ViewController: NSViewController {
     
     var clickGesture: NSClickGestureRecognizer!
     
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -95,6 +99,8 @@ class ViewController: NSViewController {
         view.addSubview(lablel)
         view.addSubview(textfiled)
         view.addSubview(imageView)
+        view.addSubview(textsView)
+        
         //view.addSubview(textView)
         
         let color = NSColor(hexString: "F46734")
@@ -122,16 +128,17 @@ class ViewController: NSViewController {
        
         let qrImageLogo = NSImage.generateQRCodeWithLogo(from: "https://apps.apple.com/cn/app/id6505094026", size: CGSize(width: 300, height: 300), logoImage: NSImage(named: "mood_day_6")!, logoSize: CGSizeMake(60, 60))
         
-        
         imageView.image = qrImageLogo
-        
     }
     
     @objc func onClick(btn:NSButton) {
         
         let showVc:TFYSwiftHomeController = TFYSwiftHomeController()
         showVc.preferredContentSize = NSSize(width: 400, height: 600)
-        TFYStatusItem.sharedInstance.presentStatusItemWithView(itemView: btn, contentViewController: showVc)
+        TFYStatusItem.shared.configureSafely(with: .init(
+            customView: btn,
+            viewController: showVc
+        ))
     }
     
     @objc func popUpButtonAction(pop:NSPopUpButton) {

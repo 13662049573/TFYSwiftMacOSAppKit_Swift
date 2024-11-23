@@ -101,26 +101,6 @@ public extension String {
         return String.dateFormatter.date(from: self)
     }
     
-    /// 获取字符串的MD5值
-   var md5: String {
-       let length = Int(CC_MD5_DIGEST_LENGTH)
-       let messageData = Data(self.utf8)
-       var digestData = Data(count: length)
-       
-       _ = digestData.withUnsafeMutableBytes { digestBytes -> UInt8 in
-           messageData.withUnsafeBytes { messageBytes -> UInt8 in
-               if let messageBytesBaseAddress = messageBytes.baseAddress,
-                  let digestBytesBlindMemory = digestBytes.bindMemory(to: UInt8.self).baseAddress {
-                   let messageLength = CC_LONG(messageData.count)
-                   CC_MD5(messageBytesBaseAddress, messageLength, digestBytesBlindMemory)
-               }
-               return 0
-           }
-       }
-       
-       return digestData.map { String(format: "%02hhx", $0) }.joined()
-   }
-    
     /// 获取字符串的哈希值
         /// - Returns: SHA-256 哈希值的十六进制字符串
         var sha256: String {
@@ -152,4 +132,150 @@ public extension String {
             )
             return Data(signature).map { String(format: "%02x", $0) }.joined()
         }
+}
+
+
+// MARK: - String 扩展
+extension String {
+    /// 计算 MD5 哈希值
+    var md5String: String? {
+        guard let data = self.data(using: .utf8) else { return nil }
+        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
+        _ = data.withUnsafeBytes { buffer in
+            CC_MD5(buffer.baseAddress, CC_LONG(data.count), &digest)
+        }
+        return digest.reduce("") { $0 + String(format: "%02x", $1) }
+    }
+    
+    /// 计算 SHA1 哈希值
+    var sha1String: String? {
+        guard let data = self.data(using: .utf8) else { return nil }
+        var digest = [UInt8](repeating: 0, count: Int(CC_SHA1_DIGEST_LENGTH))
+        
+        _ = data.withUnsafeBytes { buffer in
+            CC_SHA1(buffer.baseAddress, CC_LONG(data.count), &digest)
+        }
+        
+        return digest.reduce("") { $0 + String(format: "%02x", $1) }
+    }
+    
+    /// 计算 SHA256 哈希值
+    var sha256String: String? {
+        guard let data = self.data(using: .utf8) else { return nil }
+        var digest = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
+        
+        _ = data.withUnsafeBytes { buffer in
+            CC_SHA256(buffer.baseAddress, CC_LONG(data.count), &digest)
+        }
+        
+        return digest.reduce("") { $0 + String(format: "%02x", $1) }
+    }
+    
+    // MARK: - HMAC 函数
+    
+    /**
+     使用指定密钥计算 HMAC-MD5
+     
+     - Parameter key: HMAC 密钥
+     - Returns: HMAC 哈希值
+     */
+    func hmacMD5String(key: String) -> String? {
+        guard let keyData = key.data(using: .utf8),
+              let messageData = self.data(using: .utf8) else { return nil }
+        
+        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
+        
+        keyData.withUnsafeBytes { keyBuffer in
+            messageData.withUnsafeBytes { messageBuffer in
+                CCHmac(CCHmacAlgorithm(kCCHmacAlgMD5),
+                      keyBuffer.baseAddress,
+                      keyBuffer.count,
+                      messageBuffer.baseAddress,
+                      messageBuffer.count,
+                      &digest)
+            }
+        }
+        
+        return digest.reduce("") { $0 + String(format: "%02x", $1) }
+    }
+    
+    /// URL 解码
+    var urlDecoded: String {
+        return self.removingPercentEncoding ?? self
+    }
+    
+    // MARK: - 字符串处理
+    
+    /// 去除首尾空白字符
+    var trimmed: String {
+        return self.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    /// 检查字符串是否不为空白
+    var isNotBlank: Bool {
+        return !self.trimmed.isEmpty
+    }
+    
+    /**
+     为文件名添加屏幕缩放倍数后缀
+     
+     - Parameter scale: 屏幕缩放倍数
+     - Returns: 添加缩放倍数后的文件名
+     */
+    func appendingNameScale(_ scale: CGFloat) -> String {
+        guard scale != 1.0, !self.isEmpty, !self.hasSuffix("/") else {
+            return self
+        }
+        return self + "@\(Int(scale))x"
+    }
+    
+    /**
+     为文件路径添加屏幕缩放倍数后缀
+     
+     - Parameter scale: 屏幕缩放倍数
+     - Returns: 添加缩放倍数后的文件路径
+     */
+    func appendingPathScale(_ scale: CGFloat) -> String {
+        guard scale != 1.0, !self.isEmpty, !self.hasSuffix("/") else {
+            return self
+        }
+        
+        let ext = (self as NSString).pathExtension
+        let scaleSuffix = "@\(Int(scale))x"
+        
+        if ext.isEmpty {
+            return self + scaleSuffix
+        } else {
+            let basePath = (self as NSString).deletingPathExtension
+            return basePath + scaleSuffix + "." + ext
+        }
+    }
+    
+    // MARK: - JSON 处理
+    
+    /// 解析 JSON 字符串
+    var jsonValueDecoded: Any? {
+        guard let data = self.data(using: .utf8) else { return nil }
+        return try? JSONSerialization.jsonObject(with: data, options: [])
+    }
+    
+    // MARK: - 静态方法
+    
+    /**
+     从 Bundle 中加载文本文件
+     
+     - Parameter name: 文件名
+     - Returns: 文件内容
+     */
+    static func stringNamed(_ name: String) -> String? {
+        guard let path = Bundle.main.path(forResource: name, ofType: nil) else {
+            return nil
+        }
+        
+        do {
+            return try String(contentsOfFile: path, encoding: .utf8)
+        } catch {
+            return nil
+        }
+    }
 }

@@ -7,49 +7,32 @@
 //
 
 import Cocoa
+import QuartzCore
 
-// MARK: - Progress View Style
-public enum TFYProgressViewStyle {
+// MARK: - Enums
+enum TFYProgressViewStyle {
     case ring
     case horizontal
 }
 
 public class TFYProgressView: NSView {
-    
     // MARK: - Properties
-    private let progressLayer = CAShapeLayer()
-    private let trackLayer = CAShapeLayer()
-    
+    private var progressLayer: CAShapeLayer
+    private var trackLayer: CAShapeLayer
     private var lastProgress: CGFloat = 0
-    private var completionBlock: (() -> Void)?
     private var animationTimer: Timer?
+    private var completionBlock: (() -> Void)?
     
-    // MARK: - Public Properties
-    public var progress: CGFloat = 0 {
+    var progress: CGFloat = 0 {
         didSet {
             setProgress(progress, animated: animated)
         }
     }
     
-    public var style: TFYProgressViewStyle = .ring {
-        didSet {
-            updatePaths()
-        }
-    }
-    
-    public var progressColor: NSColor = .systemBlue {
-        didSet {
-            progressLayer.strokeColor = progressColor.cgColor
-        }
-    }
-    
-    public var trackColor: NSColor = .lightGray {
-        didSet {
-            trackLayer.strokeColor = trackColor.cgColor
-        }
-    }
-    
-    public var lineWidth: CGFloat = 3 {
+    var style: TFYProgressViewStyle
+    var animated: Bool = true
+    var animationDuration: TimeInterval = 0.3
+    var lineWidth: CGFloat = 3.0 {
         didSet {
             trackLayer.lineWidth = lineWidth
             progressLayer.lineWidth = lineWidth
@@ -57,18 +40,33 @@ public class TFYProgressView: NSView {
         }
     }
     
-    public var animated: Bool = true
-    public var animationDuration: TimeInterval = 0.3
-    public var timingFunction: CAMediaTimingFunction = .init(name: .easeInEaseOut)
+    var progressColor: NSColor = .systemBlue {
+        didSet {
+            progressLayer.strokeColor = progressColor.cgColor
+        }
+    }
+    
+    var trackColor: NSColor = .lightGray {
+        didSet {
+            trackLayer.strokeColor = trackColor.cgColor
+        }
+    }
+    
+    var timingFunction: CAMediaTimingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
     
     // MARK: - Initialization
-    public init(style: TFYProgressViewStyle) {
+    init(style: TFYProgressViewStyle) {
         self.style = style
+        self.progressLayer = CAShapeLayer()
+        self.trackLayer = CAShapeLayer()
         super.init(frame: .zero)
         commonInit()
     }
     
     required init?(coder: NSCoder) {
+        self.style = .ring
+        self.progressLayer = CAShapeLayer()
+        self.trackLayer = CAShapeLayer()
         super.init(coder: coder)
         commonInit()
     }
@@ -76,13 +74,13 @@ public class TFYProgressView: NSView {
     private func commonInit() {
         wantsLayer = true
         
-        // Setup track layer
+        // Configure track layer
         trackLayer.fillColor = NSColor.clear.cgColor
         trackLayer.strokeColor = trackColor.cgColor
         trackLayer.lineWidth = lineWidth
         layer?.addSublayer(trackLayer)
         
-        // Setup progress layer
+        // Configure progress layer
         progressLayer.fillColor = NSColor.clear.cgColor
         progressLayer.strokeColor = progressColor.cgColor
         progressLayer.lineWidth = lineWidth
@@ -124,11 +122,11 @@ public class TFYProgressView: NSView {
     }
     
     // MARK: - Progress Control
-    public func setProgress(_ progress: CGFloat, animated: Bool) {
+    func setProgress(_ progress: CGFloat, animated: Bool = true) {
         setProgress(progress, animated: animated, completion: nil)
     }
     
-    public func setProgress(_ progress: CGFloat, animated: Bool, completion: (() -> Void)?) {
+    func setProgress(_ progress: CGFloat, animated: Bool, completion: (() -> Void)?) {
         let progress = min(1.0, max(0.0, progress))
         
         if self.progress == progress {
@@ -158,8 +156,7 @@ public class TFYProgressView: NSView {
             progressLayer.add(colorAnimation, forKey: "colorAnimation")
             
             animationTimer?.invalidate()
-            animationTimer = Timer.scheduledTimer(withTimeInterval: animationDuration,
-                                                repeats: false) { [weak self] _ in
+            animationTimer = Timer.scheduledTimer(withTimeInterval: animationDuration, repeats: false) { [weak self] _ in
                 self?.animationDidComplete()
             }
         } else {
@@ -171,6 +168,23 @@ public class TFYProgressView: NSView {
     private func animationDidComplete() {
         completionBlock?()
         completionBlock = nil
+    }
+    
+    // MARK: - Style Control
+    func setStyle(_ style: TFYProgressViewStyle, animated: Bool) {
+        guard self.style != style else { return }
+        
+        self.style = style
+        
+        if animated {
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = animationDuration
+                context.timingFunction = timingFunction
+                updatePaths()
+            })
+        } else {
+            updatePaths()
+        }
     }
     
     // MARK: - Cleanup
@@ -196,10 +210,8 @@ extension NSBezierPath {
                 path.addCurve(to: points[2], control1: points[0], control2: points[1])
             case .closePath:
                 path.closeSubpath()
-            case .cubicCurveTo:
-                break
-            case .quadraticCurveTo:
-                break
+            case .cubicCurveTo: break
+            case .quadraticCurveTo: break
             @unknown default:
                 break
             }

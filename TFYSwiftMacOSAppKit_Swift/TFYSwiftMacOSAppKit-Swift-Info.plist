@@ -24,5 +24,7 @@
     <string>由于XYZ原因，我们需要你的位置</string>
     <key>NSLocationAlwaysUsageDescription</key>
     <string>由于XYZ原因，我们需要你的位置</string>
+    <key>LSUIElement</key>
+    <true/>
 </dict>
 </plist>

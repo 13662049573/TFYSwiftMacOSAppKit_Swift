@@ -9,7 +9,7 @@
 import Cocoa
 
 @objc public protocol TFYSwiftSecureTextDelegate: NSTextFieldDelegate {
-    @objc @MainActor optional func textFieldDidChange(textField:NSSecureTextField)
+    @objc @MainActor optional func securetextFieldDidChange(textField:NSSecureTextField)
 }
 
 public class TFYSwiftSecureTextField: NSSecureTextField {
@@ -45,11 +45,11 @@ public class TFYSwiftSecureTextField: NSSecureTextField {
         cell?.truncatesLastVisibleLine = true
         cell?.isEditable = true
         
-        NotificationCenter.default.addObserver(self, selector: #selector(delegate_swift?.textFieldDidChange(textField:)), name: NSControl.textDidChangeNotification, object: self)
+        NotificationCenter.default.addObserver(self, selector: #selector(delegate_swift?.securetextFieldDidChange(textField:)), name: NSControl.textDidChangeNotification, object: self)
     }
     
     public override func textDidChange(_ notification: Notification) {
-        self.delegate_swift?.textFieldDidChange?(textField: self)
+        self.delegate_swift?.securetextFieldDidChange?(textField: self)
     }
     
     public override func becomeFirstResponder() -> Bool {

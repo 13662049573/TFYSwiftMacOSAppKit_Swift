@@ -10,16 +10,20 @@ import Foundation
 import CoreWLAN
 import SystemConfiguration
 import Network
-import CoreLocation
 import NetworkExtension
 import IOKit
+import CommonCrypto
 
 // MARK: - Network Utilities Class
-public final class TFYSwiftUtils: NSObject, CLLocationManagerDelegate {
-    
-    static let IOS_CELLULAR = "pdp_ip0"
-    static let IOS_WIFI = "en0"
-    static let IOS_VPN = "utun0"
+public final class TFYSwiftUtils: NSObject {
+    // 定义常量
+    private static let encoding = String.Encoding.utf8
+    private static let algorithm: CCAlgorithm = CCAlgorithm(kCCAlgorithm3DES)
+    private static let keySize = kCCKeySize3DES
+    private static let blockSize = kCCBlockSize3DES
+    static let MACOS_CELLULAR = "pdp_ip0"
+    static let MACOS_WIFI = "en1"
+    static let MACOS_VPN = "utun1"
     static let IP_ADDR_IPv4 = "ipv4"
     static let IP_ADDR_IPv6 = "ipv6"
     
@@ -28,90 +32,81 @@ public final class TFYSwiftUtils: NSObject, CLLocationManagerDelegate {
         let name: String?
         let ip: String?
         let macAddress: String?
+        let wifiInfo:[String: Any]?
     }
     
     // MARK: - Properties
     private static let shared = TFYSwiftUtils()
-    private var locationManager: CLLocationManager?
     private var wifiNameCompletion: ((String?) -> Void)?
-    
-    // MARK: - Initialization
-    override init() {
-        super.init()
-        setupLocationManager()
-    }
-    
-    // MARK: - Setup Location Manager
-    private func setupLocationManager() {
-        locationManager = CLLocationManager()
-        locationManager?.delegate = self
-        locationManager?.requestWhenInUseAuthorization()  // Adjust based on your app's requirement
-    }
-    
-    // MARK: - CLLocationManagerDelegate
-    public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        print("Authorization status changed")
-        checkLocationAuthorization(manager: manager)
-    }
-    
-    private func checkLocationAuthorization(manager: CLLocationManager) {
-        switch manager.authorizationStatus {
-        case .authorizedWhenInUse, .authorizedAlways:
-            handleLocationPermissionGranted()
-        case .denied, .restricted, .notDetermined:
-            completeWithFailure()
-        @unknown default:
-            fatalError("Unhandled case in location authorization status")
-        }
-    }
-    
-    public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        completeWithFailure()
-    }
     
     // MARK: - Public Method to Get WiFi Information
     public static func getWiFiInfo(completion: @escaping (NetworkInfo) -> Void) {
-        shared.getWiFiName { name in
-            let ip = getWiFiIP()
-            let macAddress = getMacAddress()
-            let info = NetworkInfo(
-                name: name,
-                ip: ip,
-                macAddress: macAddress
-            )
-            completion(info)
+        let name = getWiFiName()
+        let ip = getWiFiIP()
+        let macAddress = getMacAddress()
+        let wifiInfo = getWiFiInfo()
+        let info = NetworkInfo(
+            name: name,
+            ip: ip,
+            macAddress: macAddress,
+            wifiInfo: wifiInfo
+        )
+        completion(info)
+    }
+    
+    static func getWiFiName() -> String? {
+        guard let interface = CWWiFiClient.shared().interface() else {
+            print("无法获取 WiFi 接口")
+            return nil
         }
+        return interface.ssid()
     }
     
-    // MARK: - Private Method to Get WiFi Name
-    private func getWiFiName(completion: @escaping (String?) -> Void) {
-        if let name = try? Self.getWiFiNameUsingCWWiFiClient() {
-            completion(name)
-            return
+    // 获取更详细的 WiFi 信息
+    static func getWiFiInfo() -> [String: Any] {
+        var wifiInfo: [String: Any] = [:]
+        guard let interface = CWWiFiClient.shared().interface() else {
+            print("无法获取 WiFi 接口")
+            return wifiInfo
         }
-        wifiNameCompletion = completion
-        requestLocationPermission()
-    }
-    
-    private static func getWiFiNameUsingCWWiFiClient() throws -> String? {
-        CWWiFiClient.shared().interface()?.ssid()
-    }
-    
-    private func requestLocationPermission() {
-        locationManager?.requestWhenInUseAuthorization()
-    }
-    
-    private func handleLocationPermissionGranted() {
-        if let name = try? Self.getWiFiNameUsingCWWiFiClient() {
-            wifiNameCompletion?(name)
-        } else {
-            completeWithFailure()
+        // SSID (网络名称)
+        if let ssid = interface.ssid() {
+            wifiInfo["ssid"] = ssid
         }
+        // BSSID (MAC 地址)
+        if let bssid = interface.bssid() {
+            wifiInfo["bssid"] = bssid
+        }
+        // 信号强度
+        wifiInfo["rssi"] = interface.rssiValue()
+        // 传输速率
+        wifiInfo["transmitRate"] = interface.transmitRate()
+        // 信道
+        if let channel = interface.wlanChannel() {
+            wifiInfo["channel"] = channel.channelNumber
+            wifiInfo["channelBand"] = channel.channelBand
+        }
+        // 安全类型
+        wifiInfo["security"] = interface.security().rawValue
+        return wifiInfo
     }
     
-    private func completeWithFailure() {
-        wifiNameCompletion?(nil)
-        wifiNameCompletion = nil
+    // 添加错误处理版本
+    enum WiFiError: Error {
+        case interfaceUnavailable
+        case notConnected
+        case permissionDenied
+        case unknown(String)
+    }
+    
+    static func getWiFiNameWithError() -> Result<String, WiFiError> {
+        guard let interface = CWWiFiClient.shared().interface() else {
+            return .failure(.interfaceUnavailable)
+        }
+        guard let ssid = interface.ssid() else {
+            return .failure(.notConnected)
+        }
+        return .success(ssid)
     }
     
     // MARK: - Private Method to Get WiFi IP Address
@@ -202,20 +197,15 @@ public final class TFYSwiftUtils: NSObject, CLLocationManagerDelegate {
     // MARK: - Get Device Current Network IP Address
         static func getIPAddress(preferIPv4: Bool) -> String {
             let searchArray = preferIPv4 ?
-                [IOS_VPN + "/" + IP_ADDR_IPv4, IOS_VPN + "/" + IP_ADDR_IPv6, IOS_WIFI + "/" + IP_ADDR_IPv4, IOS_WIFI + "/" + IP_ADDR_IPv6, IOS_CELLULAR + "/" + IP_ADDR_IPv4, IOS_CELLULAR + "/" + IP_ADDR_IPv6] :
-                [IOS_VPN + "/" + IP_ADDR_IPv6, IOS_VPN + "/" + IP_ADDR_IPv4, IOS_WIFI + "/" + IP_ADDR_IPv6, IOS_WIFI + "/" + IP_ADDR_IPv4, IOS_CELLULAR + "/" + IP_ADDR_IPv6, IOS_CELLULAR + "/" + IP_ADDR_IPv4]
+                [MACOS_VPN + "/" + IP_ADDR_IPv4, MACOS_VPN + "/" + IP_ADDR_IPv6, MACOS_WIFI + "/" + IP_ADDR_IPv4, MACOS_WIFI + "/" + IP_ADDR_IPv6, MACOS_CELLULAR + "/" + IP_ADDR_IPv4, MACOS_CELLULAR + "/" + IP_ADDR_IPv6] :
+                [MACOS_VPN + "/" + IP_ADDR_IPv6, MACOS_VPN + "/" + IP_ADDR_IPv4, MACOS_WIFI + "/" + IP_ADDR_IPv6, MACOS_WIFI + "/" + IP_ADDR_IPv4, MACOS_CELLULAR + "/" + IP_ADDR_IPv6, MACOS_CELLULAR + "/" + IP_ADDR_IPv4]
 
-            guard let addresses = getIPAddresses() else {
-                TFYLogger.log("没有找到IP地址。")
-                return ""
-            }
+            let addresses = getAllIPAddresses()
             for key in searchArray {
                 if let address = addresses[key], isValidatIP(ipAddress: address) {
-                    TFYLogger.log("找到有效IP: \(address)")
                     return address
                 }
             }
-            TFYLogger.log("在搜索数组中找不到有效的IP地址。")
             return ""
         }
 
@@ -228,43 +218,92 @@ public final class TFYSwiftUtils: NSObject, CLLocationManagerDelegate {
             return false
         }
 
-        static func getIPAddresses() -> [String: String]? {
-            var addresses = [String: String]()
-            var ifaddr: UnsafeMutablePointer<ifaddrs>?
-            guard getifaddrs(&ifaddr) == 0 else {
-                TFYLogger.log("日志含义获取网络接口失败。")
-                return nil
+    static func getAllIPAddresses() -> [String: String] {
+        var addresses = [String: String]()
+        var ifaddr: UnsafeMutablePointer<ifaddrs>?
+        
+        // 获取网络接口地址
+        guard getifaddrs(&ifaddr) == 0 else {
+            return addresses
+        }
+        
+        // 安全检查
+        var ptr = ifaddr
+        while let interface = ptr {
+            defer {
+                ptr = interface.pointee.ifa_next
             }
-            var ptr = ifaddr
-            while ptr != nil {
-                defer { ptr = ptr?.pointee.ifa_next }
-
-                let interface = ptr!.pointee
-                let addrFamily = interface.ifa_addr.pointee.sa_family
-                if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
-                    let flags = Int32(interface.ifa_flags)
-                    if (flags & IFF_UP) == 0 {
-                        continue // Interface is not up
+            
+            // 检查接口是否有效
+            guard let addr = interface.pointee.ifa_addr else {
+                continue
+            }
+            
+            let family = addr.pointee.sa_family
+            
+            // 只处理 IPv4 和 IPv6
+            if family == UInt8(AF_INET) || family == UInt8(AF_INET6) {
+                // 获取接口名称
+                let name = String(cString: interface.pointee.ifa_name)
+                
+                // 检查接口状态
+                let flags = Int32(interface.pointee.ifa_flags)
+                guard (flags & IFF_UP) == IFF_UP else {
+                    continue
+                }
+                
+                var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                
+                // 获取地址大小
+                let sockaddrSize: socklen_t = {
+                    switch family {
+                    case UInt8(AF_INET):
+                        return socklen_t(MemoryLayout<sockaddr_in>.size)
+                    case UInt8(AF_INET6):
+                        return socklen_t(MemoryLayout<sockaddr_in6>.size)
+                    default:
+                        return 0
                     }
-
-                    var addr = interface.ifa_addr.pointee
-                    var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                    if getnameinfo(&addr, socklen_t(interface.ifa_addr.pointee.sa_len), &hostname, socklen_t(hostname.count), nil, 0, NI_NUMERICHOST) == 0 {
-                        let address = String(cString: hostname)
-                        let name = String(cString: interface.ifa_name)
-                        let type = addrFamily == UInt8(AF_INET) ? IP_ADDR_IPv4 : IP_ADDR_IPv6
-                        let key = name + "/" + type
-                        addresses[key] = address
-                        TFYLogger.log("接口： \(name) 地址： \(address)")
+                }()
+                
+                // 安全检查地址大小
+                guard sockaddrSize > 0 else {
+                    continue
+                }
+                
+                // 获取 IP 地址
+                if getnameinfo(addr,
+                              sockaddrSize,
+                              &hostname,
+                              socklen_t(hostname.count),
+                              nil,
+                              0,
+                              NI_NUMERICHOST) == 0 {
+                    
+                    let ip = String(cString: hostname)
+                    
+                    // 根据地址类型存储
+                    if family == UInt8(AF_INET) {
+                        addresses[name] = ip
+                    } else if family == UInt8(AF_INET6) {
+                        // 可选：如果不需要 IPv6 地址，可以注释掉这行
+                        addresses["\(name)-IPv6"] = ip
                     }
+                    
+                    // 打印调试信息
+                    print("Interface: \(name), IP: \(ip)")
                 }
             }
-            freeifaddrs(ifaddr)
-            if addresses.isEmpty {
-                TFYLogger.log("没有IP地址被填充。")
-            }
-            return addresses.isEmpty ? nil : addresses
         }
+        
+        // 释放内存
+        if let ifaddrPtr = ifaddr {
+            freeifaddrs(ifaddrPtr)
+        }
+        
+        return addresses
+    }
+
     
     // Fetch the raw device model string using sysctlbyname
         func getRawDeviceModel() -> String {
@@ -386,6 +425,100 @@ public final class TFYSwiftUtils: NSObject, CLLocationManagerDelegate {
                 return newUUID
             }
         }
+    
+    /// 加密方法
+    /// - Parameters:
+    ///   - content: 要加密的内容
+    ///   - key: 密钥
+    /// - Returns: 加密后的 Base64 字符串
+    static func encrypt(content: String, key: String) -> String? {
+        guard let contentData = content.data(using: .utf8),
+              let keyData = key.data(using: .utf8) else {
+            return nil
+        }
+        
+        // 调整密钥长度
+        var adjustedKeyData = Data(count: keySize)
+        adjustedKeyData.replaceSubrange(0..<min(keyData.count, keySize),
+                                      with: keyData)
+        
+        let bufferSize = contentData.count + blockSize
+        var buffer = Data(count: bufferSize)
+        
+        var encryptedSize: size_t = 0
+        
+        let status = buffer.withUnsafeMutableBytes { bufferPtr in
+            contentData.withUnsafeBytes { contentPtr in
+                adjustedKeyData.withUnsafeBytes { keyPtr in
+                    CCCrypt(CCOperation(kCCEncrypt),
+                           algorithm,
+                           CCOptions(kCCOptionPKCS7Padding | kCCOptionECBMode),
+                           keyPtr.baseAddress,
+                           keySize,
+                           nil,
+                           contentPtr.baseAddress,
+                           contentData.count,
+                           bufferPtr.baseAddress,
+                           bufferSize,
+                           &encryptedSize)
+                }
+            }
+        }
+        
+        guard status == kCCSuccess else {
+            return nil
+        }
+        
+        buffer.count = encryptedSize
+        return buffer.base64EncodedString()
+    }
+    
+    /// 解密方法
+    /// - Parameters:
+    ///   - content: 要解密的 Base64 字符串
+    ///   - key: 密钥
+    /// - Returns: 解密后的原文
+    static func decrypt(content: String, key: String) -> String? {
+        guard let contentData = Data(base64Encoded: content),
+              let keyData = key.data(using: .utf8) else {
+            return nil
+        }
+        
+        // 调整密钥长度
+        var adjustedKeyData = Data(count: keySize)
+        adjustedKeyData.replaceSubrange(0..<min(keyData.count, keySize),
+                                      with: keyData)
+        
+        let bufferSize = contentData.count + blockSize
+        var buffer = Data(count: bufferSize)
+        
+        var decryptedSize: size_t = 0
+        
+        let status = buffer.withUnsafeMutableBytes { bufferPtr in
+            contentData.withUnsafeBytes { contentPtr in
+                adjustedKeyData.withUnsafeBytes { keyPtr in
+                    CCCrypt(CCOperation(kCCDecrypt),
+                           algorithm,
+                           CCOptions(kCCOptionPKCS7Padding | kCCOptionECBMode),
+                           keyPtr.baseAddress,
+                           keySize,
+                           nil,
+                           contentPtr.baseAddress,
+                           contentData.count,
+                           bufferPtr.baseAddress,
+                           bufferSize,
+                           &decryptedSize)
+                }
+            }
+        }
+        
+        guard status == kCCSuccess else {
+            return nil
+        }
+        
+        buffer.count = decryptedSize
+        return String(data: buffer, encoding: .utf8)
+    }
     
 }
 

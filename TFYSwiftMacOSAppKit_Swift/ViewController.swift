@@ -69,18 +69,16 @@ class ViewController: NSViewController {
     
     lazy var textsView: TFYSwiftTextFieldView = {
         let view = TFYSwiftTextFieldView(frame: NSRect(x: 200, y: 50, width: self.view.macos_width-400, height: 40))
+        view.placeholderString = "请输入密码"
         return view
     }()
     
     lazy var imageView: NSImageView = {
         let image = NSImageView(frame: NSMakeRect(1200, 100, 300, 300))
-        
         return image
     }()
     
-    
     var clickGesture: NSClickGestureRecognizer!
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()

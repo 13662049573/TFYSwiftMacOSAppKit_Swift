@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1891C9332CF086E7002DAD89 /* TFYSwiftTextFieldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1891C9322CF086E7002DAD89 /* TFYSwiftTextFieldView.swift */; };
 		18A7E3152CE6FD640069739E /* TFYSwiftMacOSAppKit-Swift-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 18A7E3142CE6FD640069739E /* TFYSwiftMacOSAppKit-Swift-Info.plist */; };
 		18A7E3172CE721830069739E /* TFYSwiftVPNManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A7E3162CE721830069739E /* TFYSwiftVPNManager.swift */; };
 		18C7ED9D2CEDAC7B00914927 /* NSKeyedUnarchiver+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7ED9C2CEDAC7B00914927 /* NSKeyedUnarchiver+Dejal.swift */; };
@@ -139,6 +140,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1891C9322CF086E7002DAD89 /* TFYSwiftTextFieldView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftTextFieldView.swift; sourceTree = "<group>"; };
 		18A7E3142CE6FD640069739E /* TFYSwiftMacOSAppKit-Swift-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "TFYSwiftMacOSAppKit-Swift-Info.plist"; sourceTree = "<group>"; };
 		18A7E3162CE721830069739E /* TFYSwiftVPNManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftVPNManager.swift; sourceTree = "<group>"; };
 		18C7ED9C2CEDAC7B00914927 /* NSKeyedUnarchiver+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSKeyedUnarchiver+Dejal.swift"; sourceTree = "<group>"; };
@@ -396,6 +398,7 @@
 				36EC0CA82CDA62D4003EBAD5 /* TFYSwiftJsonUtils.swift */,
 				36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsynce.swift */,
 				18A7E3162CE721830069739E /* TFYSwiftVPNManager.swift */,
+				1891C9322CF086E7002DAD89 /* TFYSwiftTextFieldView.swift */,
 			);
 			path = macOSUtils;
 			sourceTree = "<group>";
@@ -695,6 +698,7 @@
 				3D04F8232CDCA31F009493BF /* TFYSwiftNSMatrix.swift in Sources */,
 				18C7ED9F2CEDAEB300914927 /* Array+Dejal.swift in Sources */,
 				3D04F8242CDCA31F009493BF /* TFYSwiftNSScroller.swift in Sources */,
+				1891C9332CF086E7002DAD89 /* TFYSwiftTextFieldView.swift in Sources */,
 				3D04F8252CDCA31F009493BF /* TFYSwiftHasText.swift in Sources */,
 				36EC0CBB2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift in Sources */,
 				18C7EDA32CEDB04800914927 /* NotificationCenter+Dejal.swift in Sources */,

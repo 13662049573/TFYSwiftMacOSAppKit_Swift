@@ -67,6 +67,11 @@ class ViewController: NSViewController {
         return textView
     }()
     
+    lazy var textsView: TFYSwiftTextFieldView = {
+        let view = TFYSwiftTextFieldView(frame: NSRect(x: 200, y: 50, width: self.view.macos_width-400, height: 40))
+        return view
+    }()
+    
     lazy var imageView: NSImageView = {
         let image = NSImageView(frame: NSMakeRect(1200, 100, 300, 300))
         
@@ -84,6 +89,8 @@ class ViewController: NSViewController {
         view.addSubview(lablel)
         view.addSubview(textfiled)
         view.addSubview(imageView)
+        view.addSubview(textsView)
+        
         //view.addSubview(textView)
         
         let color = NSColor(hexString: "F46734")

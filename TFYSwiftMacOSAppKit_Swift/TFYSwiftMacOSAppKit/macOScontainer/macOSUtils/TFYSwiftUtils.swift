@@ -12,10 +12,15 @@ import SystemConfiguration
 import Network
 import NetworkExtension
 import IOKit
+import CommonCrypto
 
 // MARK: - Network Utilities Class
 public final class TFYSwiftUtils: NSObject {
-    
+    // 定义常量
+    private static let encoding = String.Encoding.utf8
+    private static let algorithm: CCAlgorithm = CCAlgorithm(kCCAlgorithm3DES)
+    private static let keySize = kCCKeySize3DES
+    private static let blockSize = kCCBlockSize3DES
     static let MACOS_CELLULAR = "pdp_ip0"
     static let MACOS_WIFI = "en1"
     static let MACOS_VPN = "utun1"
@@ -420,6 +425,100 @@ public final class TFYSwiftUtils: NSObject {
                 return newUUID
             }
         }
+    
+    /// 加密方法
+    /// - Parameters:
+    ///   - content: 要加密的内容
+    ///   - key: 密钥
+    /// - Returns: 加密后的 Base64 字符串
+    static func encrypt(content: String, key: String) -> String? {
+        guard let contentData = content.data(using: .utf8),
+              let keyData = key.data(using: .utf8) else {
+            return nil
+        }
+        
+        // 调整密钥长度
+        var adjustedKeyData = Data(count: keySize)
+        adjustedKeyData.replaceSubrange(0..<min(keyData.count, keySize),
+                                      with: keyData)
+        
+        let bufferSize = contentData.count + blockSize
+        var buffer = Data(count: bufferSize)
+        
+        var encryptedSize: size_t = 0
+        
+        let status = buffer.withUnsafeMutableBytes { bufferPtr in
+            contentData.withUnsafeBytes { contentPtr in
+                adjustedKeyData.withUnsafeBytes { keyPtr in
+                    CCCrypt(CCOperation(kCCEncrypt),
+                           algorithm,
+                           CCOptions(kCCOptionPKCS7Padding | kCCOptionECBMode),
+                           keyPtr.baseAddress,
+                           keySize,
+                           nil,
+                           contentPtr.baseAddress,
+                           contentData.count,
+                           bufferPtr.baseAddress,
+                           bufferSize,
+                           &encryptedSize)
+                }
+            }
+        }
+        
+        guard status == kCCSuccess else {
+            return nil
+        }
+        
+        buffer.count = encryptedSize
+        return buffer.base64EncodedString()
+    }
+    
+    /// 解密方法
+    /// - Parameters:
+    ///   - content: 要解密的 Base64 字符串
+    ///   - key: 密钥
+    /// - Returns: 解密后的原文
+    static func decrypt(content: String, key: String) -> String? {
+        guard let contentData = Data(base64Encoded: content),
+              let keyData = key.data(using: .utf8) else {
+            return nil
+        }
+        
+        // 调整密钥长度
+        var adjustedKeyData = Data(count: keySize)
+        adjustedKeyData.replaceSubrange(0..<min(keyData.count, keySize),
+                                      with: keyData)
+        
+        let bufferSize = contentData.count + blockSize
+        var buffer = Data(count: bufferSize)
+        
+        var decryptedSize: size_t = 0
+        
+        let status = buffer.withUnsafeMutableBytes { bufferPtr in
+            contentData.withUnsafeBytes { contentPtr in
+                adjustedKeyData.withUnsafeBytes { keyPtr in
+                    CCCrypt(CCOperation(kCCDecrypt),
+                           algorithm,
+                           CCOptions(kCCOptionPKCS7Padding | kCCOptionECBMode),
+                           keyPtr.baseAddress,
+                           keySize,
+                           nil,
+                           contentPtr.baseAddress,
+                           contentData.count,
+                           bufferPtr.baseAddress,
+                           bufferSize,
+                           &decryptedSize)
+                }
+            }
+        }
+        
+        guard status == kCCSuccess else {
+            return nil
+        }
+        
+        buffer.count = decryptedSize
+        return String(data: buffer, encoding: .utf8)
+    }
     
 }
 

@@ -48,7 +48,7 @@ class TFYProgressView: NSView {
     }
     var animated: Bool = true
     var animationDuration: TimeInterval = 0.3
-    var timingFunction: CAMediaTimingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+    var timingFunction: CAMediaTimingFunction = CAMediaTimingFunction(controlPoints: 0.42, 0.0, 0.58, 1.0)
 
     // Private layers for rendering
     private var progressLayer = CAShapeLayer()

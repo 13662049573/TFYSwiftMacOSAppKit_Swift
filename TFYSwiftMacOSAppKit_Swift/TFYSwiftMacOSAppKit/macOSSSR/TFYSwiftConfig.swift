@@ -41,85 +41,207 @@ public struct GlobalSettings: Codable {
 
 /// 服务器配置结构体 - 用于存储单个代理服务器的配置信息
 public struct ServerConfig: Codable {
-    var server: String           // 服务器地址
-    var serverPort: UInt16       // 服务器端口
-    var method: String           // 加密方法（如 aes-256-cfb 等）
-    var password: String         // 连接密码
-    var protocolType: String     // 协议类型（如 origin、auth_sha1_v4 等）
-    var protocolParam: String?   // 协议参数（可选）
-    var obfs: String            // 混淆方式（如 plain、http_simple 等）
-    var obfsParam: String?      // 混淆参数（可选）
-    var remarks: String?        // 服务器备注名称（可选）
-    var group: String?          // 服务器分组（可选）
+    /// 服务器唯一标识符
+    let id: String
+    /// 服务器地址
+    var serverHost: String
+    /// 服务器端口
+    var serverPort: UInt16
+    /// 密码
+    var password: String
+    /// 加密方法
+    var method: String
+    /// 协议类型
+    var protocolType: String
+    /// 协议参数
+    var protocolParam: String?
+    /// 混淆方式
+    var obfs: String
+    /// 混淆参数
+    var obfsParam: String?
+    /// 备注名称
+    var remarks: String?
+    /// 分组名称
+    var group: String?
+    /// 延迟（毫秒）
+    var latency: Int?
+    /// 上次连接时间
+    var lastConnectedTime: Date?
+    /// 总上传流量
+    var totalUploadTraffic: UInt64
+    /// 总下载流量
+    var totalDownloadTraffic: UInt64
     
-    /// 完整的初始化方法
-    init(server: String,
+    enum CodingKeys: String, CodingKey {
+        case id
+        case serverHost
+        case serverPort
+        case password
+        case method
+        case protocolType = "protocol"
+        case protocolParam = "protocol_param"
+        case obfs
+        case obfsParam = "obfs_param"
+        case remarks
+        case group
+        case latency
+        case lastConnectedTime
+        case totalUploadTraffic
+        case totalDownloadTraffic
+    }
+    
+    init(id: String = UUID().uuidString,
+         serverHost: String,
          serverPort: UInt16,
-         method: String,
          password: String,
+         method: String,
          protocolType: String,
-         protocolParam: String?,
+         protocolParam: String? = nil,
          obfs: String,
-         obfsParam: String?,
-         remarks: String?,
-         group: String?) {
-        self.server = server
+         obfsParam: String? = nil,
+         remarks: String? = nil,
+         group: String? = nil) {
+        self.id = id
+        self.serverHost = serverHost
         self.serverPort = serverPort
-        self.method = method
         self.password = password
+        self.method = method
         self.protocolType = protocolType
         self.protocolParam = protocolParam
         self.obfs = obfs
         self.obfsParam = obfsParam
         self.remarks = remarks
         self.group = group
+        self.latency = nil
+        self.lastConnectedTime = nil
+        self.totalUploadTraffic = 0
+        self.totalDownloadTraffic = 0
     }
     
-    /// 用于 JSON 编解码的键名映射
-    enum CodingKeys: String, CodingKey {
-        case server
-        case serverPort = "server_port"  // JSON 中使用下划线格式
-        case method
-        case password
-        case protocolType = "protocol"   // 避免与 Swift 关键字冲突
-        case protocolParam = "protocol_param"
-        case obfs
-        case obfsParam = "obfs_param"
-        case remarks
-        case group
+    /// 创建加密器实例
+    func createCrypto() throws -> TFYSwiftCrypto {
+        return try TFYSwiftCrypto(password: password, method: method)
     }
     
-    /// 解码初始化器
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    /// 验证配置是否有效
+    func isValid() -> Bool {
+        // 验证服务器地址不为空
+        guard !serverHost.isEmpty else { return false }
         
-        server = try container.decode(String.self, forKey: .server)
-        serverPort = try container.decode(UInt16.self, forKey: .serverPort)
-        method = try container.decode(String.self, forKey: .method)
-        password = try container.decode(String.self, forKey: .password)
+        // 验证端口号在有效范围内 (1-65535)
+        guard serverPort > 0 && serverPort <= UInt16.max else { return false }
         
-        protocolType = try container.decode(String.self, forKey: .protocolType)
-        protocolParam = try container.decodeIfPresent(String.self, forKey: .protocolParam)
-        obfs = try container.decode(String.self, forKey: .obfs)
-        obfsParam = try container.decodeIfPresent(String.self, forKey: .obfsParam)
-        remarks = try container.decodeIfPresent(String.self, forKey: .remarks)
-        group = try container.decodeIfPresent(String.self, forKey: .group)
+        // 验证加密方法是否支持
+        guard let _ = TFYSwiftCrypto.CryptoMethod(rawValue: method.lowercased()) else {
+            return false
+        }
+        
+        // 验证密码不为空
+        guard !password.isEmpty else { return false }
+        
+        // 验证协议类型不为空
+        guard !protocolType.isEmpty else { return false }
+        
+        // 验证混淆方式不为空
+        guard !obfs.isEmpty else { return false }
+        
+        return true
     }
     
-    /// 编码方法
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
+    /// 获取显示名称
+    var displayName: String {
+        if let remarks = remarks, !remarks.isEmpty {
+            return remarks
+        }
+        return "\(serverHost):\(serverPort)"
+    }
+    
+    /// 创建一个基本的服务器配置
+    static func createBasicConfig(
+        serverHost: String,
+        port: UInt16,
+        password: String,
+        method: String = "aes-256-cfb"
+    ) -> ServerConfig {
+        return ServerConfig(
+            serverHost: serverHost,
+            serverPort: port,
+            password: password,
+            method: method,
+            protocolType: "origin",
+            obfs: "plain"
+        )
+    }
+    
+    /// 加密敏感数据
+    mutating func encryptSensitiveData() throws {
+        guard let crypto = try? createCrypto() else {
+            throw TFYSwiftError.encryptionError("无法创建加密器")
+        }
         
-        try container.encode(server, forKey: .server)
-        try container.encode(serverPort, forKey: .serverPort)
-        try container.encode(method, forKey: .method)
-        try container.encode(password, forKey: .password)
-        try container.encode(protocolType, forKey: .protocolType)
-        try container.encodeIfPresent(protocolParam, forKey: .protocolParam)
-        try container.encode(obfs, forKey: .obfs)
-        try container.encodeIfPresent(obfsParam, forKey: .obfsParam)
-        try container.encodeIfPresent(remarks, forKey: .remarks)
-        try container.encodeIfPresent(group, forKey: .group)
+        // 加密密码
+        if !password.isEmpty {
+            let passwordData = password.data(using: .utf8) ?? Data()
+            let encryptedPassword = try crypto.encrypt(passwordData)
+            password = encryptedPassword.base64EncodedString()
+        }
+        
+        // 加密协议参数（如果存在）
+        if let param = protocolParam, !param.isEmpty {
+            let paramData = param.data(using: .utf8) ?? Data()
+            let encryptedParam = try crypto.encrypt(paramData)
+            protocolParam = encryptedParam.base64EncodedString()
+        }
+        
+        // 加密混淆参数（如果存在）
+        if let param = obfsParam, !param.isEmpty {
+            let paramData = param.data(using: .utf8) ?? Data()
+            let encryptedParam = try crypto.encrypt(paramData)
+            obfsParam = encryptedParam.base64EncodedString()
+        }
+    }
+    
+    /// 解密敏感数据
+    mutating func decryptSensitiveData() throws {
+        guard let crypto = try? createCrypto() else {
+            throw TFYSwiftError.decryptionError("无法创建解密器")
+        }
+        
+        // 解密密码
+        if !password.isEmpty {
+            guard let passwordData = Data(base64Encoded: password) else {
+                throw TFYSwiftError.decryptionError("密码格式无效")
+            }
+            let decryptedPassword = try crypto.decrypt(passwordData)
+            guard let passwordString = String(data: decryptedPassword, encoding: .utf8) else {
+                throw TFYSwiftError.decryptionError("密码解密失败")
+            }
+            password = passwordString
+        }
+        
+        // 解密协议参数（如果存在）
+        if let param = protocolParam, !param.isEmpty {
+            guard let paramData = Data(base64Encoded: param) else {
+                throw TFYSwiftError.decryptionError("协议参数格式无效")
+            }
+            let decryptedParam = try crypto.decrypt(paramData)
+            guard let paramString = String(data: decryptedParam, encoding: .utf8) else {
+                throw TFYSwiftError.decryptionError("协议参数解密失败")
+            }
+            protocolParam = paramString
+        }
+        
+        // 解密混淆参数（如果存在）
+        if let param = obfsParam, !param.isEmpty {
+            guard let paramData = Data(base64Encoded: param) else {
+                throw TFYSwiftError.decryptionError("混淆参数格式无效")
+            }
+            let decryptedParam = try crypto.decrypt(paramData)
+            guard let paramString = String(data: decryptedParam, encoding: .utf8) else {
+                throw TFYSwiftError.decryptionError("混淆参数解密失败")
+            }
+            obfsParam = paramString
+        }
     }
 }
 
@@ -200,6 +322,155 @@ public class TFYSwiftConfig: Codable {
         }
         
         return true
+    }
+}
+
+// 补充配置管理功能
+
+extension TFYSwiftConfig {
+    /// 全局设置
+    public struct GlobalSettings: Codable {
+        /// 本地监听地址
+        var localAddress: String
+        /// SOCKS5 端口
+        var socksPort: UInt16
+        /// HTTP 代理端口
+        var httpPort: UInt16
+        /// PAC 端口
+        var pacPort: UInt16
+        /// 是否启用 UDP 转发
+        var enableUDP: Bool
+        /// 是否启用 IPv6
+        var enableIPv6: Bool
+        /// 日志级别
+        var logLevel: LogLevel
+        /// 是否开机启动
+        var launchAtLogin: Bool
+        /// 是否显示网速
+        var showSpeedInDock: Bool
+        
+        public init(
+            localAddress: String = "127.0.0.1",
+            socksPort: UInt16 = 1080,
+            httpPort: UInt16 = 1087,
+            pacPort: UInt16 = 1088,
+            enableUDP: Bool = true,
+            enableIPv6: Bool = false,
+            logLevel: LogLevel = .info,
+            launchAtLogin: Bool = false,
+            showSpeedInDock: Bool = true
+        ) {
+            self.localAddress = localAddress
+            self.socksPort = socksPort
+            self.httpPort = httpPort
+            self.pacPort = pacPort
+            self.enableUDP = enableUDP
+            self.enableIPv6 = enableIPv6
+            self.logLevel = logLevel
+            self.launchAtLogin = launchAtLogin
+            self.showSpeedInDock = showSpeedInDock
+        }
+    }
+    
+    /// 日志级别
+    public enum LogLevel: String, Codable {
+        case debug
+        case info
+        case warning
+        case error
+    }
+    
+    /// 服务器组
+    public struct ServerGroup: Codable {
+        var name: String
+        var servers: [ServerConfig]
+        
+        public init(name: String, servers: [ServerConfig] = []) {
+            self.name = name
+            self.servers = servers
+        }
+    }
+    
+    /// 添加服务器配置
+    /// - Parameters:
+    ///   - server: 服务器配置
+    ///   - groupName: 组名称
+    public func addServer(_ server: ServerConfig, to groupName: String) {
+        if var group = serverGroups.first(where: { $0.name == groupName }) {
+            group.servers.append(server)
+            if let index = serverGroups.firstIndex(where: { $0.name == groupName }) {
+                serverGroups[index] = group
+            }
+        } else {
+            let newGroup = ServerGroup(name: groupName, servers: [server])
+            serverGroups.append(newGroup)
+        }
+        saveConfig()
+    }
+    
+    /// 移除服务器配置
+    /// - Parameters:
+    ///   - id: 服务器ID
+    ///   - groupName: 组名称
+    public func removeServer(id: String, from groupName: String) {
+        if var group = serverGroups.first(where: { $0.name == groupName }) {
+            group.servers.removeAll(where: { $0.id == id })
+            if let index = serverGroups.firstIndex(where: { $0.name == groupName }) {
+                serverGroups[index] = group
+            }
+        }
+        saveConfig()
+    }
+    
+    /// 更新服务器配置
+    /// - Parameter server: 服务器配置
+    public func updateServer(_ server: ServerConfig) {
+        for (groupIndex, var group) in serverGroups.enumerated() {
+            if let serverIndex = group.servers.firstIndex(where: { $0.id == server.id }) {
+                group.servers[serverIndex] = server
+                serverGroups[groupIndex] = group
+                break
+            }
+        }
+        saveConfig()
+    }
+    
+    /// 更新全局设置
+    /// - Parameter settings: 全局设置
+    public func updateGlobalSettings(_ settings: GlobalSettings) {
+        globalSettings = settings
+        saveConfig()
+    }
+    
+    /// 导出配置
+    /// - Parameter url: 导出路径
+    public func exportConfig(to url: URL) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let data = try encoder.encode(self)
+        try data.write(to: url)
+    }
+    
+    /// 导入配置
+    /// - Parameter url: 配置文件路径
+    public func importConfig(from url: URL) throws {
+        let data = try Data(contentsOf: url)
+        let config = try JSONDecoder().decode(TFYSwiftConfig.self, from: data)
+        self.globalSettings = config.globalSettings
+        self.serverGroups = config.serverGroups
+        saveConfig()
+    }
+    
+    /// 保存配置
+    private func saveConfig() {
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let data = try encoder.encode(self)
+            try data.write(to: configURL)
+        } catch {
+            print("保存配置失败: \(error)")
+        }
     }
 } 
 

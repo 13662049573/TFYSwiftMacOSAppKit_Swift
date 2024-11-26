@@ -93,6 +93,122 @@ public class TFYSwiftHotkeyManager {
     deinit {
         unregisterAllHotkeys()
     }
+    
+    /// 快捷键配置
+    public struct HotkeyConfig: Codable {
+        let keyCode: UInt32
+        let modifiers: UInt32
+        let action: String
+        let description: String
+        
+        public init(keyCode: UInt32,
+                   modifiers: UInt32,
+                   action: String,
+                   description: String) {
+            self.keyCode = keyCode
+            self.modifiers = modifiers
+            self.action = action
+            self.description = description
+        }
+    }
+    
+    /// 注册预定义的快捷键
+    public func registerDefaultHotkeys() {
+        // 切换系统代理
+        registerHotkey(
+            keyCode: kVK_ANSI_P,
+            modifiers: cmdKey | optionKey,
+            action: "toggleProxy"
+        ) {
+            NotificationCenter.default.post(name: .toggleSystemProxy, object: nil)
+        }
+        
+        // 显示/隐藏主窗口
+        registerHotkey(
+            keyCode: kVK_ANSI_M,
+            modifiers: cmdKey | optionKey,
+            action: "toggleWindow"
+        ) {
+            NotificationCenter.default.post(name: .toggleMainWindow, object: nil)
+        }
+        
+        // 切换服务器
+        registerHotkey(
+            keyCode: kVK_ANSI_S,
+            modifiers: cmdKey | optionKey,
+            action: "switchServer"
+        ) {
+            NotificationCenter.default.post(name: .showServerList, object: nil)
+        }
+    }
+    
+    /// 从配置文件加载快捷键
+    public func loadHotkeysFromConfig() {
+        guard let configURL = getConfigURL(),
+              let data = try? Data(contentsOf: configURL),
+              let configs = try? JSONDecoder().decode([HotkeyConfig].self, from: data) else {
+            return
+        }
+        
+        for config in configs {
+            registerHotkey(
+                keyCode: config.keyCode,
+                modifiers: config.modifiers,
+                action: config.action
+            ) {
+                NotificationCenter.default.post(name: Notification.Name(config.action), object: nil)
+            }
+        }
+    }
+    
+    /// 保存快捷键配置
+    public func saveHotkeyConfigs() {
+        guard let configURL = getConfigURL() else { return }
+        
+        let configs = handlers.map { hotKeyID, _ in
+            HotkeyConfig(
+                keyCode: hotKeyID.id,
+                modifiers: hotKeyID.signature,
+                action: getActionName(for: hotKeyID) ?? "",
+                description: getDescription(for: hotKeyID) ?? ""
+            )
+        }
+        
+        do {
+            let data = try JSONEncoder().encode(configs)
+            try data.write(to: configURL)
+        } catch {
+            logError("保存快捷键配置失败: \(error)")
+        }
+    }
+    
+    /// 获取配置文件URL
+    private func getConfigURL() -> URL? {
+        do {
+            let appSupport = try FileManager.default.url(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )
+            return appSupport.appendingPathComponent("TFYSwift/hotkeys.json")
+        } catch {
+            logError("获取配置文件路径失败: \(error)")
+            return nil
+        }
+    }
+    
+    /// 获取动作名称
+    private func getActionName(for hotKeyID: HotKeyIdentifier) -> String? {
+        // 实现动作名称查找逻辑
+        return nil
+    }
+    
+    /// 获取快捷键描述
+    private func getDescription(for hotKeyID: HotKeyIdentifier) -> String? {
+        // 实现描述查找逻辑
+        return nil
+    }
 }
 
 /// 热键处理器单例类 - 管理热键的回调处理
@@ -125,3 +241,10 @@ private extension String {
         return utf8.reduce(0) { ($0 << 8) + FourCharCode($1) }
     }
 } 
+
+// MARK: - Notification Names
+extension Notification.Name {
+    static let toggleSystemProxy = Notification.Name("com.tfyswift.toggleSystemProxy")
+    static let toggleMainWindow = Notification.Name("com.tfyswift.toggleMainWindow")
+    static let showServerList = Notification.Name("com.tfyswift.showServerList")
+}

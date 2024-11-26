@@ -30,10 +30,8 @@ public struct SubscriptionNode: Codable {
 
 /// 订阅管理器类 - 负责处理SSR订阅的更新和解析
 public class TFYSwiftSubscriptionManager {
-    /// 用于同步订阅操作的串行队列
-    private let queue = DispatchQueue(label: "com.tfyswift.subscription")
-    /// 配置管理器实例
     private let configManager: TFYSwiftConfigManager
+    private let queue = DispatchQueue(label: "com.tfyswift.subscription")
     
     /// 初始化订阅管理器
     /// - Parameter configManager: 配置管理器实例
@@ -44,120 +42,328 @@ public class TFYSwiftSubscriptionManager {
     /// 更新订阅
     /// - Parameters:
     ///   - url: 订阅地址URL
-    ///   - completion: 完成回调，返回解析后的服务器配置数组或错误
-    func updateSubscription(_ url: URL, completion: @escaping (Result<[ServerConfig], Error>) -> Void) {
+    ///   - completion: 完成回调，返回配置列表或错误
+    public func updateSubscription(url: URL, completion: @escaping (Result<[ServerConfig], Error>) -> Void) {
         let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let self = self else { return }
-            
             if let error = error {
-                self.queue.async {
-                    completion(.failure(error))
-                }
+                completion(.failure(error))
                 return
             }
             
             guard let data = data,
-                  let content = String(data: data, encoding: .utf8) else {
-                self.queue.async {
-                    completion(.failure(TFYSwiftError.invalidData("订阅数据无效")))
-                }
+                  let configs = try? self?.parseSubscriptionData(data) else {
+                completion(.failure(TFYSwiftError.invalidData("无效的订阅数据")))
                 return
             }
             
-            self.queue.async {
-                do {
-                    let configs = try self.parseSubscription(content)
-                    completion(.success(configs))
-                } catch {
-                    completion(.failure(error))
-                }
-            }
+            completion(.success(configs))
         }
         task.resume()
     }
     
-    /// 解析订阅内容
-    /// - Parameter content: Base64编码的订阅内容
-    /// - Returns: 服务器配置数组
-    private func parseSubscription(_ content: String) throws -> [ServerConfig] {
-        guard let data = Data(base64Encoded: content.trimmingCharacters(in: .whitespacesAndNewlines)) else {
-            throw TFYSwiftError.invalidData("Base64数据无效")
+    /// 解析订阅数据
+    private func parseSubscriptionData(_ data: Data) throws -> [ServerConfig] {
+        // 1. 解码 Base64 数据
+        guard let decodedString = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              let decodedData = Data(base64Encoded: decodedString) else {
+            throw TFYSwiftError.invalidData("无效的Base64数据")
         }
         
-        guard let decodedString = String(data: data, encoding: .utf8) else {
-            throw TFYSwiftError.invalidData("订阅内容解码失败")
+        // 2. 解析 SSR 链接
+        guard let linksString = String(data: decodedData, encoding: .utf8) else {
+            throw TFYSwiftError.invalidData("无效的SSR链接")
         }
         
-        return try decodedString
-            .components(separatedBy: .newlines)
+        // 3. 分割多个链接
+        let links = linksString.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-            .map { try parseServerConfig($0) }
+        
+        // 4. 解析每个链接
+        return try links.compactMap { link -> ServerConfig? in
+            guard link.hasPrefix("ssr://") else { return nil }
+            
+            // 移除 "ssr://" 前缀并解码
+            let base64String = String(link.dropFirst(6))
+            guard let data = Data(base64Encoded: base64String),
+                  let content = String(data: data, encoding: .utf8) else {
+                return nil
+            }
+            
+            // 解析 SSR 参数
+            let parts = content.components(separatedBy: ":")
+            guard parts.count >= 6 else { return nil }
+            
+            let serverHost = parts[0]
+            guard let serverPort = UInt16(parts[1]),
+                  let protocol = parts[2],
+                  let method = parts[3],
+                  let obfs = parts[4] else {
+                return nil
+            }
+            
+            // 解析剩余参数
+            let remainingParts = parts[5].components(separatedBy: "/?")
+            guard let passwordBase64 = remainingParts[0],
+                  let password = String(data: Data(base64Encoded: passwordBase64)!, encoding: .utf8) else {
+                return nil
+            }
+            
+            // 创建服务器配置
+            return ServerConfig(
+                serverHost: serverHost,
+                serverPort: serverPort,
+                password: password,
+                method: method,
+                protocolType: protocol,
+                obfs: obfs,
+                remarks: nil,
+                group: nil
+            )
+        }
+    }
+}
+
+// 添加订阅管理功能
+
+extension TFYSwiftSubscriptionManager {
+    /// 订阅配置
+    public struct SubscriptionConfig: Codable {
+        let url: URL
+        let name: String
+        let autoUpdate: Bool
+        let updateInterval: TimeInterval
+        let lastUpdate: Date?
+        
+        public init(
+            url: URL,
+            name: String,
+            autoUpdate: Bool = true,
+            updateInterval: TimeInterval = 86400, // 默认24小时
+            lastUpdate: Date? = nil
+        ) {
+            self.url = url
+            self.name = name
+            self.autoUpdate = autoUpdate
+            self.updateInterval = updateInterval
+            self.lastUpdate = lastUpdate
+        }
     }
     
-    /// 解析单个服务器配置
-    /// - Parameter uri: SSR URI字符串
-    /// - Returns: 服务器配置对象
-    private func parseServerConfig(_ uri: String) throws -> ServerConfig {
-        guard uri.hasPrefix("ssr://") else {
-            throw TFYSwiftError.invalidData("无效的SSR URI")
-        }
-        
-        let base64String = String(uri.dropFirst(6))
-        guard let data = Data(base64Encoded: base64String.padding(toLength: ((base64String.count + 3) / 4) * 4,
-                                                                withPad: "=",
-                                                                startingAt: 0)),
-              let content = String(data: data, encoding: .utf8) else {
-            throw TFYSwiftError.invalidData("Base64内容无效")
-        }
-        
-        let components = content.components(separatedBy: ":")
-        guard components.count >= 6 else {
-            throw TFYSwiftError.invalidData("SSR配置格式无效")
-        }
-        
-        let mainParts = components[0...5].map { $0 }
-        
-        // 解析附加参数
-        var params: [String: String] = [:]
-        if components.count > 1 {
-            let queryItems = components[1].components(separatedBy: "&")
-            for item in queryItems {
-                let pair = item.components(separatedBy: "=")
-                if pair.count == 2 {
-                    params[pair[0]] = pair[1]
+    /// 订阅状态
+    public enum SubscriptionStatus {
+        case idle
+        case updating
+        case error(Error)
+    }
+    
+    /// 添加订阅
+    /// - Parameters:
+    ///   - url: 订阅URL
+    ///   - name: 订阅名称
+    ///   - completion: 完成回调
+    public func addSubscription(
+        url: URL,
+        name: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+        queue.async {
+            // 检查是否已存在相同URL的订阅
+            guard !self.subscriptions.contains(where: { $0.url == url }) else {
+                completion(.failure(TFYSwiftError.duplicateSubscription))
+                return
+            }
+            
+            let config = SubscriptionConfig(url: url, name: name)
+            self.subscriptions.append(config)
+            
+            // 保存配置
+            self.saveSubscriptions()
+            
+            // 立即更新订阅
+            self.updateSubscription(config) { result in
+                switch result {
+                case .success:
+                    completion(.success(()))
+                case .failure(let error):
+                    completion(.failure(error))
                 }
             }
         }
-        
-        return ServerConfig(
-            server: mainParts[0],
-            serverPort: UInt16(mainParts[1]) ?? 0,
-            method: mainParts[3],
-            password: decodeBase64URL(mainParts[5]) ?? "",
-            protocolType: mainParts[2],
-            protocolParam: decodeBase64URL(params["protoparam"] ?? ""),
-            obfs: mainParts[4],
-            obfsParam: decodeBase64URL(params["obfsparam"] ?? ""),
-            remarks: decodeBase64URL(params["remarks"] ?? ""),
-            group: decodeBase64URL(params["group"] ?? "")
-        )
     }
     
-    /// 解码Base64URL编码的字符串
-    /// - Parameter string: Base64URL编码的字符串
-    /// - Returns: 解码后的字符串，失败返回nil
-    private func decodeBase64URL(_ string: String) -> String? {
-        let base64 = string
-            .replacingOccurrences(of: "-", with: "+")
-            .replacingOccurrences(of: "_", with: "/")
-            .padding(toLength: ((string.count + 3) / 4) * 4,
-                    withPad: "=",
-                    startingAt: 0)
-        
-        guard let data = Data(base64Encoded: base64) else {
-            return nil
+    /// 更新订阅
+    /// - Parameters:
+    ///   - config: 订阅配置
+    ///   - completion: 完成回调
+    public func updateSubscription(
+        _ config: SubscriptionConfig,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+        queue.async {
+            self.status = .updating
+            
+            let request = URLRequest(url: config.url, cachePolicy: .reloadIgnoringLocalCacheData)
+            
+            let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    self.status = .error(error)
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let data = data else {
+                    let error = TFYSwiftError.invalidData("Empty subscription data")
+                    self.status = .error(error)
+                    completion(.failure(error))
+                    return
+                }
+                
+                do {
+                    // 解析订阅数据
+                    let servers = try self.parseSubscriptionData(data)
+                    
+                    // 更新服务器配置
+                    self.updateServerConfigs(servers, from: config)
+                    
+                    // 更新最后更新时间
+                    var updatedConfig = config
+                    updatedConfig = SubscriptionConfig(
+                        url: config.url,
+                        name: config.name,
+                        autoUpdate: config.autoUpdate,
+                        updateInterval: config.updateInterval,
+                        lastUpdate: Date()
+                    )
+                    
+                    if let index = self.subscriptions.firstIndex(where: { $0.url == config.url }) {
+                        self.subscriptions[index] = updatedConfig
+                    }
+                    
+                    // 保存配置
+                    self.saveSubscriptions()
+                    
+                    self.status = .idle
+                    completion(.success(()))
+                    
+                } catch {
+                    self.status = .error(error)
+                    completion(.failure(error))
+                }
+            }
+            
+            task.resume()
+        }
+    }
+    
+    /// 删除订阅
+    /// - Parameters:
+    ///   - url: 订阅URL
+    ///   - removeServers: 是否同时删除相关服务器
+    public func removeSubscription(
+        url: URL,
+        removeServers: Bool = false,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+        queue.async {
+            guard let index = self.subscriptions.firstIndex(where: { $0.url == url }) else {
+                completion(.failure(TFYSwiftError.subscriptionNotFound))
+                return
+            }
+            
+            let config = self.subscriptions[index]
+            self.subscriptions.remove(at: index)
+            
+            if removeServers {
+                // 删除相关服务器配置
+                self.removeServerConfigs(from: config)
+            }
+            
+            // 保存配置
+            self.saveSubscriptions()
+            
+            completion(.success(()))
+        }
+    }
+    
+    /// 检查订阅更新
+    public func checkSubscriptionUpdates() {
+        queue.async {
+            let now = Date()
+            
+            for subscription in self.subscriptions where subscription.autoUpdate {
+                // 检查是否需要更新
+                if let lastUpdate = subscription.lastUpdate,
+                   now.timeIntervalSince(lastUpdate) < subscription.updateInterval {
+                    continue
+                }
+                
+                // 更新订阅
+                self.updateSubscription(subscription) { _ in }
+            }
+        }
+    }
+    
+    // MARK: - Private Methods
+    
+    private func parseSubscriptionData(_ data: Data) throws -> [ServerConfig] {
+        // 解码Base64数据
+        guard let decodedString = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              let decodedData = Data(base64Encoded: decodedString) else {
+            throw TFYSwiftError.invalidData("Invalid Base64 data")
         }
         
-        return String(data: data, encoding: .utf8)
+        // 解析SSR链接
+        guard let linksString = String(data: decodedData, encoding: .utf8) else {
+            throw TFYSwiftError.invalidData("Invalid decoded data")
+        }
+        
+        return try linksString.components(separatedBy: .newlines)
+            .filter { !$0.isEmpty }
+            .map { try parseSSRLink($0) }
     }
-} 
+    
+    private func parseSSRLink(_ link: String) throws -> ServerConfig {
+        // 实现SSR链接解析逻辑
+        // 返回ServerConfig实例
+        return ServerConfig(id: UUID().uuidString,
+                          serverHost: "",
+                          serverPort: 0,
+                          password: "",
+                          method: "",
+                          protocolType: "",
+                          obfs: "")
+    }
+    
+    private func updateServerConfigs(_ servers: [ServerConfig], from subscription: SubscriptionConfig) {
+        // 更新服务器配置的实现
+    }
+    
+    private func removeServerConfigs(from subscription: SubscriptionConfig) {
+        // 删除服务器配置的实现
+    }
+    
+    private func saveSubscriptions() {
+        do {
+            let data = try JSONEncoder().encode(subscriptions)
+            try data.write(to: subscriptionsURL)
+        } catch {
+            logError("Failed to save subscriptions: \(error)")
+        }
+    }
+    
+    private func loadSubscriptions() {
+        guard FileManager.default.fileExists(atPath: subscriptionsURL.path) else {
+            return
+        }
+        
+        do {
+            let data = try Data(contentsOf: subscriptionsURL)
+            subscriptions = try JSONDecoder().decode([SubscriptionConfig].self, from: data)
+        } catch {
+            logError("Failed to load subscriptions: \(error)")
+        }
+    }
+}

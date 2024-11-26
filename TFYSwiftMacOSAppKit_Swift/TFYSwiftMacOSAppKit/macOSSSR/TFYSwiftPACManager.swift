@@ -19,6 +19,8 @@ public class TFYSwiftPACManager {
     private let config: TFYSwiftConfig
     /// PAC文件内容
     private var pacContent: String
+    /// 服务器是否在运行
+    private var isRunning: Bool = false
     
     /// 初始化PAC管理器
     /// - Parameter config: 全局配置对象
@@ -37,44 +39,72 @@ public class TFYSwiftPACManager {
     }
     
     /// 启动PAC服务器
-    /// - Throws: 启动失败时抛出错误
-    func start() throws {
-        let port = NWEndpoint.Port(integerLiteral: UInt16(config.globalSettings.pacPort))
-        let parameters = NWParameters.tcp
-        
-        // 创建并配置HTTP服务器
-        httpServer = try NWListener(using: parameters, on: port)
-        httpServer?.stateUpdateHandler = { [weak self] state in
-            switch state {
-            case .ready:
-                logInfo("PAC服务器已启动，端口: \(self?.config.globalSettings.pacPort ?? 0)")
-            case .failed(let error):
-                logError("PAC服务器启动失败: \(error)")
-            case .cancelled:
-                logInfo("PAC服务器已停止")
-            default:
-                break
+    /// - Parameter completion: 完成回调，返回成功或失败结果
+    public func start(completion: @escaping (Result<Void, Error>) -> Void) {
+        queue.async { [weak self] in
+            guard let self = self else {
+                completion(.failure(TFYSwiftError.systemError("实例已被释放")))
+                return
+            }
+            
+            guard !self.isRunning else {
+                completion(.failure(TFYSwiftError.systemError("PAC服务器已在运行")))
+                return
+            }
+            
+            do {
+                // 创建HTTP服务器
+                let parameters = NWParameters.tcp
+                guard let port = NWEndpoint.Port(rawValue: self.config.globalSettings.pacPort) else {
+                    completion(.failure(TFYSwiftError.configurationError("无效的端口号")))
+                    return
+                }
+                
+                self.httpServer = try NWListener(using: parameters, on: port)
+                
+                // 设置监听器状态处理
+                self.httpServer?.stateUpdateHandler = { [weak self] state in
+                    self?.handleListenerState(state)
+                }
+                
+                // 设置新连接处理
+                self.httpServer?.newConnectionHandler = { [weak self] connection in
+                    self?.handleNewConnection(connection)
+                }
+                
+                // 启动监听
+                self.httpServer?.start(queue: self.queue)
+                self.isRunning = true
+                completion(.success(()))
+            } catch {
+                completion(.failure(error))
             }
         }
-        
-        // 设置新连接处理器
-        httpServer?.newConnectionHandler = { [weak self] connection in
-            self?.handleConnection(connection)
-        }
-        
-        // 在指定队列上启动服务器
-        httpServer?.start(queue: queue)
     }
     
     /// 停止PAC服务器
-    func stop() {
-        httpServer?.cancel()
-        httpServer = nil
+    /// - Parameter completion: 完成回调，返回成功或失败结果
+    public func stop(completion: @escaping (Result<Void, Error>) -> Void) {
+        queue.async { [weak self] in
+            guard let self = self else {
+                completion(.failure(TFYSwiftError.systemError("实例已被释放")))
+                return
+            }
+            
+            guard self.isRunning else {
+                completion(.failure(TFYSwiftError.systemError("PAC服务器未在运行")))
+                return
+            }
+            
+            self.httpServer?.cancel()
+            self.httpServer = nil
+            self.isRunning = false
+            completion(.success(()))
+        }
     }
     
     /// 处理新的网络连接
-    /// - Parameter connection: 网络连接对象
-    private func handleConnection(_ connection: NWConnection) {
+    private func handleNewConnection(_ connection: NWConnection) {
         connection.stateUpdateHandler = { [weak self] state in
             switch state {
             case .ready:
@@ -93,7 +123,6 @@ public class TFYSwiftPACManager {
     }
     
     /// 处理HTTP请求
-    /// - Parameter connection: 网络连接对象
     private func handleRequest(_ connection: NWConnection) {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] content, _, isComplete, error in
             guard let self = self else { return }
@@ -116,7 +145,6 @@ public class TFYSwiftPACManager {
     }
     
     /// 发送PAC文件响应
-    /// - Parameter connection: 网络连接对象
     private func sendPACResponse(_ connection: NWConnection) {
         // 构建HTTP响应
         let response = """
@@ -137,8 +165,165 @@ public class TFYSwiftPACManager {
         })
     }
     
+    /// 处理监听器状态变化
+    private func handleListenerState(_ state: NWListener.State) {
+        switch state {
+        case .ready:
+            logInfo("PAC服务器就绪")
+        case .failed(let error):
+            logError("PAC服务器失败: \(error)")
+        case .cancelled:
+            logInfo("PAC服务器已停止")
+        default:
+            break
+        }
+    }
+    
     /// 析构函数 - 确保服务器被正确关闭
     deinit {
-        stop()
+        stop { _ in }
+    }
+    
+    /// PAC 模式枚举
+    public enum PACMode {
+        case auto           // 自动模式
+        case global        // 全局模式
+        case manual        // 手动模式
+    }
+    
+    /// 更新 PAC 文件内容
+    /// - Parameters:
+    ///   - rules: 代理规则列表
+    ///   - mode: PAC 模式
+    ///   - completion: 完成回调
+    public func updatePACFile(rules: [String], mode: PACMode, completion: @escaping (Result<Void, Error>) -> Void) {
+        queue.async {
+            do {
+                // 生成新的 PAC 内容
+                let newContent = try self.generatePACContent(rules: rules, mode: mode)
+                
+                // 更新 PAC 内容
+                self.pacContent = newContent
+                
+                // 如果服务器正在运行，重启服务器以应用新配置
+                if self.isRunning {
+                    try self.restartServer()
+                }
+                
+                completion(.success(()))
+                
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
+    
+    /// 生成 PAC 文件内容
+    private func generatePACContent(rules: [String], mode: PACMode) throws -> String {
+        // PAC 文件模板
+        let template = """
+        function FindProxyForURL(url, host) {
+            // 代理服务器地址
+            var proxy = "SOCKS5 \(config.globalSettings.localAddress):\(config.globalSettings.socksPort); DIRECT";
+            
+            // 直连域名列表
+            var directDomains = \(getDirectDomainsJSON());
+            
+            // 代理域名列表
+            var proxyDomains = \(getProxyDomainsJSON(rules));
+            
+            // 判断是否是 IP 地址
+            if (isPlainHostName(host) || isInNet(host, "10.0.0.0", "255.0.0.0") ||
+                isInNet(host, "172.16.0.0", "255.240.0.0") ||
+                isInNet(host, "192.168.0.0", "255.255.0.0") ||
+                isInNet(host, "127.0.0.0", "255.255.255.0")) {
+                return "DIRECT";
+            }
+            
+            // 根据模式返回代理设置
+            switch ("\(mode)") {
+                case "global":
+                    return proxy;
+                case "manual":
+                    // 检查是否在直连列表中
+                    for (var i = 0; i < directDomains.length; i++) {
+                        if (dnsDomainIs(host, directDomains[i])) {
+                            return "DIRECT";
+                        }
+                    }
+                    // 检查是否在代理列表中
+                    for (var i = 0; i < proxyDomains.length; i++) {
+                        if (dnsDomainIs(host, proxyDomains[i])) {
+                            return proxy;
+                        }
+                    }
+                    return "DIRECT";
+                default:
+                    // 自动模式
+                    return proxy;
+            }
+        }
+        """
+        
+        return template
+    }
+    
+    /// 获取直连域名列表的 JSON 字符串
+    private func getDirectDomainsJSON() -> String {
+        let domains = [
+            "localhost",
+            "127.0.0.1",
+            "*.local",
+            "*.cn"
+        ]
+        
+        return JSONStringify(domains)
+    }
+    
+    /// 获取代理域名列表的 JSON 字符串
+    private func getProxyDomainsJSON(_ rules: [String]) -> String {
+        return JSONStringify(rules)
+    }
+    
+    /// 将数组转换为 JSON 字符串
+    private func JSONStringify(_ array: [String]) -> String {
+        do {
+            let data = try JSONSerialization.data(withJSONObject: array, options: [])
+            if let string = String(data: data, encoding: .utf8) {
+                return string
+            }
+        } catch {
+            logError("JSON序列化失败: \(error)")
+        }
+        return "[]"
+    }
+    
+    /// 重启 PAC 服务器
+    private func restartServer() throws {
+        stop { _ in }
+        try startServer()
+    }
+    
+    /// 启动 PAC 服务器
+    private func startServer() throws {
+        // 创建 TCP 监听器
+        let parameters = NWParameters.tcp
+        
+        // 设置本地端点
+        let endpoint = NWEndpoint.hostPort(
+            host: NWEndpoint.Host(config.globalSettings.localAddress),
+            port: NWEndpoint.Port(integerLiteral: UInt16(config.globalSettings.pacPort))
+        )
+        
+        // 创建监听器
+        httpServer = try NWListener(using: parameters, on: endpoint)
+        
+        // 设置连接处理
+        httpServer?.newConnectionHandler = { [weak self] connection in
+            self?.handleNewConnection(connection)
+        }
+        
+        // 启动监听器
+        httpServer?.start(queue: queue)
     }
 }

@@ -30,84 +30,133 @@ public class TFYSwiftProxyServer {
     private let config: TFYSwiftConfig
     /// 当前服务器状态
     private var state: ProxyState = .stopped
+    /// 配置管理对象
+    private let configManager: TFYSwiftConfigManager
+    /// 服务器是否在运行
+    private var isRunning: Bool = false
     
     /// 初始化代理服务器
     /// - Parameter config: 全局配置对象
-    init(config: TFYSwiftConfig) {
+    init(config: TFYSwiftConfig, configManager: TFYSwiftConfigManager) {
         self.config = config
+        self.configManager = configManager
     }
     
     /// 启动代理服务器
-    /// - Throws: 启动失败时抛出错误
-    func start() throws {
-        if case .stopped = state {
-            state = .starting
+    /// - Parameter completion: 完成回调
+    public func start(completion: @escaping (Result<Void, Error>) -> Void) {
+        queue.async {
+            guard !self.isRunning else {
+                completion(.success(()))
+                return
+            }
             
-            let port = NWEndpoint.Port(integerLiteral: config.globalSettings.socksPort)
-            let parameters = NWParameters.tcp
-            
-            // 创建网络监听器
-            listener = try NWListener(using: parameters, on: port)
-            
-            // 设置状态更新处理器
-            listener?.stateUpdateHandler = { [weak self] state in
-                guard let self = self else { return }
+            do {
+                // 创建监听器参数
+                let parameters = NWParameters.tcp
                 
-                switch state {
-                case .ready:
-                    self.state = .running
-                    logInfo("代理服务器已启动，端口: \(self.config.globalSettings.socksPort)")
-                case .failed(let error):
-                    self.state = .error(error)
-                    logError("代理服务器启动失败: \(error)")
-                case .cancelled:
-                    self.state = .stopped
-                    logInfo("代理服务器已停止")
-                default:
-                    break
+                // 设置本地端点
+                let localEndpoint = NWEndpoint.hostPort(
+                    host: NWEndpoint.Host(self.config.globalSettings.localAddress),
+                    port: NWEndpoint.Port(integerLiteral: UInt16(self.config.globalSettings.socksPort))
+                )
+                
+                // 创建监听器
+                self.listener = try NWListener(using: parameters, on: localEndpoint)
+                
+                // 设置监听器状态处理
+                self.listener?.stateUpdateHandler = { [weak self] state in
+                    self?.handleListenerState(state)
                 }
+                
+                // 设置新连接处理
+                self.listener?.newConnectionHandler = { [weak self] connection in
+                    self?.handleNewConnection(connection)
+                }
+                
+                // 启动监听
+                self.listener?.start(queue: self.queue)
+                self.isRunning = true
+                
+                logInfo("代理服务器已启动，监听地址: \(self.config.globalSettings.localAddress):\(self.config.globalSettings.socksPort)")
+                completion(.success(()))
+                
+            } catch {
+                self.state = .error(error)
+                logError("启动代理服务器失败: \(error)")
+                completion(.failure(error))
             }
-            
-            // 设置新连接处理器
-            listener?.newConnectionHandler = { [weak self] connection in
-                self?.handleNewConnection(connection)
-            }
-            
-            // 在指定队列上启动监听器
-            listener?.start(queue: queue)
         }
     }
     
     /// 停止代理服务器
-    func stop() {
-        listener?.cancel()
-        listener = nil
-        
-        queue.async {
-            // 断开所有活动连接
-            for connection in self.connections.values {
-                connection.disconnect()
+    public func stop(completion: @escaping (Result<Void, Error>) -> Void) {
+        queue.async { [weak self] in
+            guard let self = self else {
+                completion(.failure(TFYSwiftError.systemError("实例已被释放")))
+                return
             }
+            
+            guard self.isRunning else {
+                completion(.failure(TFYSwiftError.systemError("服务器未在运行")))
+                return
+            }
+            
+            self.listener?.cancel()
+            self.listener = nil
+            self.isRunning = false
+            self.state = .stopped
+            
+            // 断开所有现有连接
+            self.connections.values.forEach { $0.disconnect() }
             self.connections.removeAll()
+            
+            completion(.success(()))
         }
-        
-        state = .stopped
     }
     
-    /// 处理新的网络连接
-    /// - Parameter connection: 新建立的网络连接
-    private func handleNewConnection(_ connection: NWConnection) {
-        let id = UUID()
-        let proxyConnection = TFYSwiftProxyConnection(connection: connection, config: config, delegate: self)
-        
-        queue.async {
-            self.connections[id] = proxyConnection
-            proxyConnection.start()
+    /// 处理监听器状态变化
+    private func handleListenerState(_ state: NWListener.State) {
+        switch state {
+        case .ready:
+            self.state = .running
+            logInfo("监听器就绪")
+            
+        case .failed(let error):
+            self.state = .error(error)
+            logError("监听器失败: \(error)")
+            
+        case .cancelled:
+            self.state = .stopped
+            logInfo("监听器已停止")
+            
+        default:
+            break
         }
+    }
+    
+    /// 处理新连接
+    private func handleNewConnection(_ connection: NWConnection) {
+        // 创建连接ID
+        let connectionId = UUID()
+        
+        // 创建代理连接
+        let proxyConnection = TFYSwiftProxyConnection(
+            connection: connection,
+            config: self.config,
+            delegate: self
+        )
+        
+        // 存储连接
+        connections[connectionId] = proxyConnection
+        
+        // 开始处理连接
+        proxyConnection.start()
+        
+        logInfo("新连接已建立: \(connectionId)")
     }
     
     /// 移除指定ID的连接
-    /// - Parameter id: 要移除的连接ID
     private func removeConnection(withId id: UUID) {
         queue.async {
             self.connections.removeValue(forKey: id)
@@ -126,13 +175,38 @@ public class TFYSwiftProxyServer {
     
     /// 析构函数 - 确保服务器被正确停止
     deinit {
-        stop()
+        stop { _ in }
+    }
+    
+    /// 获取连接统计信息
+    public func getConnectionStats() -> ConnectionStats {
+        return queue.sync {
+            ConnectionStats(
+                activeConnections: connections.count,
+                totalConnections: totalConnectionCount,
+                failedConnections: failedConnectionCount
+            )
+        }
+    }
+    
+    /// 连接统计信息结构体
+    public struct ConnectionStats {
+        public let activeConnections: Int
+        public let totalConnections: Int
+        public let failedConnections: Int
+        
+        public var description: String {
+            return """
+            活动连接数: \(activeConnections)
+            总连接数: \(totalConnections)
+            失败连接数: \(failedConnections)
+            """
+        }
     }
 }
 
 // MARK: - TFYSwiftProxyConnectionDelegate
 extension TFYSwiftProxyServer: TFYSwiftProxyConnectionDelegate {
-    /// 连接完成的回调处理
     func connectionDidComplete(_ connection: TFYSwiftProxyConnection) {
         queue.async {
             if let connectionId = self.connections.first(where: { $0.value === connection })?.key {
@@ -142,7 +216,6 @@ extension TFYSwiftProxyServer: TFYSwiftProxyConnectionDelegate {
         }
     }
     
-    /// 连接失败的回调处理
     func connection(_ connection: TFYSwiftProxyConnection, didFailWith error: Error) {
         queue.async {
             if let connectionId = self.connections.first(where: { $0.value === connection })?.key {

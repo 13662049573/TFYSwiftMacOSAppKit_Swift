@@ -122,4 +122,132 @@ public class TFYSwiftDNSResolver {
         defer { cacheLock.unlock() }
         cache.removeAll()
     }
+    
+    /// DNS 解析结果
+    public struct DNSResult {
+        let addresses: [String]
+        let timestamp: Date
+        let ttl: TimeInterval
+        
+        var isExpired: Bool {
+            return Date().timeIntervalSince(timestamp) > ttl
+        }
+    }
+    
+    /// DNS 解析选项
+    public struct DNSOptions {
+        let timeout: TimeInterval
+        let useCache: Bool
+        let preferIPv6: Bool
+        
+        public init(
+            timeout: TimeInterval = 5.0,
+            useCache: Bool = true,
+            preferIPv6: Bool = false
+        ) {
+            self.timeout = timeout
+            self.useCache = useCache
+            self.preferIPv6 = preferIPv6
+        }
+    }
+    
+    /// 异步解析域名
+    /// - Parameters:
+    ///   - hostname: 域名
+    ///   - options: 解析选项
+    ///   - completion: 完成回调
+    public func resolve(
+        _ hostname: String,
+        options: DNSOptions = DNSOptions(),
+        completion: @escaping (Result<[String], Error>) -> Void
+    ) {
+        queue.async {
+            // 检查缓存
+            if options.useCache, let cached = self.getCachedResult(for: hostname) {
+                completion(.success(cached))
+                return
+            }
+            
+            // 创建 NWEndpoint.Host
+            let host = NWEndpoint.Host(hostname)
+            
+            // 创建连接参数
+            var parameters = NWParameters()
+            parameters.preferNoProxies = true
+            
+            // 设置地址类型
+            if options.preferIPv6 {
+                parameters.requiredInterfaceType = .ipv6
+            } else {
+                parameters.requiredInterfaceType = .ipv4
+            }
+            
+            // 创建连接
+            let connection = NWConnection(
+                host: host,
+                port: 80,
+                using: parameters
+            )
+            
+            // 设置状态处理
+            connection.stateUpdateHandler = { [weak self] state in
+                switch state {
+                case .preparing:
+                    break
+                    
+                case .ready:
+                    // 获取连接的远程地址
+                    if let endpoint = connection.currentPath?.remoteEndpoint,
+                       let addresses = self?.extractAddresses(from: endpoint) {
+                        // 缓存结果
+                        self?.cacheResult(addresses, for: hostname)
+                        completion(.success(addresses))
+                    } else {
+                        completion(.failure(TFYSwiftError.networkError("无法获取远程地址")))
+                    }
+                    connection.cancel()
+                    
+                case .failed(let error):
+                    completion(.failure(error))
+                    connection.cancel()
+                    
+                case .cancelled:
+                    break
+                    
+                default:
+                    break
+                }
+            }
+            
+            // 设置超时
+            self.queue.asyncAfter(deadline: .now() + options.timeout) {
+                if connection.state != .cancelled {
+                    connection.cancel()
+                    completion(.failure(TFYSwiftError.networkError("DNS解析超时")))
+                }
+            }
+            
+            // 启动连接
+            connection.start(queue: self.queue)
+        }
+    }
+    
+    /// 从端点提取地址
+    private func extractAddresses(from endpoint: NWEndpoint) -> [String]? {
+        switch endpoint {
+        case .hostPort(let host, _):
+            return [host.debugDescription]
+        default:
+            return nil
+        }
+    }
+    
+    /// 清理过期缓存
+    private func cleanExpiredCache() {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        
+        let now = Date()
+        cache = cache.filter { !$0.value.isExpired }
+    }
 } 

@@ -571,4 +571,257 @@ public class TFYSwiftProxyConnection {
     }
 }
 
+// 添加代理连接管理功能
+
+extension TFYSwiftProxyConnection {
+    /// 代理连接配置
+    public struct ProxyConfig {
+        let serverConfig: ServerConfig
+        let localPort: UInt16
+        let timeout: TimeInterval
+        let bufferSize: Int
+        
+        public init(
+            serverConfig: ServerConfig,
+            localPort: UInt16,
+            timeout: TimeInterval = 30,
+            bufferSize: Int = 8192
+        ) {
+            self.serverConfig = serverConfig
+            self.localPort = localPort
+            self.timeout = timeout
+            self.bufferSize = bufferSize
+        }
+    }
+    
+    /// 连接统计信息
+    public struct ConnectionStats {
+        var uploadBytes: UInt64 = 0
+        var downloadBytes: UInt64 = 0
+        var startTime: Date = Date()
+        var lastActiveTime: Date = Date()
+        var errorCount: Int = 0
+        
+        var duration: TimeInterval {
+            return Date().timeIntervalSince(startTime)
+        }
+        
+        var uploadSpeed: Double {
+            return Double(uploadBytes) / duration
+        }
+        
+        var downloadSpeed: Double {
+            return Double(downloadBytes) / duration
+        }
+    }
+    
+    /// 启动代理连接
+    public func start() {
+        queue.async { [weak self] in
+            guard let self = self else { return }
+            
+            do {
+                // 创建本地socket
+                try self.createLocalSocket()
+                
+                // 连接远程服务器
+                try self.connectToServer()
+                
+                // 初始化加密器
+                try self.initializeCrypto()
+                
+                // 开始处理数据
+                self.startProcessing()
+                
+                self.state = .established
+                self.delegate?.connectionDidEstablish(self)
+                
+            } catch {
+                self.handleError(error)
+            }
+        }
+    }
+    
+    /// 停止代理连接
+    public func stop() {
+        queue.async { [weak self] in
+            guard let self = self else { return }
+            
+            self.state = .closed
+            self.closeConnection()
+            self.delegate?.connectionDidClose(self)
+        }
+    }
+    
+    // MARK: - Private Methods
+    
+    private func createLocalSocket() throws {
+        let endpoint = NWEndpoint.hostPort(
+            host: "127.0.0.1",
+            port: NWEndpoint.Port(integerLiteral: config.localPort)
+        )
+        
+        let parameters = NWParameters.tcp
+        localConnection = NWConnection(to: endpoint, using: parameters)
+        
+        localConnection?.stateUpdateHandler = { [weak self] state in
+            self?.handleLocalConnectionState(state)
+        }
+        
+        localConnection?.start(queue: queue)
+    }
+    
+    private func connectToServer() throws {
+        let endpoint = NWEndpoint.hostPort(
+            host: NWEndpoint.Host(config.serverConfig.serverHost),
+            port: NWEndpoint.Port(integerLiteral: config.serverConfig.serverPort)
+        )
+        
+        let parameters = NWParameters.tcp
+        remoteConnection = NWConnection(to: endpoint, using: parameters)
+        
+        remoteConnection?.stateUpdateHandler = { [weak self] state in
+            self?.handleRemoteConnectionState(state)
+        }
+        
+        remoteConnection?.start(queue: queue)
+    }
+    
+    private func initializeCrypto() throws {
+        crypto = try TFYSwiftCrypto(
+            password: config.serverConfig.password,
+            method: config.serverConfig.method
+        )
+    }
+    
+    private func startProcessing() {
+        processLocalToRemote()
+        processRemoteToLocal()
+    }
+    
+    private func processLocalToRemote() {
+        localConnection?.receive(minimumIncompleteLength: 1, maximumLength: config.bufferSize) { [weak self] content, _, isComplete, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                self.handleError(error)
+                return
+            }
+            
+            if let data = content {
+                do {
+                    // 加密数据
+                    let encryptedData = try self.crypto?.encrypt(data) ?? data
+                    
+                    // 发送到远程服务器
+                    self.remoteConnection?.send(content: encryptedData, completion: .contentProcessed { error in
+                        if let error = error {
+                            self.handleError(error)
+                        }
+                    })
+                    
+                    // 更新统计信息
+                    self.stats.uploadBytes += UInt64(data.count)
+                    self.stats.lastActiveTime = Date()
+                    
+                } catch {
+                    self.handleError(error)
+                }
+            }
+            
+            if isComplete {
+                self.stop()
+            } else {
+                self.processLocalToRemote()
+            }
+        }
+    }
+    
+    private func processRemoteToLocal() {
+        remoteConnection?.receive(minimumIncompleteLength: 1, maximumLength: config.bufferSize) { [weak self] content, _, isComplete, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                self.handleError(error)
+                return
+            }
+            
+            if let data = content {
+                do {
+                    // 解密数据
+                    let decryptedData = try self.crypto?.decrypt(data) ?? data
+                    
+                    // 发送到本地
+                    self.localConnection?.send(content: decryptedData, completion: .contentProcessed { error in
+                        if let error = error {
+                            self.handleError(error)
+                        }
+                    })
+                    
+                    // 更新统计信息
+                    self.stats.downloadBytes += UInt64(data.count)
+                    self.stats.lastActiveTime = Date()
+                    
+                } catch {
+                    self.handleError(error)
+                }
+            }
+            
+            if isComplete {
+                self.stop()
+            } else {
+                self.processRemoteToLocal()
+            }
+        }
+    }
+    
+    private func handleLocalConnectionState(_ state: NWConnection.State) {
+        switch state {
+        case .ready:
+            logInfo("本地连接就绪")
+        case .failed(let error):
+            handleError(error)
+        case .cancelled:
+            stop()
+        default:
+            break
+        }
+    }
+    
+    private func handleRemoteConnectionState(_ state: NWConnection.State) {
+        switch state {
+        case .ready:
+            logInfo("远程连接就绪")
+        case .failed(let error):
+            handleError(error)
+        case .cancelled:
+            stop()
+        default:
+            break
+        }
+    }
+    
+    private func handleError(_ error: Error) {
+        stats.errorCount += 1
+        state = .error(error)
+        delegate?.connection(self, didFailWith: error)
+        stop()
+    }
+    
+    private func closeConnection() {
+        localConnection?.cancel()
+        remoteConnection?.cancel()
+        localConnection = nil
+        remoteConnection = nil
+        crypto = nil
+    }
+}
+
+// MARK: - Connection Delegate Protocol
+public protocol TFYSwiftProxyConnectionDelegate: AnyObject {
+    func connectionDidEstablish(_ connection: TFYSwiftProxyConnection)
+    func connectionDidClose(_ connection: TFYSwiftProxyConnection)
+    func connection(_ connection: TFYSwiftProxyConnection, didFailWith error: Error)
+}
+
 

@@ -14,22 +14,33 @@ import Cocoa
 
 public class TFYSwiftTextField: NSTextField {
     /// 文字是否居中 默认 NO
-    public var isTextAlignmentVerticalCenter:Bool = true {
+    @objc public dynamic var isTextAlignmentVerticalCenter: Bool = true {
         didSet {
-            (self.cell as! TFYSwiftTextFieldCell).isTextAlignmentVerticalCenter = isTextAlignmentVerticalCenter
+            (self.cell as? TFYSwiftTextFieldCell)?.isTextAlignmentVerticalCenter = isTextAlignmentVerticalCenter
         }
     }
     /// 修改光标离X轴的距离 默认 0 isTextAlignmentVerticalCenter 为 YES 的时候 使用
-    public var Xcursor:CGFloat = 10 {
+    @objc public dynamic var Xcursor: CGFloat = 10 {
         didSet {
-            (self.cell as! TFYSwiftTextFieldCell).Xcursor = Xcursor
+            (self.cell as? TFYSwiftTextFieldCell)?.Xcursor = Xcursor
         }
     }
     
-    weak public var delegate_swift: (any TFYSwiftNotifyingDelegate)?
+    /// 占位符文本颜色
+    private var _placeholderColor: NSColor = .placeholderTextColor
+    @objc public dynamic var placeholderColor: NSColor {
+        get { return _placeholderColor }
+        set {
+            _placeholderColor = newValue
+            updatePlaceholderAttributes()
+        }
+    }
+    
+    @objc weak public var delegate_swift: (any TFYSwiftNotifyingDelegate)?
     
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: coder)
+        registerForNotifications()
     }
     
     public override init(frame frameRect: NSRect) {
@@ -37,7 +48,7 @@ public class TFYSwiftTextField: NSTextField {
         registerForNotifications()
     }
     
-    func registerForNotifications() {
+    private func registerForNotifications() {
         autoresizingMask = [.width,.height]
         isBordered = false
         drawsBackground = true
@@ -51,33 +62,49 @@ public class TFYSwiftTextField: NSTextField {
         cell?.isBordered = false
         preferredMaxLayoutWidth = 100
         
-        NotificationCenter.default.addObserver(self, selector: #selector(delegate_swift?.textFieldDidChange(textField:)), name: NSControl.textDidChangeNotification, object: self)
+        NotificationCenter.default.addObserver(self, selector: #selector(textDidChangeNotification(_:)), name: NSControl.textDidChangeNotification, object: self)
+    }
+    
+    @objc private func textDidChangeNotification(_ notification: Notification) {
+        delegate_swift?.textFieldDidChange?(textField: self)
     }
     
     public override func textDidChange(_ notification: Notification) {
-        self.delegate_swift?.textFieldDidChange?(textField: self)
+        super.textDidChange(notification)
+        delegate_swift?.textFieldDidChange?(textField: self)
     }
     
     public override func becomeFirstResponder() -> Bool {
         let success = super.becomeFirstResponder()
         if success {
-            let textView:NSTextView = self.currentEditor() as! NSTextView
-            textView.insertionPointColor = textColor
+            if let textView = self.currentEditor() as? NSTextView {
+                textView.insertionPointColor = textColor ?? .textColor
+            }
         }
         return success
     }
     
+    private func updatePlaceholderAttributes() {
+        guard let placeholderString = self.placeholderString else { return }
+        let attributedString = NSMutableAttributedString(string: placeholderString)
+        let style = NSMutableParagraphStyle()
+        style.alignment = alignment
+        let attributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: placeholderColor,
+            .paragraphStyle: style
+        ]
+        attributedString.addAttributes(attributes, range: NSRange(location: 0, length: placeholderString.count))
+        placeholderAttributedString = attributedString
+    }
+    
     public override var alignment: NSTextAlignment {
         didSet {
-            let placeholderString = self.placeholderString
-            if (placeholderString != nil) {
-                let attributedString:NSMutableAttributedString = NSMutableAttributedString(string: placeholderString!)
-                let style:NSMutableParagraphStyle = (NSParagraphStyle.default as! NSMutableParagraphStyle)
-                style.alignment = alignment
-                attributedString.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSMakeRange(0, placeholderString!.utf16.count))
-                placeholderAttributedString = attributedString
-            }
+            updatePlaceholderAttributes()
         }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }
 

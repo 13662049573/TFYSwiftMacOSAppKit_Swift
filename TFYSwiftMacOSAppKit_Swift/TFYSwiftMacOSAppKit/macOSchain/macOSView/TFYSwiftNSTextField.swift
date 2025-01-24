@@ -8,23 +8,11 @@
 
 import Cocoa
 
-public extension Chain where Base: TFYSwiftTextField {
+public extension Chain where Base: NSTextField {
     
     @discardableResult
     func placeholderString(_ placeholderString: String) -> Self {
         base.placeholderString = placeholderString
-        return self
-    }
-    
-    @discardableResult
-    func placeholderStringColor(_ color: NSColor) -> Self {
-        base.placeholderStringColor = color
-        return self
-    }
-    
-    @discardableResult
-    func placeholderAttributedString(_ attr: NSAttributedString) -> Self {
-        base.placeholderAttributedString = attr
         return self
     }
     
@@ -77,20 +65,20 @@ public extension Chain where Base: TFYSwiftTextField {
     }
     
     @discardableResult
-    func delegate(_ delegate:(any NSTextFieldDelegate)) -> Self {
+    func delegate(_ delegate: NSTextFieldDelegate) -> Self {
         base.delegate = delegate
         return self
     }
     
     @discardableResult
-    func bezelStyle(_ state: NSTextField.BezelStyle) -> Self {
-        base.bezelStyle = state
+    func bezelStyle(_ style: NSTextField.BezelStyle) -> Self {
+        base.bezelStyle = style
         return self
     }
     
     @discardableResult
-    func preferredMaxLayoutWidth(_ pre: CGFloat) -> Self {
-        base.preferredMaxLayoutWidth = pre
+    func preferredMaxLayoutWidth(_ width: CGFloat) -> Self {
+        base.preferredMaxLayoutWidth = width
         return self
     }
     
@@ -107,14 +95,14 @@ public extension Chain where Base: TFYSwiftTextField {
     }
     
     @discardableResult
-    func lineBreakStrategy(_ state: NSParagraphStyle.LineBreakStrategy) -> Self {
-        base.lineBreakStrategy = state
+    func lineBreakStrategy(_ strategy: NSParagraphStyle.LineBreakStrategy) -> Self {
+        base.lineBreakStrategy = strategy
         return self
     }
     
     @discardableResult
-    func automaticTextCompletionEnabled(_ autom: Bool) -> Self {
-        base.isAutomaticTextCompletionEnabled = autom
+    func automaticTextCompletionEnabled(_ enabled: Bool) -> Self {
+        base.isAutomaticTextCompletionEnabled = enabled
         return self
     }
     
@@ -131,11 +119,14 @@ public extension Chain where Base: TFYSwiftTextField {
     }
     
     @discardableResult
-    func importsGraphics(_ state: Bool) -> Self {
-        base.importsGraphics = state
+    func importsGraphics(_ imports: Bool) -> Self {
+        base.importsGraphics = imports
         return self
     }
+}
 
+// MARK: - TFYSwiftTextField Chain Extension
+public extension Chain where Base: TFYSwiftTextField {
     @discardableResult
     func isTextAlignmentVerticalCenter(_ value: Bool) -> Self {
         base.isTextAlignmentVerticalCenter = value
@@ -149,8 +140,14 @@ public extension Chain where Base: TFYSwiftTextField {
     }
     
     @discardableResult
-    func delegate(_ value: (any TFYSwiftNotifyingDelegate)) -> Self {
-        base.delegate_swift = value
+    func placeholderColor(_ color: NSColor) -> Self {
+        base.placeholderColor = color
+        return self
+    }
+    
+    @discardableResult
+    func delegate_swift(_ delegate: TFYSwiftNotifyingDelegate) -> Self {
+        base.delegate_swift = delegate
         return self
     }
 }

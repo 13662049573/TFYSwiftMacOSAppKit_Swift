@@ -20,44 +20,44 @@ Pod::Spec.new do |spec|
 
   spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => spec.version }
 
-  spec.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/**/*.{swift}"
-
   spec.subspec 'macOScategory' do |ss|
-    ss.source_files  = "TFYSwiftMacOSAppKit/macOScategory/**/*.{swift}"
+    ss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScategory/**/*.{swift}"
   end
 
   spec.subspec 'macOSchain' do |ss|
-    ss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/**/*.{swift}"
+    ss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/**/*.{swift}"
     ss.subspec 'macOSBase' do |sss|
-       sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSBase/**/*.{swift}"
+      sss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSBase/**/*.{swift}"
     end
     ss.subspec 'macOSCALayer' do |sss|
-       sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSCALayer/**/*.{swift}"
+      sss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSCALayer/**/*.{swift}"
     end
     ss.subspec 'macOSView' do |sss|
-       sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSView/**/*.{swift}"
+      sss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSView/**/*.{swift}"
     end
     ss.subspec 'macOSGesture' do |sss|
-       sss.source_files  = "TFYSwiftMacOSAppKit/macOSchain/macOSGesture/**/*.{swift}"
+      sss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSGesture/**/*.{swift}"
     end
   end
 
   spec.subspec 'macOSfoundation' do |ss|
-    ss.source_files  = "TFYSwiftMacOSAppKit/macOSfoundation/**/*.{swift}" 
+    ss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSfoundation/**/*.{swift}"
   end
 
   spec.subspec 'macOSHUD' do |ss|
-    ss.source_files  = "TFYSwiftMacOSAppKit/macOSHUD/**/*.{swift}" 
+    ss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSHUD/**/*.{swift}"
   end
 
   spec.subspec 'macOScontainer' do |ss|
-    ss.source_files  = "TFYSwiftMacOSAppKit/macOScontainer/**/*.{swift}"
+    ss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/**/*.{swift}"
     ss.subspec 'macOSStatusItem' do |sss|
-      sss.source_files  = "TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/**/*.{swift}"
+      sss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSStatusItem/**/*.{swift}"
     end
     ss.subspec 'macOSUtils' do |sss|
-      sss.source_files  = "TFYSwiftMacOSAppKit/macOScontainer/macOSUtils/**/*.{swift}"
+      sss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOScontainer/macOSUtils/**/*.{swift}"
     end
   end
+
+  spec.swift_version = '5.0'
 
 end

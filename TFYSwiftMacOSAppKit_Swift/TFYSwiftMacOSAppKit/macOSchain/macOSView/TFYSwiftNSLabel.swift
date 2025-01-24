@@ -11,7 +11,7 @@ import Cocoa
 public extension Chain where Base: TFYSwiftLabel {
     
     @discardableResult
-    func mouseDownBlock(_ block: @escaping (_ label:TFYSwiftLabel) -> Void) -> Chain {
+    func mouseDownBlock(_ block: @escaping (_ label:TFYSwiftLabel) -> Void) -> Self {
         base.mouseDownBlock = block
         return self
     }

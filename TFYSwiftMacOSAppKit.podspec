@@ -22,7 +22,7 @@ Pod::Spec.new do |spec|
 
   # 1. 基础组件
   spec.subspec 'macOSBase' do |ss|
-    ss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSchain/macOSBase/**/*.{swift}"
+    ss.source_files = "TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit/macOSBase/**/*.{swift}"
   end
 
   # 2. Foundation 扩展

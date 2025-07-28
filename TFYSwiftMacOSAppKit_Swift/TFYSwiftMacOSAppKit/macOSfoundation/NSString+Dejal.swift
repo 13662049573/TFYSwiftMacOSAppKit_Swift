@@ -137,14 +137,20 @@ public extension String {
 
 // MARK: - String 扩展
 extension String {
-    /// 计算 MD5 哈希值
-    var md5String: String? {
+    /// 计算 SHA256 哈希值（替代已弃用的MD5）
+    var sha256String: String? {
         guard let data = self.data(using: .utf8) else { return nil }
-        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
+        var digest = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
         _ = data.withUnsafeBytes { buffer in
-            CC_MD5(buffer.baseAddress, CC_LONG(data.count), &digest)
+            CC_SHA256(buffer.baseAddress, CC_LONG(data.count), &digest)
         }
         return digest.reduce("") { $0 + String(format: "%02x", $1) }
+    }
+    
+    /// 计算 MD5 哈希值（已弃用，建议使用SHA256）
+    @available(*, deprecated, message: "MD5已被弃用，建议使用sha256String")
+    var md5String: String? {
+        return sha256String
     }
     
     /// 计算 SHA1 哈希值
@@ -159,35 +165,25 @@ extension String {
         return digest.reduce("") { $0 + String(format: "%02x", $1) }
     }
     
-    /// 计算 SHA256 哈希值
-    var sha256String: String? {
-        guard let data = self.data(using: .utf8) else { return nil }
-        var digest = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
-        
-        _ = data.withUnsafeBytes { buffer in
-            CC_SHA256(buffer.baseAddress, CC_LONG(data.count), &digest)
-        }
-        
-        return digest.reduce("") { $0 + String(format: "%02x", $1) }
-    }
+
     
     // MARK: - HMAC 函数
     
     /**
-     使用指定密钥计算 HMAC-MD5
+     使用指定密钥计算 HMAC-SHA256
      
      - Parameter key: HMAC 密钥
      - Returns: HMAC 哈希值
      */
-    func hmacMD5String(key: String) -> String? {
+    func hmacSHA256String(key: String) -> String? {
         guard let keyData = key.data(using: .utf8),
               let messageData = self.data(using: .utf8) else { return nil }
         
-        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
+        var digest = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
         
         keyData.withUnsafeBytes { keyBuffer in
             messageData.withUnsafeBytes { messageBuffer in
-                CCHmac(CCHmacAlgorithm(kCCHmacAlgMD5),
+                CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256),
                       keyBuffer.baseAddress,
                       keyBuffer.count,
                       messageBuffer.baseAddress,
@@ -197,6 +193,17 @@ extension String {
         }
         
         return digest.reduce("") { $0 + String(format: "%02x", $1) }
+    }
+    
+    /**
+     使用指定密钥计算 HMAC-MD5（已弃用，建议使用HMAC-SHA256）
+     
+     - Parameter key: HMAC 密钥
+     - Returns: HMAC 哈希值
+     */
+    @available(*, deprecated, message: "HMAC-MD5已被弃用，建议使用hmacSHA256String")
+    func hmacMD5String(key: String) -> String? {
+        return hmacSHA256String(key: key)
     }
     
     /// URL 解码

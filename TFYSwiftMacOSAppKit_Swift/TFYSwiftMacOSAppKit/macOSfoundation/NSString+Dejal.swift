@@ -189,12 +189,6 @@ extension String {
         return digest.reduce("") { $0 + String(format: "%02x", $1) }
     }
     
-    /// 计算 MD5 哈希值（已弃用，建议使用SHA256）
-    @available(*, deprecated, message: "MD5已被弃用，建议使用sha256String")
-    var md5String: String? {
-        return sha256String
-    }
-    
     /// 计算 SHA1 哈希值
     var sha1String: String? {
         guard let data = self.data(using: .utf8) else { return nil }

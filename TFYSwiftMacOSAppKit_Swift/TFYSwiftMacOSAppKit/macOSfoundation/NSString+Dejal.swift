@@ -93,6 +93,48 @@ public extension String {
         return emailPredicate.evaluate(with: self)
     }
     
+    /// 检查字符串是否是有效的URL
+    var isValidURL: Bool {
+        guard let url = URL(string: self) else { return false }
+        // 在macOS中，我们无法使用UIApplication，所以只检查URL格式
+        return url.scheme != nil && url.host != nil
+    }
+    
+    /// 检查字符串是否是有效的手机号码（中国大陆）
+    var isValidPhoneNumber: Bool {
+        let phoneRegex = "^1[3-9]\\d{9}$"
+        let phonePredicate = NSPredicate(format: "SELF MATCHES %@", phoneRegex)
+        return phonePredicate.evaluate(with: self)
+    }
+    
+    /// 检查字符串是否是有效的身份证号码（中国大陆）
+    var isValidIDCard: Bool {
+        let idCardRegex = "^[1-9]\\d{5}(18|19|20)\\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\\d{3}[0-9Xx]$"
+        let idCardPredicate = NSPredicate(format: "SELF MATCHES %@", idCardRegex)
+        return idCardPredicate.evaluate(with: self)
+    }
+    
+    /// 检查字符串是否是有效的邮政编码（中国大陆）
+    var isValidPostalCode: Bool {
+        let postalRegex = "^[1-9]\\d{5}$"
+        let postalPredicate = NSPredicate(format: "SELF MATCHES %@", postalRegex)
+        return postalPredicate.evaluate(with: self)
+    }
+    
+    /// 检查字符串是否是有效的IPv4地址
+    var isValidIPv4: Bool {
+        let ipv4Regex = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+        let ipv4Predicate = NSPredicate(format: "SELF MATCHES %@", ipv4Regex)
+        return ipv4Predicate.evaluate(with: self)
+    }
+    
+    /// 检查字符串是否是有效的IPv6地址
+    var isValidIPv6: Bool {
+        let ipv6Regex = "^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$"
+        let ipv6Predicate = NSPredicate(format: "SELF MATCHES %@", ipv6Regex)
+        return ipv6Predicate.evaluate(with: self)
+    }
+    
     /// 将字符串转换为日期
     /// - Parameter format: 日期格式
     /// - Returns: 转换后的日期，如果转换失败则返回nil
@@ -284,5 +326,197 @@ extension String {
         } catch {
             return nil
         }
+    }
+    
+    // MARK: - 高级字符串处理
+    
+    /// 获取字符串的字符数（考虑表情符号）
+    var characterCount: Int {
+        return self.count
+    }
+    
+    /// 获取字符串的字节数
+    var byteCount: Int {
+        return self.utf8.count
+    }
+    
+    /// 获取字符串的单词数
+    var wordCount: Int {
+        let components = self.components(separatedBy: .whitespacesAndNewlines)
+        return components.filter { !$0.isEmpty }.count
+    }
+    
+    /// 获取字符串的行数
+    var lineCount: Int {
+        return self.components(separatedBy: .newlines).count
+    }
+    
+    /// 截取字符串到指定长度，并添加省略号
+    /// - Parameter length: 最大长度
+    /// - Returns: 截取后的字符串
+    func truncated(to length: Int) -> String {
+        guard self.count > length else { return self }
+        let index = self.index(self.startIndex, offsetBy: length - 3)
+        return String(self[..<index]) + "..."
+    }
+    
+    /// 将字符串按指定长度分割
+    /// - Parameter length: 分割长度
+    /// - Returns: 分割后的字符串数组
+    func split(by length: Int) -> [String] {
+        var result: [String] = []
+        var currentIndex = self.startIndex
+        
+        while currentIndex < self.endIndex {
+            let endIndex = self.index(currentIndex, offsetBy: length, limitedBy: self.endIndex) ?? self.endIndex
+            result.append(String(self[currentIndex..<endIndex]))
+            currentIndex = endIndex
+        }
+        
+        return result
+    }
+    
+    /// 将字符串转换为驼峰命名
+    var camelCase: String {
+        let components = self.components(separatedBy: CharacterSet.alphanumerics.inverted)
+        let words = components.filter { !$0.isEmpty }
+        
+        guard !words.isEmpty else { return self }
+        
+        let firstWord = words[0].lowercased()
+        let remainingWords = words.dropFirst().map { $0.prefix(1).uppercased() + $0.dropFirst().lowercased() }
+        
+        return firstWord + remainingWords.joined()
+    }
+    
+    /// 将字符串转换为帕斯卡命名
+    var pascalCase: String {
+        let camelCase = self.camelCase
+        return camelCase.prefix(1).uppercased() + camelCase.dropFirst()
+    }
+    
+    /// 将字符串转换为蛇形命名
+    var snakeCase: String {
+        return self.replacingOccurrences(of: "([a-z])([A-Z])", with: "$1_$2", options: .regularExpression)
+            .lowercased()
+            .replacingOccurrences(of: "[^a-z0-9_]", with: "_", options: .regularExpression)
+            .replacingOccurrences(of: "_+", with: "_", options: .regularExpression)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "_"))
+    }
+    
+    /// 将字符串转换为短横线命名
+    var kebabCase: String {
+        return self.replacingOccurrences(of: "([a-z])([A-Z])", with: "$1-$2", options: .regularExpression)
+            .lowercased()
+            .replacingOccurrences(of: "[^a-z0-9-]", with: "-", options: .regularExpression)
+            .replacingOccurrences(of: "-+", with: "-", options: .regularExpression)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+    }
+    
+    /// 将字符串转换为标题格式
+    var titleCase: String {
+        return self.components(separatedBy: " ")
+            .map { $0.prefix(1).uppercased() + $0.dropFirst().lowercased() }
+            .joined(separator: " ")
+    }
+    
+    /// 将字符串转换为句子格式
+    var sentenceCase: String {
+        guard !self.isEmpty else { return self }
+        return self.prefix(1).uppercased() + self.dropFirst().lowercased()
+    }
+    
+    /// 反转字符串
+    var reversed: String {
+        return String(self.reversed())
+    }
+    
+    /// 检查字符串是否是回文
+    var isPalindrome: Bool {
+        let cleaned = self.lowercased().replacingOccurrences(of: "[^a-z0-9]", with: "", options: .regularExpression)
+        return cleaned == cleaned.reversed
+    }
+    
+    /// 获取字符串中最常见的字符
+    var mostCommonCharacter: Character? {
+        let characterCounts = self.reduce(into: [Character: Int]()) { counts, character in
+            counts[character, default: 0] += 1
+        }
+        return characterCounts.max(by: { $0.value < $1.value })?.key
+    }
+    
+    /// 获取字符串中字符的频率分布
+    var characterFrequency: [Character: Int] {
+        return self.reduce(into: [Character: Int]()) { counts, character in
+            counts[character, default: 0] += 1
+        }
+    }
+    
+    /// 移除字符串中的重复字符
+    var removingDuplicates: String {
+        var seen = Set<Character>()
+        return self.filter { character in
+            if seen.contains(character) {
+                return false
+            } else {
+                seen.insert(character)
+                return true
+            }
+        }
+    }
+    
+    /// 检查字符串是否包含所有指定的字符
+    /// - Parameter characters: 要检查的字符集合
+    /// - Returns: 是否包含所有字符
+    func containsAll(_ characters: Set<Character>) -> Bool {
+        let stringCharacters = Set(self)
+        return characters.isSubset(of: stringCharacters)
+    }
+    
+    /// 检查字符串是否只包含指定的字符
+    /// - Parameter characters: 允许的字符集合
+    /// - Returns: 是否只包含指定字符
+    func containsOnly(_ characters: Set<Character>) -> Bool {
+        let stringCharacters = Set(self)
+        return stringCharacters.isSubset(of: characters)
+    }
+    
+    /// 获取字符串的相似度（使用编辑距离）
+    /// - Parameter other: 要比较的字符串
+    /// - Returns: 相似度（0-1）
+    func similarity(to other: String) -> Double {
+        let distance = self.levenshteinDistance(to: other)
+        let maxLength = max(self.count, other.count)
+        return maxLength == 0 ? 1.0 : 1.0 - Double(distance) / Double(maxLength)
+    }
+    
+    /// 计算两个字符串的编辑距离
+    /// - Parameter other: 要比较的字符串
+    /// - Returns: 编辑距离
+    func levenshteinDistance(to other: String) -> Int {
+        let selfArray = Array(self)
+        let otherArray = Array(other)
+        
+        var matrix = Array(repeating: Array(repeating: 0, count: otherArray.count + 1), count: selfArray.count + 1)
+        
+        for i in 0...selfArray.count {
+            matrix[i][0] = i
+        }
+        
+        for j in 0...otherArray.count {
+            matrix[0][j] = j
+        }
+        
+        for i in 1...selfArray.count {
+            for j in 1...otherArray.count {
+                if selfArray[i - 1] == otherArray[j - 1] {
+                    matrix[i][j] = matrix[i - 1][j - 1]
+                } else {
+                    matrix[i][j] = Swift.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + 1)
+                }
+            }
+        }
+        
+        return matrix[selfArray.count][otherArray.count]
     }
 }

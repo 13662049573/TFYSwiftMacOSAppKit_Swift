@@ -87,7 +87,7 @@ class ViewController: NSViewController {
         view.addSubview(imageView)
         view.addSubview(textsView)
         
-        let color = NSColor(hexString: "F46734")
+        let color = try! NSColor(hexString: "F46734")
         
         let linkInfos = [
             LinkInfo(key: "《用户协议》", value: "http://api.irainone.com/app/iop/register.html"),

@@ -9,12 +9,22 @@
 import Cocoa
 
 // MARK: - Enums
-enum TFYHUDMode {
+public enum TFYHUDMode {
     case indeterminate    // 不确定进度模式(转圈)
     case determinate      // 确定进度模式(进度条)
     case text            // 纯文本模式
     case customView      // 自定义视图模式
     case loading         // 加载模式
+}
+
+public enum TFYHUDPosition {
+    case center
+    case top
+    case bottom
+    case topLeft
+    case topRight
+    case bottomLeft
+    case bottomRight
 }
 
 public class TFYProgressMacOSHUD: NSView {
@@ -25,16 +35,28 @@ public class TFYProgressMacOSHUD: NSView {
     private(set) var progressView: TFYProgressView
     private(set) var customImageView: NSImageView
     
-    var mode: TFYHUDMode = .indeterminate {
+    public var mode: TFYHUDMode = .indeterminate {
         didSet {
             updateForMode()
         }
     }
     
+    public var position: TFYHUDPosition = .center {
+        didSet {
+            updatePosition()
+        }
+    }
+    
+    public var autoHide: Bool = true
+    public var hideDelay: TimeInterval = 3.0
+    public var animationDuration: TimeInterval = 0.3
+    
     private let layoutManager: TFYLayoutManager
     private let themeManager: TFYThemeManager
     private let animation: TFYAnimationEnhancer
     private var hideTimer: Timer?
+    private var positionConstraints: [NSLayoutConstraint] = []
+    private var activeConstraints: [NSLayoutConstraint] = []
     
     // MARK: - Initialization
     override init(frame: NSRect) {
@@ -72,12 +94,15 @@ public class TFYProgressMacOSHUD: NSView {
     // MARK: - Setup Methods
     private func setupSubviews() {
         // Container view setup
+        containerView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(containerView)
         
         // Activity indicator setup
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(activityIndicator)
         
         // Progress view setup
+        progressView.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(progressView)
         
         // Status label setup
@@ -102,6 +127,14 @@ public class TFYProgressMacOSHUD: NSView {
         statusLabel.lineBreakMode = .byWordWrapping
         statusLabel.preferredMaxLayoutWidth = 200
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 添加文字变化监听
+        statusLabel.target = self
+        statusLabel.action = #selector(statusLabelChanged)
+    }
+    
+    @objc private func statusLabelChanged() {
+        updateSizeForText()
     }
     
     private func setupCustomImageView() {
@@ -119,15 +152,156 @@ public class TFYProgressMacOSHUD: NSView {
     
     private func setupLayout() {
         layoutManager.setupHUDConstraints(self)
-        layoutManager.setupConstraints(for: self)
         layoutManager.setupAdaptiveLayout(for: self)
-        layoutManager.setupSubviewsConstraints(self)
+        updatePosition()
+    }
+    
+    // MARK: - Position Management
+    private func updatePosition() {
+        guard superview != nil else { return }
+        
+        // 移除现有位置约束
+        NSLayoutConstraint.deactivate(positionConstraints)
+        positionConstraints.removeAll()
+        
+        // 添加新的位置约束
+        switch position {
+        case .center:
+            positionConstraints = [
+                containerView.centerXAnchor.constraint(equalTo: centerXAnchor),
+                containerView.centerYAnchor.constraint(equalTo: centerYAnchor)
+            ]
+            
+        case .top:
+            positionConstraints = [
+                containerView.centerXAnchor.constraint(equalTo: centerXAnchor),
+                containerView.topAnchor.constraint(equalTo: topAnchor, constant: 100)
+            ]
+            
+        case .bottom:
+            positionConstraints = [
+                containerView.centerXAnchor.constraint(equalTo: centerXAnchor),
+                containerView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -100)
+            ]
+            
+        case .topLeft:
+            positionConstraints = [
+                containerView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 50),
+                containerView.topAnchor.constraint(equalTo: topAnchor, constant: 100)
+            ]
+            
+        case .topRight:
+            positionConstraints = [
+                containerView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -50),
+                containerView.topAnchor.constraint(equalTo: topAnchor, constant: 100)
+            ]
+            
+        case .bottomLeft:
+            positionConstraints = [
+                containerView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 50),
+                containerView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -100)
+            ]
+            
+        case .bottomRight:
+            positionConstraints = [
+                containerView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -50),
+                containerView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -100)
+            ]
+        }
+        
+        NSLayoutConstraint.activate(positionConstraints)
+    }
+    
+    /// 动态更新HUD大小
+    public func updateSizeForText() {
+        // 检查是否有文字内容
+        let hasText = !statusLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        
+        // 移除现有的容器大小约束
+        containerView.constraints.forEach { constraint in
+            if constraint.firstAttribute == .width || constraint.firstAttribute == .height {
+                constraint.isActive = false
+            }
+        }
+        
+        // 根据是否有文字设置新的约束
+        if hasText {
+            // 有文字时使用自适应大小
+            NSLayoutConstraint.activate([
+                containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
+                containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100)
+            ])
+            statusLabel.isHidden = false
+        } else {
+            // 无文字时使用固定大小
+            NSLayoutConstraint.activate([
+                containerView.widthAnchor.constraint(equalToConstant: 200),
+                containerView.heightAnchor.constraint(equalToConstant: 120)
+            ])
+            statusLabel.isHidden = true
+        }
+        
+        // 强制布局更新
+        needsLayout = true
+        layout()
+    }
+    
+    /// 确保HUD大小稳定
+    public func ensureStableSize() {
+        // 确保容器视图有固定大小
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 检查是否有文字内容
+        let hasText = !statusLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        
+        // 移除可能冲突的约束
+        containerView.constraints.forEach { constraint in
+            if constraint.firstAttribute == .width || constraint.firstAttribute == .height {
+                constraint.isActive = false
+            }
+        }
+        
+        // 根据是否有文字设置约束
+        if hasText {
+            // 有文字时使用自适应大小
+            NSLayoutConstraint.activate([
+                containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
+                containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100)
+            ])
+        } else {
+            // 无文字时使用固定大小
+            NSLayoutConstraint.activate([
+                containerView.widthAnchor.constraint(equalToConstant: 200),
+                containerView.heightAnchor.constraint(equalToConstant: 120)
+            ])
+        }
+        
+        // 强制布局更新
+        needsLayout = true
+        layout()
     }
     
     /// 显示HUD
     public static func showHUD(addedTo view: NSView) -> TFYProgressMacOSHUD {
         let hud = TFYProgressMacOSHUD(frame: view.bounds)
+        hud.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(hud)
+        
+        // 设置约束
+        NSLayoutConstraint.activate([
+            hud.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hud.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hud.topAnchor.constraint(equalTo: view.topAnchor),
+            hud.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+        // 确保布局正确设置
+        hud.layoutManager.setupHUDConstraints(hud)
+        hud.layoutManager.setupAdaptiveLayout(for: hud)
+        
+        // 确保HUD可见
+        hud.isHidden = false
+        
         return hud
     }
     
@@ -184,108 +358,265 @@ public class TFYProgressMacOSHUD: NSView {
             activityIndicator.startAnimation()
         }
         
-        layoutManager.invalidateLayout()
-        layoutManager.setupHUDConstraints(self)
+        // 只在首次设置时更新布局，避免重复设置约束
+        if activeConstraints.isEmpty {
+            DispatchQueue.main.async {
+                self.layoutManager.setupHUDConstraints(self)
+                self.layoutManager.setupAdaptiveLayout(for: self)
+                
+                // 强制布局更新
+                self.needsLayout = true
+                self.layout()
+            }
+        }
     }
     
     // MARK: - Convenience Methods
-    static func showSuccess(_ status: String) {
+    public static func showSuccess(_ status: String, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
             let hud = shared
             hud.mode = .customView
+            hud.position = position
             hud.customImageView.image = createSuccessImage()
             hud.statusLabel.stringValue = status
+            hud.updateSizeForText() // 更新大小
             hud.show()
-            hud.hide(afterDelay: 3.0)
+            if hud.autoHide {
+                hud.hide(afterDelay: hud.hideDelay)
+            }
         }
     }
     
-    static func showError(_ status: String) {
+    public static func showError(_ status: String, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
             let hud = shared
             hud.mode = .customView
+            hud.position = position
             hud.customImageView.image = createErrorImage()
             hud.statusLabel.stringValue = status
+            hud.statusLabel.textColor = .systemRed
+            hud.updateSizeForText() // 更新大小
             hud.show()
-            hud.hide(afterDelay: 3.0)
+            if hud.autoHide {
+                hud.hide(afterDelay: hud.hideDelay)
+            }
         }
     }
     
-    static func showInfo(_ status: String) {
+    public static func showInfo(_ status: String, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
             let hud = shared
             hud.mode = .customView
+            hud.position = position
             hud.customImageView.image = createInfoImage()
             hud.statusLabel.stringValue = status
+            hud.updateSizeForText() // 更新大小
             hud.show()
-            hud.hide(afterDelay: 3.0)
+            if hud.autoHide {
+                hud.hide(afterDelay: hud.hideDelay)
+            }
         }
     }
     
-    static func showMessage(_ status: String) {
+    public static func showMessage(_ status: String, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
             let hud = shared
             hud.mode = .text
+            hud.position = position
             hud.statusLabel.stringValue = status
+            hud.updateSizeForText() // 更新大小
             hud.show()
-            hud.hide(afterDelay: 3.0)
+            if hud.autoHide {
+                hud.hide(afterDelay: hud.hideDelay)
+            }
         }
     }
     
-    static func showLoading(_ status: String) {
+    public static func showLoading(_ status: String, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
             let hud = shared
             hud.mode = .loading
+            hud.position = position
             hud.statusLabel.stringValue = status
+            hud.updateSizeForText() // 更新大小
             hud.show()
         }
     }
     
-    static func showProgress(_ progress: Float, status: String?) {
+    public static func showProgress(_ progress: Float, status: String?, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
             let hud = shared
             hud.mode = .determinate
+            hud.position = position
             hud.progressView.progress = CGFloat(progress)
             hud.statusLabel.stringValue = status ?? ""
+            hud.updateSizeForText() // 更新大小
             hud.show()
         }
     }
     
-    static func showImage(_ image:NSImage , status:String?) {
+    public static func showImage(_ image: NSImage, status: String?, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
             let hud = shared
             hud.mode = .customView
+            hud.position = position
             hud.customImageView.image = image
             hud.statusLabel.stringValue = status ?? ""
+            hud.updateSizeForText() // 更新大小
             hud.show()
         }
     }
     
-    static func hideHUD() {
+    /// 设置进度值
+    public func setProgress(_ progress: CGFloat) {
+        progressView.progress = progress
+    }
+    
+    /// 设置进度视图样式
+    public func setProgressViewStyle(_ style: TFYProgressViewStyle) {
+        progressView.style = style
+    }
+    
+    /// 设置进度视图大小
+    public func setProgressViewSize(_ size: TFYProgressViewSize) {
+        progressView.size = size
+    }
+    
+    /// 设置进度视图颜色
+    public func setProgressViewColors(progress: NSColor, track: NSColor) {
+        progressView.progressColor = progress
+        progressView.trackColor = track
+    }
+    
+    /// 设置进度指示器样式
+    public func setActivityIndicatorStyle(_ style: TFYProgressIndicatorStyle) {
+        activityIndicator.setStyle(style)
+    }
+    
+    /// 设置进度指示器大小
+    public func setActivityIndicatorSize(_ size: TFYProgressIndicatorSize) {
+        activityIndicator.setSize(size)
+    }
+    
+    /// 设置进度指示器颜色
+    public func setActivityIndicatorColor(_ color: NSColor) {
+        activityIndicator.setColor(color)
+    }
+    
+    /// 配置进度指示器
+    public func configureActivityIndicator(style: TFYProgressIndicatorStyle, size: TFYProgressIndicatorSize, color: NSColor? = nil) {
+        activityIndicator.configure(style: style, size: size, color: color)
+    }
+    
+    /// 配置进度视图
+    public func configureProgressView(style: TFYProgressViewStyle, size: TFYProgressViewSize, progressColor: NSColor, trackColor: NSColor) {
+        progressView.configure(style: style, size: size, progressColor: progressColor, trackColor: trackColor)
+    }
+    
+    /// 显示百分比
+    public func showProgressPercentage(_ show: Bool) {
+        progressView.showPercentage = show
+    }
+    
+    /// 设置主题
+    public func setTheme(_ themeName: String) {
+        themeManager.applyTheme(themeName)
+    }
+    
+    /// 设置动画持续时间
+    public func setAnimationDuration(_ duration: TimeInterval) {
+        animationDuration = duration
+        animation.configure(duration: CGFloat(duration), springDamping: 0.7, initialSpringVelocity: 0.5, animationCurve: .easeInOut)
+    }
+    
+    /// 设置动画类型
+    public func setAnimationType(_ type: TFYAnimationType) {
+        animation.setAnimationType(type)
+    }
+    
+    /// 显示带进度的HUD
+    public static func showProgressHUD(_ progress: CGFloat, status: String?, style: TFYProgressViewStyle = .ring, position: TFYHUDPosition = .center) {
+        DispatchQueue.main.async {
+            let hud = shared
+            hud.mode = .determinate
+            hud.position = position
+            hud.progressView.style = style
+            hud.progressView.progress = progress
+            hud.statusLabel.stringValue = status ?? ""
+            hud.updateSizeForText() // 更新大小
+            hud.show()
+        }
+    }
+    
+    /// 显示带百分比的进度HUD
+    public static func showProgressWithPercentage(_ progress: CGFloat, status: String?, position: TFYHUDPosition = .center) {
+        DispatchQueue.main.async {
+            let hud = shared
+            hud.mode = .determinate
+            hud.position = position
+            hud.progressView.showPercentage = true
+            hud.progressView.progress = progress
+            hud.statusLabel.stringValue = status ?? ""
+            hud.updateSizeForText() // 更新大小
+            hud.show()
+        }
+    }
+    
+    /// 显示不同样式的进度HUD
+    public static func showProgressWithStyle(_ progress: CGFloat, style: TFYProgressViewStyle, status: String?, position: TFYHUDPosition = .center) {
+        DispatchQueue.main.async {
+            let hud = shared
+            hud.mode = .determinate
+            hud.position = position
+            hud.progressView.style = style
+            hud.progressView.progress = progress
+            hud.statusLabel.stringValue = status ?? ""
+            hud.updateSizeForText() // 更新大小
+            hud.show()
+        }
+    }
+    
+    public static func hideHUD() {
         DispatchQueue.main.async {
             shared.hide()
         }
     }
     
-    static func hideHUD(afterDelay delay: TimeInterval) {
+    public static func hideHUD(afterDelay delay: TimeInterval) {
         DispatchQueue.main.async {
             shared.hide(afterDelay: delay)
         }
     }
     
     // MARK: - Private Methods
-    private func show() {
+    public func show() {
+        // 确保HUD在最上层
+        if let superview = superview {
+            superview.addSubview(self, positioned: .above, relativeTo: nil)
+        }
+        
+        // 确保HUD大小稳定
+        ensureStableSize()
+        
+        // 设置可见并应用动画
         isHidden = false
         animation.setup(with: self)
-        animation.applyAnimation(to: self)
-        superview?.addSubview(self, positioned: .above, relativeTo: nil)
+        
+        // 应用动画
+        DispatchQueue.main.async {
+            self.animation.applyAnimation(to: self)
+        }
     }
     
-    private func hide() {
+    public func hide() {
         animation.reset(self)
         hideTimer?.invalidate()
         hideTimer = nil
-        isHidden = true
+        
+        // 延迟隐藏，让动画完成
+        DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+            self.isHidden = true
+        }
     }
     
     private func hide(afterDelay delay: TimeInterval) {

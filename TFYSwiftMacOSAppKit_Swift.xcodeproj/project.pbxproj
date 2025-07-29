@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -41,7 +41,6 @@
 		36EC0CC32CDCF3B5003EBAD5 /* TFYStatusItemWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CC22CDCF3B5003EBAD5 /* TFYStatusItemWindowController.swift */; };
 		36EC0CC52CDCF457003EBAD5 /* TFYStatusItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CC42CDCF457003EBAD5 /* TFYStatusItem.swift */; };
 		3D04F7452CDA0E13009493BF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F73E2CDA0E13009493BF /* AppDelegate.swift */; };
-		3D04F7462CDA0E13009493BF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7432CDA0E13009493BF /* ViewController.swift */; };
 		3D04F7472CDA0E13009493BF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3D04F73F2CDA0E13009493BF /* Assets.xcassets */; };
 		3D04F7482CDA0E13009493BF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3D04F7412CDA0E13009493BF /* Main.storyboard */; };
 		3D04F7522CDA1020009493BF /* TFYSwiftTextFieldCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F7512CDA1020009493BF /* TFYSwiftTextFieldCell.swift */; };
@@ -109,7 +108,6 @@
 		3D04F8482CDCB135009493BF /* TFYSwiftCAShapeLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8472CDCB135009493BF /* TFYSwiftCAShapeLayer.swift */; };
 		3D04F84A2CDCB269009493BF /* TFYSwiftCATextLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8492CDCB269009493BF /* TFYSwiftCATextLayer.swift */; };
 		3D04F84C2CDCB324009493BF /* TFYSwiftCATiledLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F84B2CDCB324009493BF /* TFYSwiftCATiledLayer.swift */; };
-		3D04F8512CDCB66B009493BF /* TFYSwiftHomeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8502CDCB66B009493BF /* TFYSwiftHomeController.swift */; };
 		3D04F8632CDDAE09009493BF /* NSControl+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8622CDDAE09009493BF /* NSControl+Dejal.swift */; };
 		3D04F86B2CDE1AD5009493BF /* NSColor+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F86A2CDE1AD5009493BF /* NSColor+Dejal.swift */; };
 		3D04F8A02CDEE720009493BF /* CAGradientLayer+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F89F2CDEE720009493BF /* CAGradientLayer+Dejal.swift */; };
@@ -161,7 +159,6 @@
 		3D04F73F2CDA0E13009493BF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3D04F7402CDA0E13009493BF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		3D04F7422CDA0E13009493BF /* TFYSwiftMacOSAppKit_Swift.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TFYSwiftMacOSAppKit_Swift.entitlements; sourceTree = "<group>"; };
-		3D04F7432CDA0E13009493BF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		3D04F7512CDA1020009493BF /* TFYSwiftTextFieldCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftTextFieldCell.swift; sourceTree = "<group>"; };
 		3D04F7532CDA1275009493BF /* TFYSwiftSecureTextFieldCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftSecureTextFieldCell.swift; sourceTree = "<group>"; };
 		3D04F7552CDA131D009493BF /* TFYSwiftTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftTextField.swift; sourceTree = "<group>"; };
@@ -227,7 +224,6 @@
 		3D04F8472CDCB135009493BF /* TFYSwiftCAShapeLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCAShapeLayer.swift; sourceTree = "<group>"; };
 		3D04F8492CDCB269009493BF /* TFYSwiftCATextLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCATextLayer.swift; sourceTree = "<group>"; };
 		3D04F84B2CDCB324009493BF /* TFYSwiftCATiledLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCATiledLayer.swift; sourceTree = "<group>"; };
-		3D04F8502CDCB66B009493BF /* TFYSwiftHomeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftHomeController.swift; sourceTree = "<group>"; };
 		3D04F8622CDDAE09009493BF /* NSControl+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSControl+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F86A2CDE1AD5009493BF /* NSColor+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSColor+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F89F2CDEE720009493BF /* CAGradientLayer+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CAGradientLayer+Dejal.swift"; sourceTree = "<group>"; };
@@ -239,6 +235,10 @@
 		84CB83E42E376C1B005B1152 /* TFYSwiftCacheKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCacheKit.swift; sourceTree = "<group>"; };
 		84CB83E82E376D02005B1152 /* TFYStitchImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStitchImage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		84CB83EA2E38622C005B1152 /* Demo */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Demo; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		3D04F7292CDA0E09009493BF /* Frameworks */ = {
@@ -309,14 +309,13 @@
 		3D04F7442CDA0E13009493BF /* TFYSwiftMacOSAppKit_Swift */ = {
 			isa = PBXGroup;
 			children = (
+				84CB83EA2E38622C005B1152 /* Demo */,
 				3D04F7492CDA0E2B009493BF /* TFYSwiftMacOSAppKit */,
 				3D04F73E2CDA0E13009493BF /* AppDelegate.swift */,
 				3D04F73F2CDA0E13009493BF /* Assets.xcassets */,
 				3D04F7412CDA0E13009493BF /* Main.storyboard */,
 				18A7E3142CE6FD640069739E /* TFYSwiftMacOSAppKit-Swift-Info.plist */,
 				3D04F7422CDA0E13009493BF /* TFYSwiftMacOSAppKit_Swift.entitlements */,
-				3D04F7432CDA0E13009493BF /* ViewController.swift */,
-				3D04F8502CDCB66B009493BF /* TFYSwiftHomeController.swift */,
 			);
 			path = TFYSwiftMacOSAppKit_Swift;
 			sourceTree = "<group>";
@@ -499,6 +498,9 @@
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				84CB83EA2E38622C005B1152 /* Demo */,
+			);
 			name = TFYSwiftMacOSAppKit_Swift;
 			packageProductDependencies = (
 			);
@@ -660,13 +662,11 @@
 				363B35622D434F1600BC628D /* TFYSwiftChain.swift in Sources */,
 				363B35632D434F1600BC628D /* TFYSwiftHasFont.swift in Sources */,
 				363B35642D434F1600BC628D /* TFYSwiftHasText.swift in Sources */,
-				3D04F8512CDCB66B009493BF /* TFYSwiftHomeController.swift in Sources */,
 				18C7EDA52CEDB13200914927 /* Bundle+Dejal.swift in Sources */,
 				3D04F75A2CDA27B4009493BF /* TFYSwiftOpenPanel.swift in Sources */,
 				36EC0CA72CDA5812003EBAD5 /* TFYSwiftUtils.swift in Sources */,
 				36EC0C9E2CDA4627003EBAD5 /* TFYSwiftLabel.swift in Sources */,
 				3D04F8462CDCB048009493BF /* TFYSwiftCAScrollLayer.swift in Sources */,
-				3D04F7462CDA0E13009493BF /* ViewController.swift in Sources */,
 				36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsynce.swift in Sources */,
 				36EC0CA92CDA62D4003EBAD5 /* TFYSwiftJsonUtils.swift in Sources */,
 				3D04F8A62CDEEF4E009493BF /* NSSplitView+Dejal.swift in Sources */,

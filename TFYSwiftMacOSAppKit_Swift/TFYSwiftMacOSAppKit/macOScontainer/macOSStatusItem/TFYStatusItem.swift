@@ -77,6 +77,12 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
         set { statusItem?.button?.appearsDisabled = newValue }
     }
     
+    /// 当前展示模式
+    public var presentationMode: TFYStatusItemPresentationMode {
+        get { _presentationMode }
+        set { _presentationMode = newValue }
+    }
+    
     // MARK: - 私有属性
     
     private var statusItem: NSStatusItem?
@@ -88,7 +94,7 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     private var pbChangeCount: Int = 0
     private var customViewContainer: TFYStatusItemContainerView?
     private var customView: NSView?
-    private var presentationMode: TFYStatusItemPresentationMode = .undefined
+    private var _presentationMode: TFYStatusItemPresentationMode = .undefined
     private var statusItemWindowController: TFYStatusItemWindowController?
     
     @Published private(set) var isStatusItemWindowVisible: Bool = true
@@ -132,7 +138,7 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     /// - Throws: TFYStatusItemError
     public func configure(with config: StatusItemConfiguration) throws {
         // 检查初始化状态
-        guard presentationMode == .undefined else {
+        guard _presentationMode == .undefined else {
             throw TFYStatusItemError.alreadyInitialized
         }
         
@@ -146,7 +152,7 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
             button.image = image
             button.target = self
             button.action = #selector(handleStatusItemButtonAction(_:))
-            presentationMode = .image
+            _presentationMode = .image
         } else if let view = config.customView {
             let containerView = TFYStatusItemContainerView(frame: view.bounds)
             containerView.target = self
@@ -158,7 +164,7 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
             
             button.frame = containerView.bounds
             button.addSubview(containerView)
-            presentationMode = .customView
+            _presentationMode = .customView
         }
         
         // 配置视图控制器(如果有)
@@ -330,6 +336,28 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     /// 获取状态栏项的frame
     public func getStatusItemFrame() -> NSRect? {
         return statusItem?.button?.window?.frame
+    }
+    
+    /// 重置状态栏项
+    public func reset() {
+        // 清理现有状态
+        statusItemWindowController?.dismissStatusItemWindow()
+        statusItemWindowController = nil
+        customViewContainer = nil
+        customView = nil
+        _presentationMode = .undefined
+        
+        // 重新设置状态栏项
+        if let button = statusItem?.button {
+            button.image = nil
+            button.target = nil
+            button.action = nil
+            button.subviews.forEach { $0.removeFromSuperview() }
+        }
+        
+        // 重新初始化
+        setupStatusItem()
+        setupObservers()
     }
 }
 

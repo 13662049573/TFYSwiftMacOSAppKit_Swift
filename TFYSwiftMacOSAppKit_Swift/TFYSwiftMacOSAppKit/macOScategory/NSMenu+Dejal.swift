@@ -99,6 +99,113 @@ public extension NSMenu {
             }
         }
     }
+    
+    // MARK: - 新增实用方法
+    
+    /// 添加带回调的菜单项
+    /// - Parameters:
+    ///   - title: 菜单项标题
+    ///   - icon: 菜单项图标
+    ///   - keyEquivalent: 快捷键
+    ///   - action: 点击回调
+    /// - Returns: 创建的菜单项
+    @discardableResult
+    func addItem(title: String, icon: NSImage? = nil, keyEquivalent: String = "", action: @escaping (NSMenuItem) -> Void) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: #selector(handleMenuAction(_:)), keyEquivalent: keyEquivalent)
+        item.image = icon
+        item.target = self
+        
+        // 存储回调
+        objc_setAssociatedObject(item, "menuAction", action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        
+        addItem(item)
+        return item
+    }
+    
+    @objc private func handleMenuAction(_ sender: NSMenuItem) {
+        if let action = objc_getAssociatedObject(sender, "menuAction") as? (NSMenuItem) -> Void {
+            action(sender)
+        }
+    }
+    
+    /// 添加子菜单
+    /// - Parameters:
+    ///   - title: 子菜单标题
+    ///   - icon: 子菜单图标
+    /// - Returns: 创建的子菜单
+    @discardableResult
+    func addSubmenu(title: String, icon: NSImage? = nil) -> NSMenu {
+        let submenu = NSMenu(title: title)
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.image = icon
+        item.submenu = submenu
+        addItem(item)
+        return submenu
+    }
+    
+    /// 批量添加菜单项
+    /// - Parameter items: 菜单项配置数组
+    func addItems(_ items: [(title: String, action: (NSMenuItem) -> Void, icon: NSImage?, keyEquivalent: String)]) {
+        for itemConfig in items {
+            addItem(title: itemConfig.title, icon: itemConfig.icon, keyEquivalent: itemConfig.keyEquivalent, action: itemConfig.action)
+        }
+    }
+    
+    /// 根据标题查找菜单项
+    /// - Parameter title: 菜单项标题
+    /// - Returns: 找到的菜单项
+    func item(withTitle title: String) -> NSMenuItem? {
+        return items.first { $0.title == title }
+    }
+    
+    /// 根据标签查找菜单项
+    /// - Parameter tag: 菜单项标签
+    /// - Returns: 找到的菜单项
+    func item(withTag tag: Int) -> NSMenuItem? {
+        return items.first { $0.tag == tag }
+    }
+    
+    /// 启用或禁用菜单项
+    /// - Parameters:
+    ///   - title: 菜单项标题
+    ///   - enabled: 是否启用
+    func setItemEnabled(title: String, enabled: Bool) {
+        if let item = item(withTitle: title) {
+            item.isEnabled = enabled
+        }
+    }
+    
+    /// 设置菜单项状态
+    /// - Parameters:
+    ///   - title: 菜单项标题
+    ///   - state: 菜单项状态
+    func setItemState(title: String, state: NSControl.StateValue) {
+        if let item = item(withTitle: title) {
+            item.state = state
+        }
+    }
+    
+    /// 移除所有菜单项
+    func removeAllItems() {
+        while items.count > 0 {
+            removeItem(at: 0)
+        }
+    }
+    
+    /// 获取菜单项数量
+    var itemCount: Int {
+        return items.count
+    }
+    
+    /// 检查菜单是否为空
+    var isEmpty: Bool {
+        return items.isEmpty
+    }
+    
+    /// 获取所有菜单项标题
+    var itemTitles: [String] {
+        return items.map { $0.title }
+    }
 }
 
 // 扩展 NSMenuItem
@@ -110,5 +217,21 @@ extension NSMenuItem {
             settingsBlock(menuItem)
         }
         return menuItem
+    }
+    
+    /// 设置菜单项回调
+    /// - Parameter action: 点击回调
+    func setAction(_ action: @escaping (NSMenuItem) -> Void) {
+        self.action = #selector(handleAction(_:))
+        self.target = self
+        
+        // 存储回调
+        objc_setAssociatedObject(self, "menuItemAction", action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+    }
+    
+    @objc private func handleAction(_ sender: NSMenuItem) {
+        if let action = objc_getAssociatedObject(self, "menuItemAction") as? (NSMenuItem) -> Void {
+            action(sender)
+        }
     }
 }

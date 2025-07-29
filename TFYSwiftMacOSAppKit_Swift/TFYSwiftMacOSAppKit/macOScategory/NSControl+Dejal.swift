@@ -262,4 +262,107 @@ public extension NSControl {
         
         self.attributedStringValue = textAttrStr
     }
+    
+    // MARK: - 新增实用方法
+    
+    /// 设置富文本样式
+    /// - Parameters:
+    ///   - text: 文本内容
+    ///   - font: 字体
+    ///   - color: 颜色
+    ///   - alignment: 对齐方式
+    func setAttributedText(_ text: String, font: NSFont, color: NSColor, alignment: NSTextAlignment = .left) {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = alignment
+        
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: color,
+            .paragraphStyle: paragraphStyle
+        ]
+        
+        self.attributedStringValue = NSAttributedString(string: text, attributes: attributes)
+    }
+    
+    /// 设置圆角边框
+    /// - Parameters:
+    ///   - cornerRadius: 圆角半径
+    ///   - borderWidth: 边框宽度
+    ///   - borderColor: 边框颜色
+    func setRoundedBorder(cornerRadius: CGFloat, borderWidth: CGFloat = 0, borderColor: NSColor = .clear) {
+        self.wantsLayer = true
+        self.layer?.cornerRadius = cornerRadius
+        self.layer?.borderWidth = borderWidth
+        self.layer?.borderColor = borderColor.cgColor
+    }
+    
+    /// 设置阴影效果
+    /// - Parameters:
+    ///   - shadowColor: 阴影颜色
+    ///   - shadowOffset: 阴影偏移
+    ///   - shadowRadius: 阴影半径
+    ///   - shadowOpacity: 阴影透明度
+    func setShadow(shadowColor: NSColor = .black, shadowOffset: CGSize = CGSize(width: 0, height: 2), shadowRadius: CGFloat = 4, shadowOpacity: Float = 0.3) {
+        self.wantsLayer = true
+        self.layer?.shadowColor = shadowColor.cgColor
+        self.layer?.shadowOffset = shadowOffset
+        self.layer?.shadowRadius = shadowRadius
+        self.layer?.shadowOpacity = shadowOpacity
+    }
+    
+    /// 添加渐变动画
+    /// - Parameters:
+    ///   - duration: 动画时长
+    ///   - delay: 延迟时间
+    func addFadeAnimation(duration: TimeInterval = 0.3, delay: TimeInterval = 0) {
+        let fadeOut = {
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = duration
+                context.allowsImplicitAnimation = true
+                self.animator().alphaValue = 0.0
+            }, completionHandler: {
+                NSAnimationContext.runAnimationGroup({ context in
+                    context.duration = duration
+                    context.allowsImplicitAnimation = true
+                    self.animator().alphaValue = 1.0
+                })
+            })
+        }
+        if delay > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: fadeOut)
+        } else {
+            fadeOut()
+        }
+    }
+
+    /// 获取当前文本的尺寸
+    /// - Parameter maxSize: 最大尺寸限制
+    /// - Returns: 文本尺寸
+    func textSize(maxSize: NSSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)) -> NSSize {
+        return self.attributedStringValue.boundingRect(with: maxSize, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil).size
+    }
+    
+    /// 检查文本是否为空或只包含空白字符
+    var isEmptyOrWhitespace: Bool {
+        return stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
+    /// 清除文本内容
+    func clearText() {
+        self.stringValue = ""
+    }
+    
+    /// 设置占位符文本
+    /// - Parameters:
+    ///   - placeholder: 占位符文本
+    ///   - color: 占位符颜色
+    func setPlaceholder(_ placeholder: String, color: NSColor = .placeholderTextColor) {
+        if let textField = self as? NSTextField {
+            let attributes: [NSAttributedString.Key: Any] = [
+                .foregroundColor: color,
+                .font: textField.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+            ]
+            textField.placeholderAttributedString = NSAttributedString(string: placeholder, attributes: attributes)
+        }
+    }
 }

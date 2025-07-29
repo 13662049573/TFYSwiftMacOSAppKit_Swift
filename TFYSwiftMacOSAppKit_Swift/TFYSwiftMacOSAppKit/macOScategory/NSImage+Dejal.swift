@@ -17,6 +17,8 @@ public extension NSImage {
         case imageCreationFailed      // 图像创建失败
         case filterCreationFailed     // 滤镜创建失败
         case kernelCreationFailed     // 内核创建失败
+        case invalidImageData         // 无效的图像数据
+        case unsupportedFormat        // 不支持的格式
     }
     
     /// 在指定矩形区域内绘制翻转的图像
@@ -97,6 +99,16 @@ public extension NSImage {
         return bitmapRep.representation(using: .png, properties: [:])
     }
     
+    /// 获取图像的JPEG格式数据
+    /// - Parameter compressionFactor: 压缩因子 (0.0 - 1.0)
+    /// - Returns: JPEG格式的数据，如果转换失败则返回nil
+    func jpegRepresentation(compressionFactor: CGFloat = 0.8) -> Data? {
+        guard let cgImage = cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        let bitmapRep = NSBitmapImageRep(cgImage: cgImage)
+        bitmapRep.size = size
+        return bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: compressionFactor])
+    }
+    
     /// 创建纯色图像
     /// - Parameter color: 要使用的颜色
     /// - Returns: 创建的纯色图像
@@ -110,6 +122,152 @@ public extension NSImage {
         image.unlockFocus()
         
         return image
+    }
+    
+    /// 创建渐变图像
+    /// - Parameters:
+    ///   - colors: 颜色数组
+    ///   - size: 图像尺寸
+    ///   - direction: 渐变方向
+    /// - Returns: 渐变图像
+    static func gradientImage(colors: [NSColor], size: NSSize, direction: NSGradient.DrawingOptions = .drawsBeforeStartingLocation) -> NSImage {
+        let image = NSImage(size: size)
+        let gradient = NSGradient(colors: colors)!
+        
+        image.lockFocus()
+        gradient.draw(in: NSRect(origin: .zero, size: size), angle: 0)
+        image.unlockFocus()
+        
+        return image
+    }
+    
+    // MARK: - 图像处理新方法
+    
+    /// 调整图像大小
+    /// - Parameter newSize: 新尺寸
+    /// - Returns: 调整后的图像
+    func resized(to newSize: NSSize) -> NSImage {
+        let image = NSImage(size: newSize)
+        image.lockFocus()
+        NSGraphicsContext.current?.imageInterpolation = .high
+        draw(in: NSRect(origin: .zero, size: newSize), from: .zero, operation: .copy, fraction: 1.0)
+        image.unlockFocus()
+        return image
+    }
+    
+    /// 裁剪图像
+    /// - Parameter rect: 裁剪区域
+    /// - Returns: 裁剪后的图像
+    func cropped(to rect: NSRect) -> NSImage {
+        let image = NSImage(size: rect.size)
+        image.lockFocus()
+        draw(in: NSRect(origin: .zero, size: rect.size), from: rect, operation: .copy, fraction: 1.0)
+        image.unlockFocus()
+        return image
+    }
+    
+    /// 旋转图像
+    /// - Parameter angle: 旋转角度（弧度）
+    /// - Returns: 旋转后的图像
+    func rotated(by angle: CGFloat) -> NSImage {
+        let transform = NSAffineTransform()
+        transform.rotate(byRadians: angle)
+        
+        let bounds = NSRect(origin: .zero, size: size)
+        let rotatedBounds = transformedRect(bounds, by: transform)
+        
+        let image = NSImage(size: rotatedBounds.size)
+        image.lockFocus()
+        
+        let context = NSGraphicsContext.current!
+        context.saveGraphicsState()
+        context.cgContext.translateBy(x: rotatedBounds.width / 2, y: rotatedBounds.height / 2)
+        context.cgContext.rotate(by: angle)
+        context.cgContext.translateBy(x: -size.width / 2, y: -size.height / 2)
+        
+        draw(in: bounds, from: .zero, operation: .copy, fraction: 1.0)
+        
+        context.restoreGraphicsState()
+        image.unlockFocus()
+        
+        return image
+    }
+    
+    /// 应用模糊效果
+    /// - Parameter radius: 模糊半径
+    /// - Returns: 模糊后的图像
+    func blurred(radius: CGFloat) -> NSImage? {
+        guard let cgImage = cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        
+        let ciImage = CIImage(cgImage: cgImage)
+        guard let blurFilter = CIFilter(name: "CIGaussianBlur") else { return nil }
+        
+        blurFilter.setValue(ciImage, forKey: "inputImage")
+        blurFilter.setValue(radius, forKey: "inputRadius")
+        
+        guard let outputImage = blurFilter.outputImage else { return nil }
+        
+        let rep = NSCIImageRep(ciImage: outputImage)
+        let image = NSImage(size: size)
+        image.addRepresentation(rep)
+        
+        return image
+    }
+    
+    /// 应用黑白效果
+    /// - Returns: 黑白图像
+    func blackAndWhite() -> NSImage? {
+        guard let cgImage = cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        
+        let ciImage = CIImage(cgImage: cgImage)
+        guard let filter = CIFilter(name: "CIColorMonochrome") else { return nil }
+        
+        filter.setValue(ciImage, forKey: "inputImage")
+        filter.setValue(CIColor(red: 0.7, green: 0.7, blue: 0.7), forKey: "inputColor")
+        filter.setValue(1.0, forKey: "inputIntensity")
+        
+        guard let outputImage = filter.outputImage else { return nil }
+        
+        let rep = NSCIImageRep(ciImage: outputImage)
+        let image = NSImage(size: size)
+        image.addRepresentation(rep)
+        
+        return image
+    }
+    
+    /// 保存图像到文件
+    /// - Parameters:
+    ///   - url: 保存路径
+    ///   - format: 图像格式
+    ///   - properties: 保存属性
+    /// - Throws: 保存错误
+    func save(to url: URL, format: NSBitmapImageRep.FileType, properties: [NSBitmapImageRep.PropertyKey: Any] = [:]) throws {
+        guard let cgImage = cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            throw ImageError.invalidImageData
+        }
+        
+        let bitmapRep = NSBitmapImageRep(cgImage: cgImage)
+        bitmapRep.size = size
+        
+        guard let data = bitmapRep.representation(using: format, properties: properties) else {
+            throw ImageError.unsupportedFormat
+        }
+        
+        try data.write(to: url)
+    }
+    
+    /// 从文件加载图像
+    /// - Parameter url: 文件路径
+    /// - Returns: 加载的图像，如果失败则返回nil
+    static func load(from url: URL) -> NSImage? {
+        return NSImage(contentsOf: url)
+    }
+    
+    /// 从数据创建图像
+    /// - Parameter data: 图像数据
+    /// - Returns: 创建的图像，如果失败则返回nil
+    static func load(from data: Data) -> NSImage? {
+        return NSImage(data: data)
     }
     
     // MARK: - 二维码生成相关方法
@@ -256,5 +414,152 @@ public extension NSImage {
         return kernel.apply(extent: ciImage.extent,
                           roiCallback: { _, rect in rect },
                           arguments: [ciImage])!
+    }
+    
+    // MARK: - 新增实用方法
+    
+    /// 获取图像的平均颜色
+    /// - Returns: 平均颜色
+    func averageColor() -> NSColor? {
+        guard let cgImage = cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        
+        let width = Int(size.width)
+        let height = Int(size.height)
+        let bytesPerPixel = 4
+        let bytesPerRow = width * bytesPerPixel
+        let bitsPerComponent = 8
+        
+        guard let context = CGContext(data: nil,
+                                    width: width,
+                                    height: height,
+                                    bitsPerComponent: bitsPerComponent,
+                                    bytesPerRow: bytesPerRow,
+                                    space: CGColorSpaceCreateDeviceRGB(),
+                                    bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        
+        guard let data = context.data else { return nil }
+        let buffer = data.bindMemory(to: UInt8.self, capacity: width * height * bytesPerPixel)
+        
+        var totalRed: Int = 0
+        var totalGreen: Int = 0
+        var totalBlue: Int = 0
+        var totalAlpha: Int = 0
+        
+        for y in 0..<height {
+            for x in 0..<width {
+                let pixelIndex = (y * width + x) * bytesPerPixel
+                totalRed += Int(buffer[pixelIndex])
+                totalGreen += Int(buffer[pixelIndex + 1])
+                totalBlue += Int(buffer[pixelIndex + 2])
+                totalAlpha += Int(buffer[pixelIndex + 3])
+            }
+        }
+        
+        let pixelCount = width * height
+        let averageRed = CGFloat(totalRed) / CGFloat(pixelCount) / 255.0
+        let averageGreen = CGFloat(totalGreen) / CGFloat(pixelCount) / 255.0
+        let averageBlue = CGFloat(totalBlue) / CGFloat(pixelCount) / 255.0
+        let averageAlpha = CGFloat(totalAlpha) / CGFloat(pixelCount) / 255.0
+        
+        return NSColor(red: averageRed, green: averageGreen, blue: averageBlue, alpha: averageAlpha)
+    }
+    
+    /// 创建圆形图像
+    /// - Returns: 圆形图像
+    func circularImage() -> NSImage {
+        let image = NSImage(size: size)
+        image.lockFocus()
+        
+        let path = NSBezierPath(ovalIn: NSRect(origin: .zero, size: size))
+        path.addClip()
+        
+        draw(in: NSRect(origin: .zero, size: size), from: .zero, operation: .copy, fraction: 1.0)
+        
+        image.unlockFocus()
+        return image
+    }
+    
+    /// 创建圆角图像
+    /// - Parameter cornerRadius: 圆角半径
+    /// - Returns: 圆角图像
+    func roundedImage(cornerRadius: CGFloat) -> NSImage {
+        let image = NSImage(size: size)
+        image.lockFocus()
+        
+        let path = NSBezierPath(roundedRect: NSRect(origin: .zero, size: size), xRadius: cornerRadius, yRadius: cornerRadius)
+        path.addClip()
+        
+        draw(in: NSRect(origin: .zero, size: size), from: .zero, operation: .copy, fraction: 1.0)
+        
+        image.unlockFocus()
+        return image
+    }
+    
+    /// 添加边框
+    /// - Parameters:
+    ///   - borderWidth: 边框宽度
+    ///   - borderColor: 边框颜色
+    /// - Returns: 带边框的图像
+    func addBorder(width borderWidth: CGFloat, color borderColor: NSColor) -> NSImage {
+        let newSize = NSSize(width: size.width + borderWidth * 2, height: size.height + borderWidth * 2)
+        let image = NSImage(size: newSize)
+        
+        image.lockFocus()
+        borderColor.setFill()
+        NSBezierPath(rect: NSRect(origin: .zero, size: newSize)).fill()
+        
+        draw(in: NSRect(x: borderWidth, y: borderWidth, width: size.width, height: size.height),
+             from: .zero, operation: .copy, fraction: 1.0)
+        
+        image.unlockFocus()
+        return image
+    }
+    
+    /// 创建缩略图
+    /// - Parameter maxSize: 最大尺寸
+    /// - Returns: 缩略图
+    func thumbnail(maxSize: NSSize) -> NSImage {
+        let scale = min(maxSize.width / size.width, maxSize.height / size.height)
+        let newSize = NSSize(width: size.width * scale, height: size.height * scale)
+        return resized(to: newSize)
+    }
+    
+    /// 检查图像是否为透明
+    var isTransparent: Bool {
+        guard let cgImage = cgImage(forProposedRect: nil, context: nil, hints: nil) else { return false }
+        return cgImage.alphaInfo != .none && cgImage.alphaInfo != .noneSkipLast
+    }
+    
+    /// 获取图像的文件大小（以字节为单位）
+    /// - Parameter format: 图像格式
+    /// - Returns: 文件大小
+    func fileSize(format: NSBitmapImageRep.FileType = .png) -> Int? {
+        guard let data = representation(for: format) else { return nil }
+        return data.count
+    }
+    
+    /// 获取图像的表示形式
+    /// - Parameter format: 图像格式
+    /// - Returns: 图像数据
+    func representation(for format: NSBitmapImageRep.FileType) -> Data? {
+        guard let cgImage = cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        let bitmapRep = NSBitmapImageRep(cgImage: cgImage)
+        bitmapRep.size = size
+        return bitmapRep.representation(using: format, properties: [:])
+    }
+    
+    /// 计算NSRect经过NSAffineTransform变换后的新rect
+    private func transformedRect(_ rect: NSRect, by transform: NSAffineTransform) -> NSRect {
+        let points = [
+            NSPoint(x: rect.minX, y: rect.minY),
+            NSPoint(x: rect.maxX, y: rect.minY),
+            NSPoint(x: rect.minX, y: rect.maxY),
+            NSPoint(x: rect.maxX, y: rect.maxY)
+        ].map { transform.transform($0) }
+        let xs = points.map { $0.x }
+        let ys = points.map { $0.y }
+        return NSRect(x: xs.min()!, y: ys.min()!, width: xs.max()! - xs.min()!, height: ys.max()! - ys.min()!)
     }
 }

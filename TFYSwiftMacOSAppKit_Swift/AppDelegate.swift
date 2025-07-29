@@ -19,11 +19,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         view.wantsLayer = true
         view.layer?.backgroundColor = NSColor.orange.cgColor
 
-        // 配置图片和视图控制器
-        TFYStatusItem.shared.configureSafely(with: .init(
-            image: NSImage(named: "mood_analysis_select_5"),
-            viewController: showVc
-        ))
+//        // 配置图片和视图控制器
+//        TFYStatusItem.shared.configureSafely(with: .init(
+//            image: NSImage(named: "mood_analysis_select_5"),
+//            viewController: showVc
+//        ))
 
         // 配置自定义视图和视图控制器
         TFYStatusItem.shared.configureSafely(with: .init(

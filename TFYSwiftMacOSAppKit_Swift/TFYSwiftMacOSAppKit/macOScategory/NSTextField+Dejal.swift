@@ -12,6 +12,8 @@ public extension NSTextField {
     
     private struct AssociatedKeys {
         static var placeholderColorName:UnsafeRawPointer = UnsafeRawPointer(bitPattern: "textColor".hashValue)!
+        static var textChangeHandler: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "textChangeHandler".hashValue)!
+        static var validationHandler: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "validationHandler".hashValue)!
     }
     
     var placeholderStringColor:NSColor {
@@ -76,6 +78,134 @@ public extension NSTextField {
         }
         self.stringValue = text
         self.frame.size = NSSize(width: width, height: height)
+    }
+    
+    // MARK: - 新增实用方法
+    
+    /// 设置文本变化回调
+    /// - Parameter handler: 文本变化回调
+    func setTextChangeHandler(_ handler: @escaping (String) -> Void) {
+        objc_setAssociatedObject(self, AssociatedKeys.textChangeHandler, handler, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        self.target = self
+        self.action = #selector(handleTextChange(_:))
+    }
+    
+    @objc private func handleTextChange(_ sender: NSTextField) {
+        if let handler = objc_getAssociatedObject(self, AssociatedKeys.textChangeHandler) as? (String) -> Void {
+            handler(sender.stringValue)
+        }
+    }
+    
+    /// 设置文本验证回调
+    /// - Parameter handler: 验证回调，返回是否有效
+    func setValidationHandler(_ handler: @escaping (String) -> Bool) {
+        objc_setAssociatedObject(self, AssociatedKeys.validationHandler, handler, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+    }
+    
+    /// 验证当前文本
+    /// - Returns: 是否有效
+    func validateText() -> Bool {
+        if let handler = objc_getAssociatedObject(self, AssociatedKeys.validationHandler) as? (String) -> Bool {
+            return handler(stringValue)
+        }
+        return true
+    }
+    
+    /// 添加焦点效果
+    func addFocusEffect() {
+        NotificationCenter.default.addObserver(self, selector: #selector(textFieldDidBeginEditing), name: NSControl.textDidBeginEditingNotification, object: self)
+        NotificationCenter.default.addObserver(self, selector: #selector(textFieldDidEndEditing), name: NSControl.textDidEndEditingNotification, object: self)
+    }
+    
+    @objc private func textFieldDidBeginEditing() {
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.2
+            self.animator().alphaValue = 1.0
+        })
+    }
+    
+    @objc private func textFieldDidEndEditing() {
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.2
+            self.animator().alphaValue = 0.8
+        })
+    }
+    
+    /// 设置最大字符数
+    /// - Parameter maxLength: 最大字符数
+    func setMaxLength(_ maxLength: Int) {
+        self.target = self
+        self.action = #selector(handleTextDidChange(_:))
+        objc_setAssociatedObject(self, "maxLength", maxLength, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    }
+    
+    @objc private func handleTextDidChange(_ sender: NSTextField) {
+        if let maxLength = objc_getAssociatedObject(self, "maxLength") as? Int {
+            if sender.stringValue.count > maxLength {
+                sender.stringValue = String(sender.stringValue.prefix(maxLength))
+            }
+        }
+    }
+    
+    /// 检查文本是否为空
+    var isEmpty: Bool {
+        return stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
+    /// 设置文本字段为只读
+    /// - Parameter readOnly: 是否只读
+    func setReadOnly(_ readOnly: Bool) {
+        self.isEditable = !readOnly
+        self.isSelectable = !readOnly
+        if readOnly {
+            self.backgroundColor = NSColor.controlBackgroundColor
+        }
+    }
+    
+    /// 获取当前光标位置
+    var cursorPosition: Int {
+        if let textView = self.currentEditor() as? NSTextView {
+            return textView.selectedRange().location
+        }
+        return 0
+    }
+    
+    /// 设置光标位置
+    /// - Parameter position: 光标位置
+    func setCursorPosition(_ position: Int) {
+        if let textView = self.currentEditor() as? NSTextView {
+            let range = NSRange(location: position, length: 0)
+            textView.setSelectedRange(range)
+        }
+    }
+    
+    /// 复制文本到剪贴板
+    func copyText() {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(stringValue, forType: .string)
+    }
+    
+    /// 从剪贴板粘贴文本
+    func pasteText() {
+        let pasteboard = NSPasteboard.general
+        if let text = pasteboard.string(forType: .string) {
+            self.stringValue = text
+        }
+    }
+    
+    /// 撤销操作
+    func undo() {
+        if let textView = self.currentEditor() as? NSTextView {
+            textView.undoManager?.undo()
+        }
+    }
+    
+    /// 重做操作
+    func redo() {
+        if let textView = self.currentEditor() as? NSTextView {
+            textView.undoManager?.redo()
+        }
     }
 }
 
@@ -158,4 +288,29 @@ public extension NSTextField {
         codeTimer.resume()
     }
     
+    // MARK: - 新增手势和动画方法
+    
+    /// 添加缩放手势
+    @discardableResult
+    func addGesturePinch(_ action: @escaping ((NSMagnificationGestureRecognizer) -> Void)) -> NSMagnificationGestureRecognizer {
+        let obj = NSMagnificationGestureRecognizer(target: nil, action: nil)
+        self.isEnabled = true
+        self.addGestureRecognizer(obj)
+        obj.addAction { recognizer in
+            action(recognizer as! NSMagnificationGestureRecognizer)
+        }
+        return obj
+    }
+    
+    /// 添加旋转手势
+    @discardableResult
+    func addGestureRotation(_ action: @escaping ((NSRotationGestureRecognizer) -> Void)) -> NSRotationGestureRecognizer {
+        let obj = NSRotationGestureRecognizer(target: nil, action: nil)
+        self.isEnabled = true
+        self.addGestureRecognizer(obj)
+        obj.addAction { recognizer in
+            action(recognizer as! NSRotationGestureRecognizer)
+        }
+        return obj
+    }
 }

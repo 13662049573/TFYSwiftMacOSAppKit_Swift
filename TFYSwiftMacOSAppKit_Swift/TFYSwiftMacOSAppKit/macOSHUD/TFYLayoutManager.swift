@@ -44,19 +44,38 @@ public class TFYLayoutManager: NSObject {
         var allConstraints: [NSLayoutConstraint] = []
         let container = hud.containerView
         
-        // Status label constraints if exists
-        if !hud.statusLabel.stringValue.isEmpty {
-            allConstraints.append(
-                hud.statusLabel.topAnchor.constraint(equalTo: hud.customImageView.bottomAnchor, constant: 12)
-            )
+        // 检查是否有文字内容
+        let hasText = !hud.statusLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        
+        // Container view constraints - 根据是否有文字决定大小
+        if hasText {
+            // 有文字时使用自适应大小
+            allConstraints.append(contentsOf: [
+                container.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
+                container.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
+                container.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
+                container.heightAnchor.constraint(greaterThanOrEqualToConstant: 100),
+                container.leadingAnchor.constraint(greaterThanOrEqualTo: hud.leadingAnchor, constant: 40),
+                container.trailingAnchor.constraint(lessThanOrEqualTo: hud.trailingAnchor, constant: -40)
+            ])
+        } else {
+            // 无文字时使用固定大小
+            allConstraints.append(contentsOf: [
+                container.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
+                container.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
+                container.widthAnchor.constraint(equalToConstant: 200),
+                container.heightAnchor.constraint(equalToConstant: 120),
+                container.leadingAnchor.constraint(greaterThanOrEqualTo: hud.leadingAnchor, constant: 40),
+                container.trailingAnchor.constraint(lessThanOrEqualTo: hud.trailingAnchor, constant: -40)
+            ])
         }
         
-        // Custom image view constraints
+        // Activity indicator constraints
         allConstraints.append(contentsOf: [
-            hud.customImageView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            hud.customImageView.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
-            hud.customImageView.widthAnchor.constraint(equalToConstant: 32),
-            hud.customImageView.heightAnchor.constraint(equalToConstant: 32)
+            hud.activityIndicator.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            hud.activityIndicator.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
+            hud.activityIndicator.widthAnchor.constraint(equalToConstant: 32),
+            hud.activityIndicator.heightAnchor.constraint(equalToConstant: 32)
         ])
         
         // Progress view constraints
@@ -67,31 +86,27 @@ public class TFYLayoutManager: NSObject {
             hud.progressView.heightAnchor.constraint(equalToConstant: 40)
         ])
         
-        // Container view constraints
+        // Custom image view constraints
         allConstraints.append(contentsOf: [
-            container.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
-            container.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
-            container.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
-            container.heightAnchor.constraint(greaterThanOrEqualToConstant: 120),
-            container.leadingAnchor.constraint(greaterThanOrEqualTo: hud.leadingAnchor, constant: 40),
-            container.trailingAnchor.constraint(lessThanOrEqualTo: hud.trailingAnchor, constant: -40)
+            hud.customImageView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            hud.customImageView.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
+            hud.customImageView.widthAnchor.constraint(equalToConstant: 32),
+            hud.customImageView.heightAnchor.constraint(equalToConstant: 32)
         ])
         
-        // Activity indicator constraints
-        allConstraints.append(contentsOf: [
-            hud.activityIndicator.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            hud.activityIndicator.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
-            hud.activityIndicator.widthAnchor.constraint(equalToConstant: 32),
-            hud.activityIndicator.heightAnchor.constraint(equalToConstant: 32)
-        ])
-        
-        // Status label constraints
-        allConstraints.append(contentsOf: [
-            hud.statusLabel.topAnchor.constraint(equalTo: hud.activityIndicator.bottomAnchor, constant: 12),
-            hud.statusLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            hud.statusLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-            hud.statusLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16)
-        ])
+        // Status label constraints - 根据是否有文字调整
+        if hasText {
+            allConstraints.append(contentsOf: [
+                hud.statusLabel.topAnchor.constraint(equalTo: hud.activityIndicator.bottomAnchor, constant: 12),
+                hud.statusLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+                hud.statusLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+                hud.statusLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+                hud.statusLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 20)
+            ])
+        } else {
+            // 无文字时隐藏状态标签
+            hud.statusLabel.isHidden = true
+        }
         
         NSLayoutConstraint.activate(allConstraints)
         activeConstraints.append(contentsOf: allConstraints)
@@ -108,13 +123,27 @@ public class TFYLayoutManager: NSObject {
         
         var constraints: [NSLayoutConstraint] = []
         
-        // 容器视图约束
-        constraints.append(contentsOf: [
-            hud.containerView.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
-            hud.containerView.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
-            hud.containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
-            hud.containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100)
-        ])
+        // 检查是否有文字内容
+        let hasText = !hud.statusLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        
+        // 容器视图约束 - 根据是否有文字决定大小
+        if hasText {
+            // 有文字时使用自适应大小
+            constraints.append(contentsOf: [
+                hud.containerView.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
+                hud.containerView.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
+                hud.containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
+                hud.containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100)
+            ])
+        } else {
+            // 无文字时使用固定大小
+            constraints.append(contentsOf: [
+                hud.containerView.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
+                hud.containerView.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
+                hud.containerView.widthAnchor.constraint(equalToConstant: 200),
+                hud.containerView.heightAnchor.constraint(equalToConstant: 120)
+            ])
+        }
         
         // 活动指示器约束
         constraints.append(contentsOf: [
@@ -140,21 +169,30 @@ public class TFYLayoutManager: NSObject {
             hud.customImageView.heightAnchor.constraint(equalToConstant: 32)
         ])
         
-        // 状态标签约束
-        constraints.append(contentsOf: [
-            hud.statusLabel.topAnchor.constraint(equalTo: hud.activityIndicator.bottomAnchor, constant: 12),
-            hud.statusLabel.leadingAnchor.constraint(equalTo: hud.containerView.leadingAnchor, constant: 16),
-            hud.statusLabel.trailingAnchor.constraint(equalTo: hud.containerView.trailingAnchor, constant: -16),
-            hud.statusLabel.bottomAnchor.constraint(equalTo: hud.containerView.bottomAnchor, constant: -16)
-        ])
+        // 状态标签约束 - 根据是否有文字调整
+        if hasText {
+            constraints.append(contentsOf: [
+                hud.statusLabel.topAnchor.constraint(equalTo: hud.activityIndicator.bottomAnchor, constant: 12),
+                hud.statusLabel.leadingAnchor.constraint(equalTo: hud.containerView.leadingAnchor, constant: 16),
+                hud.statusLabel.trailingAnchor.constraint(equalTo: hud.containerView.trailingAnchor, constant: -16),
+                hud.statusLabel.bottomAnchor.constraint(equalTo: hud.containerView.bottomAnchor, constant: -16),
+                hud.statusLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 20)
+            ])
+            hud.statusLabel.isHidden = false
+        } else {
+            // 无文字时隐藏状态标签
+            hud.statusLabel.isHidden = true
+        }
         
         // 根据当前模式调整约束优先级
         switch hud.mode {
         case .text:
             // 纯文本模式时，调整状态标签的约束
-            let topConstraint = hud.statusLabel.topAnchor.constraint(equalTo: hud.containerView.topAnchor, constant: 16)
-            topConstraint.priority = .defaultHigh
-            constraints.append(topConstraint)
+            if hasText {
+                let topConstraint = hud.statusLabel.topAnchor.constraint(equalTo: hud.containerView.topAnchor, constant: 16)
+                topConstraint.priority = .defaultHigh
+                constraints.append(topConstraint)
+            }
             
         case .customView:
             // 自定义视图模式时，调整图像视图的约束
@@ -218,13 +256,27 @@ public class TFYLayoutManager: NSObject {
     func setupDefaultConstraints(_ hud: TFYProgressMacOSHUD, constraints: inout [NSLayoutConstraint]) {
         let container = hud.containerView
         
-        // Base container constraints
-        constraints.append(contentsOf: [
-            container.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
-            container.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
-            container.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
-            container.heightAnchor.constraint(greaterThanOrEqualToConstant: 100)
-        ])
+        // 检查是否有文字内容
+        let hasText = !hud.statusLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        
+        // Base container constraints - 根据是否有文字决定大小
+        if hasText {
+            // 有文字时使用自适应大小
+            constraints.append(contentsOf: [
+                container.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
+                container.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
+                container.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
+                container.heightAnchor.constraint(greaterThanOrEqualToConstant: 100)
+            ])
+        } else {
+            // 无文字时使用固定大小
+            constraints.append(contentsOf: [
+                container.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
+                container.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
+                container.widthAnchor.constraint(equalToConstant: 200),
+                container.heightAnchor.constraint(equalToConstant: 120)
+            ])
+        }
         
         setupConstraintsBasedOnMode(hud, container: container, constraints: &constraints)
     }

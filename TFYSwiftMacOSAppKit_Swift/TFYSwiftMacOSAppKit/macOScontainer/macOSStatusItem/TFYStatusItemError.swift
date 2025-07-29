@@ -1,5 +1,5 @@
 //
-//  TFYStatusItemContainerView.swift
+//  TFYStatusItemError.swift
 //  TFYSwiftMacOSAppKit_Swift
 //
 //  Created by 田风有 on 2024/11/7.

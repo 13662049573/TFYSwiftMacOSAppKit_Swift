@@ -88,4 +88,172 @@ public extension NSSplitView {
 
         display()
     }
+    
+    /// 检查子视图是否折叠
+    /// - Parameter index: 子视图索引
+    /// - Returns: 是否折叠
+    func isSubviewCollapsed(atIndex index: Int) -> Bool {
+        guard index < subviews.count else { return false }
+        return isSubviewCollapsed(subviews[index])
+    }
+    
+    /// 设置子视图的最小尺寸
+    /// - Parameters:
+    ///   - index: 子视图索引
+    ///   - minSize: 最小尺寸
+    func setMinimumSize(_ minSize: CGFloat, forSubviewAt index: Int) {
+        guard index < subviews.count else { return }
+        let subview = subviews[index]
+        if isVertical {
+            subview.frame.size.width = max(subview.frame.size.width, minSize)
+        } else {
+            subview.frame.size.height = max(subview.frame.size.height, minSize)
+        }
+    }
+    
+    /// 设置子视图的最大尺寸
+    /// - Parameters:
+    ///   - index: 子视图索引
+    ///   - maxSize: 最大尺寸
+    func setMaximumSize(_ maxSize: CGFloat, forSubviewAt index: Int) {
+        guard index < subviews.count else { return }
+        let subview = subviews[index]
+        if isVertical {
+            subview.frame.size.width = min(subview.frame.size.width, maxSize)
+        } else {
+            subview.frame.size.height = min(subview.frame.size.height, maxSize)
+        }
+    }
+    
+    /// 获取子视图的当前尺寸
+    /// - Parameter index: 子视图索引
+    /// - Returns: 子视图尺寸
+    func sizeForSubview(at index: Int) -> CGFloat {
+        guard index < subviews.count else { return 0 }
+        let subview = subviews[index]
+        return isVertical ? subview.frame.size.width : subview.frame.size.height
+    }
+    
+    /// 设置子视图的尺寸
+    /// - Parameters:
+    ///   - index: 子视图索引
+    ///   - size: 新尺寸
+    func setSize(_ size: CGFloat, forSubviewAt index: Int) {
+        guard index < subviews.count else { return }
+        let subview = subviews[index]
+        if isVertical {
+            subview.frame.size.width = size
+        } else {
+            subview.frame.size.height = size
+        }
+        display()
+    }
+    
+    /// 平均分配子视图尺寸
+    func distributeSubviewsEqually() {
+        let totalSize = isVertical ? frame.size.width : frame.size.height
+        let dividerThickness = self.dividerThickness
+        let availableSize = totalSize - (CGFloat(subviews.count - 1) * dividerThickness)
+        let equalSize = availableSize / CGFloat(subviews.count)
+        
+        for (index, subview) in subviews.enumerated() {
+            if isVertical {
+                subview.frame.size.width = equalSize
+                if index > 0 {
+                    subview.frame.origin.x = CGFloat(index) * (equalSize + dividerThickness)
+                }
+            } else {
+                subview.frame.size.height = equalSize
+                if index > 0 {
+                    subview.frame.origin.y = CGFloat(index) * (equalSize + dividerThickness)
+                }
+            }
+        }
+        display()
+    }
+    
+    /// 交换子视图位置
+    /// - Parameters:
+    ///   - index1: 第一个子视图索引
+    ///   - index2: 第二个子视图索引
+    func swapSubviews(at index1: Int, and index2: Int) {
+        guard index1 < subviews.count && index2 < subviews.count else { return }
+        let subview1 = subviews[index1]
+        let subview2 = subviews[index2]
+        
+        let frame1 = subview1.frame
+        let frame2 = subview2.frame
+        
+        subview1.frame = frame2
+        subview2.frame = frame1
+    }
+    
+    /// 获取分割视图的总尺寸
+    var totalSize: CGFloat {
+        return isVertical ? frame.size.width : frame.size.height
+    }
+    
+    /// 获取可用尺寸（减去分割器厚度）
+    var availableSize: CGFloat {
+        let totalSize = self.totalSize
+        let dividerThickness = self.dividerThickness
+        return totalSize - (CGFloat(subviews.count - 1) * dividerThickness)
+    }
+    
+    /// 创建水平分割视图
+    /// - Parameter subviews: 子视图数组
+    /// - Returns: 创建的水平分割视图
+    static func createHorizontalSplitView(with subviews: [NSView]) -> NSSplitView {
+        let splitView = NSSplitView()
+        splitView.isVertical = false
+        splitView.dividerStyle = .thin
+        
+        for subview in subviews {
+            splitView.addSubview(subview)
+        }
+        
+        return splitView
+    }
+    
+    /// 创建垂直分割视图
+    /// - Parameter subviews: 子视图数组
+    /// - Returns: 创建的垂直分割视图
+    static func createVerticalSplitView(with subviews: [NSView]) -> NSSplitView {
+        let splitView = NSSplitView()
+        splitView.isVertical = true
+        splitView.dividerStyle = .thin
+        
+        for subview in subviews {
+            splitView.addSubview(subview)
+        }
+        
+        return splitView
+    }
+    
+    /// 设置分割视图的动画
+    /// - Parameter animated: 是否启用动画
+    func setAnimated(_ animated: Bool) {
+        if animated {
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = 0.3
+                context.allowsImplicitAnimation = true
+                self.display()
+            })
+        } else {
+            self.display()
+        }
+    }
+    
+    /// 获取分割视图的子视图标题
+    var subviewTitles: [String] {
+        return subviews.compactMap { subview in
+            if let textField = subview as? NSTextField {
+                return textField.stringValue
+            } else if let label = subview as? NSTextField {
+                return label.stringValue
+            } else {
+                return subview.accessibilityLabel()
+            }
+        }
+    }
 }

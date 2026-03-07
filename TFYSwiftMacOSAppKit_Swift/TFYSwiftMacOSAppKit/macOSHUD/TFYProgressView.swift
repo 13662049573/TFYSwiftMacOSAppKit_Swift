@@ -29,11 +29,16 @@ public class TFYProgressView: NSView {
     // Properties
     public var progress: CGFloat = 0.0 {
         didSet {
-            if progress != oldValue {
+            if progress != oldValue, !isInsideSetProgress {
+                isInsideSetProgress = true
                 setProgress(progress, animated: animated)
+                isInsideSetProgress = false
             }
         }
     }
+
+    /// 防止 didSet 与 setProgress 相互递归
+    private var isInsideSetProgress: Bool = false
     
     public var style: TFYProgressViewStyle = .ring {
         didSet {
@@ -208,8 +213,9 @@ public class TFYProgressView: NSView {
 
     private func updatePaths() {
         let bounds = self.bounds
+        guard bounds.width > 0, bounds.height > 0 else { return }
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
-        let radius = min(bounds.width, bounds.height) / 2 - lineWidth
+        let radius = max(0, min(bounds.width, bounds.height) / 2 - lineWidth)
         
         switch style {
         case .ring:
@@ -242,8 +248,9 @@ public class TFYProgressView: NSView {
     
     private func updatePiePath() {
         let bounds = self.bounds
+        guard bounds.width > 0, bounds.height > 0 else { return }
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
-        let radius = min(bounds.width, bounds.height) / 2 - lineWidth
+        let radius = max(0, min(bounds.width, bounds.height) / 2 - lineWidth)
         
         let startAngle = -CGFloat.pi / 2
         let endAngle = startAngle + (2 * CGFloat.pi * progress)
@@ -275,20 +282,23 @@ public class TFYProgressView: NSView {
     public func setProgress(_ progress: CGFloat, animated: Bool, completion: (() -> Void)? = nil) {
         let clampedProgress = min(max(progress, 0.0), 1.0)
         lastProgress = self.progress
+        isInsideSetProgress = true
         self.progress = clampedProgress
+        isInsideSetProgress = false
         completionBlock = completion
-        
+
         if animated {
             let animation = CABasicAnimation(keyPath: "strokeEnd")
             animation.fromValue = lastProgress
-            animation.toValue = progress
+            animation.toValue = clampedProgress
             animation.duration = animationDuration
             animation.timingFunction = timingFunction
             animation.isRemovedOnCompletion = false
             animation.fillMode = .forwards
             
             progressLayer.add(animation, forKey: "progressAnimation")
-            
+            progressLayer.strokeEnd = clampedProgress
+
             if style == .pie {
                 let pieAnimation = CABasicAnimation(keyPath: "path")
                 pieAnimation.duration = animationDuration
@@ -296,12 +306,11 @@ public class TFYProgressView: NSView {
                 pieLayer.add(pieAnimation, forKey: "pieAnimation")
             }
             
-            // Timer to handle completion
-            Timer.scheduledTimer(withTimeInterval: animationDuration, repeats: false) { _ in
-                self.animationDidComplete()
+            DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) { [weak self] in
+                self?.animationDidComplete()
             }
         } else {
-            progressLayer.strokeEnd = progress
+            progressLayer.strokeEnd = clampedProgress
             if style == .pie {
                 updatePiePath()
             }

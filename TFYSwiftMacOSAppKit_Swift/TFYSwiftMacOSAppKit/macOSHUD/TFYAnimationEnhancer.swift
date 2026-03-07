@@ -54,9 +54,11 @@ public class TFYAnimationEnhancer: NSObject {
     }
     
     // MARK: - View Setup
+    /// 每次 show 前调用，重置 layer 状态，避免上一轮方向/缩放/旋转残留
     func setup(with view: NSView) {
         view.wantsLayer = true
         view.layer?.opacity = 0.0
+        view.layer?.transform = CATransform3DIdentity
     }
     
     func applyAnimation(to view: NSView) {
@@ -122,24 +124,26 @@ public class TFYAnimationEnhancer: NSObject {
     
     private func applyScaleAnimation(to view: NSView) {
         let scaleAnimation = CABasicAnimation(keyPath: "transform.scale")
-        scaleAnimation.fromValue = 0.0
+        scaleAnimation.fromValue = 0.01
         scaleAnimation.toValue = 1.0
         scaleAnimation.duration = duration
         scaleAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
         
         view.layer?.add(scaleAnimation, forKey: "scaleIn")
         view.layer?.opacity = 1.0
+        view.layer?.setValue(1.0, forKeyPath: "transform.scale")
     }
     
     private func applyScaleOutAnimation(to view: NSView) {
         let scaleAnimation = CABasicAnimation(keyPath: "transform.scale")
         scaleAnimation.fromValue = 1.0
-        scaleAnimation.toValue = 0.0
+        scaleAnimation.toValue = 0.01
         scaleAnimation.duration = duration
         scaleAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
         
         view.layer?.add(scaleAnimation, forKey: "scaleOut")
         view.layer?.opacity = 0.0
+        view.layer?.setValue(0.01, forKeyPath: "transform.scale")
     }
     
     private func applySlideAnimation(to view: NSView) {
@@ -151,6 +155,7 @@ public class TFYAnimationEnhancer: NSObject {
         
         view.layer?.add(slideAnimation, forKey: "slideIn")
         view.layer?.opacity = 1.0
+        view.layer?.setValue(0.0, forKeyPath: "transform.translation.y")
     }
     
     private func applySlideOutAnimation(to view: NSView) {
@@ -162,6 +167,7 @@ public class TFYAnimationEnhancer: NSObject {
         
         view.layer?.add(slideAnimation, forKey: "slideOut")
         view.layer?.opacity = 0.0
+        view.layer?.setValue(50.0, forKeyPath: "transform.translation.y")
     }
     
     private func applyRotateAnimation(to view: NSView) {
@@ -202,11 +208,12 @@ public class TFYAnimationEnhancer: NSObject {
         
         view.layer?.add(groupAnimation, forKey: "rotateOut")
         view.layer?.opacity = 0.0
+        view.layer?.setValue(-Double.pi * 2, forKeyPath: "transform.rotation")
     }
     
     private func applyBounceAnimation(to view: NSView) {
         let bounceAnimation = CAKeyframeAnimation(keyPath: "transform.scale")
-        bounceAnimation.values = [0.0, 1.2, 0.9, 1.0]
+        bounceAnimation.values = [0.01, 1.2, 0.9, 1.0]
         bounceAnimation.keyTimes = [0.0, 0.6, 0.8, 1.0] as [NSNumber]
         bounceAnimation.duration = duration
         bounceAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -226,7 +233,7 @@ public class TFYAnimationEnhancer: NSObject {
     
     private func applyBounceOutAnimation(to view: NSView) {
         let bounceAnimation = CAKeyframeAnimation(keyPath: "transform.scale")
-        bounceAnimation.values = [1.0, 1.1, 0.8, 0.0]
+        bounceAnimation.values = [1.0, 1.1, 0.8, 0.01]
         bounceAnimation.keyTimes = [0.0, 0.2, 0.6, 1.0] as [NSNumber]
         bounceAnimation.duration = duration
         bounceAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -242,11 +249,12 @@ public class TFYAnimationEnhancer: NSObject {
         
         view.layer?.add(groupAnimation, forKey: "bounceOut")
         view.layer?.opacity = 0.0
+        view.layer?.setValue(0.01, forKeyPath: "transform.scale")
     }
     
     private func applyElasticAnimation(to view: NSView) {
         let elasticAnimation = CAKeyframeAnimation(keyPath: "transform.scale")
-        elasticAnimation.values = [0.0, 1.3, 0.8, 1.1, 0.95, 1.0]
+        elasticAnimation.values = [0.01, 1.3, 0.8, 1.1, 0.95, 1.0]
         elasticAnimation.keyTimes = [0.0, 0.3, 0.5, 0.7, 0.9, 1.0] as [NSNumber]
         elasticAnimation.duration = duration
         elasticAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -266,7 +274,7 @@ public class TFYAnimationEnhancer: NSObject {
     
     private func applyElasticOutAnimation(to view: NSView) {
         let elasticAnimation = CAKeyframeAnimation(keyPath: "transform.scale")
-        elasticAnimation.values = [1.0, 1.1, 0.9, 1.05, 0.95, 0.0]
+        elasticAnimation.values = [1.0, 1.1, 0.9, 1.05, 0.95, 0.01]
         elasticAnimation.keyTimes = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0] as [NSNumber]
         elasticAnimation.duration = duration
         elasticAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -282,12 +290,13 @@ public class TFYAnimationEnhancer: NSObject {
         
         view.layer?.add(groupAnimation, forKey: "elasticOut")
         view.layer?.opacity = 0.0
+        view.layer?.setValue(0.01, forKeyPath: "transform.scale")
     }
     
     private func applyCustomAnimation(to view: NSView) {
         // 自定义动画：组合缩放和旋转
         let scaleAnimation = CABasicAnimation(keyPath: "transform.scale")
-        scaleAnimation.fromValue = 0.0
+        scaleAnimation.fromValue = 0.01
         scaleAnimation.toValue = 1.0
         scaleAnimation.duration = duration
         
@@ -314,7 +323,7 @@ public class TFYAnimationEnhancer: NSObject {
         // 自定义动画：组合缩放和旋转
         let scaleAnimation = CABasicAnimation(keyPath: "transform.scale")
         scaleAnimation.fromValue = 1.0
-        scaleAnimation.toValue = 0.0
+        scaleAnimation.toValue = 0.01
         scaleAnimation.duration = duration
         
         let rotateAnimation = CABasicAnimation(keyPath: "transform.rotation")
@@ -334,6 +343,8 @@ public class TFYAnimationEnhancer: NSObject {
         
         view.layer?.add(groupAnimation, forKey: "customOut")
         view.layer?.opacity = 0.0
+        view.layer?.setValue(0.01, forKeyPath: "transform.scale")
+        view.layer?.setValue(-Double.pi, forKeyPath: "transform.rotation")
     }
     
     // MARK: - Animations

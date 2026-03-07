@@ -27,17 +27,24 @@ class HUDDemoViewController: NSViewController {
     }
     
     private func setupHUDDemo() {
-        // 创建主容器视图
+        let scrollView = NSScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        view.addSubview(scrollView)
+        
         let containerView = NSView()
         containerView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(containerView)
+        scrollView.documentView = containerView
         
-        // 设置约束
         NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: view.topAnchor),
-            containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            containerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            containerView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            containerView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.heightAnchor)
         ])
         
         // 创建标题
@@ -69,6 +76,9 @@ class HUDDemoViewController: NSViewController {
         // 初始化管理器
         themeManager = TFYThemeManager()
         animationEnhancer = TFYAnimationEnhancer()
+        
+        // 设置文档视图高度以便滚动
+        containerView.frame.size.height = 680
     }
     
     private func createHUDTypeSection(in containerView: NSView) {
@@ -179,7 +189,7 @@ class HUDDemoViewController: NSViewController {
         
         delayTextField = NSTextField()
         delayTextField.frame = NSRect(x: 310, y: 300, width: 60, height: 20)
-        delayTextField.stringValue = "3.0"
+        delayTextField.stringValue = "2.0"
         delayTextField.font = .systemFont(ofSize: 12)
         delayTextField.textColor = .labelColor
         delayTextField.backgroundColor = .controlBackgroundColor
@@ -268,12 +278,12 @@ class HUDDemoViewController: NSViewController {
         sectionLabel.isBordered = false
         sectionLabel.isEditable = false
         sectionLabel.isSelectable = false
-        sectionLabel.frame = NSRect(x: 20, y: 490, width: 200, height: 25)
+        sectionLabel.frame = NSRect(x: 20, y: 530, width: 200, height: 25)
         
         containerView.addSubview(sectionLabel)
         
         let instructionLabel = NSTextField()
-        instructionLabel.frame = NSRect(x: 20, y: 520, width: 600, height: 120)
+        instructionLabel.frame = NSRect(x: 20, y: 560, width: 600, height: 110)
         instructionLabel.stringValue = """
         使用说明:
         
@@ -368,6 +378,19 @@ class HUDDemoViewController: NSViewController {
         default: return .fade
         }
     }
+
+    private func getCurrentThemeName() -> String {
+        switch themePopUp.indexOfSelectedItem {
+        case 0: return "dark"
+        case 1: return "light"
+        case 2: return "customBlue"
+        case 3: return "customGreen"
+        case 4: return "customPurple"
+        case 5: return "customOrange"
+        case 6: return "system"
+        default: return "dark"
+        }
+    }
     
     private func configureCurrentHUD() {
         guard let hud = currentHUD else { return }
@@ -384,14 +407,10 @@ class HUDDemoViewController: NSViewController {
         default: break
         }
         
-        // 设置动画类型
-        if let animation = animationEnhancer {
-            animation.setAnimationType(getCurrentAnimationType())
-        }
-        
-        // 设置动画持续时间
+        // 设置动画类型与时长到 HUD 自身的 animation，否则下拉框选择不会生效
+        hud.setAnimationType(getCurrentAnimationType())
         if let durationText = durationTextField.stringValue.isEmpty ? nil : durationTextField.stringValue,
-           let duration = Double(durationText) {
+           let duration = Double(durationText), duration > 0 {
             hud.setAnimationDuration(duration)
         }
         
@@ -416,58 +435,66 @@ class HUDDemoViewController: NSViewController {
         configureCurrentHUD()
         currentHUD?.show()
         
-        if currentHUD?.autoHide == true {
-            DispatchQueue.main.asyncAfter(deadline: .now() + currentHUD!.hideDelay) {
-                self.currentHUD?.hide()
+        if let hud = currentHUD, hud.autoHide {
+            let delay = hud.hideDelay
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.currentHUD?.hide()
             }
         }
     }
     
     @objc private func showProgressHUD() {
         hideCurrentHUD()
-        
-        currentHUD = TFYProgressMacOSHUD.showHUD(addedTo: view)
-        currentHUD?.mode = .determinate
-        currentHUD?.position = getCurrentPosition()
-        currentHUD?.statusLabel.stringValue = "下载进度"
+
+        let hud = TFYProgressMacOSHUD.showHUD(addedTo: view)
+        currentHUD = hud
+        hud.mode = .determinate
+        hud.position = getCurrentPosition()
+        hud.statusLabel.stringValue = "下载进度"
         configureCurrentHUD()
-        currentHUD?.show()
-        
-        // 模拟进度更新
+        hud.show()
+
+        // 使用 GCD 模拟进度更新，避免 Timer 在 Run Loop 非 Default 模式下不触发
         var progress: Double = 0.0
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+        func tick() {
             progress += 0.01
-            self.currentHUD?.setProgress(CGFloat(progress))
-            
+            currentHUD?.setProgress(CGFloat(progress))
             if progress >= 1.0 {
-                timer.invalidate()
-                self.currentHUD?.hide()
+                currentHUD?.hide()
+                return
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: tick)
         }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: tick)
     }
     
     @objc private func showSuccessHUD() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showSuccess("操作成功完成！", position: getCurrentPosition())
     }
-    
+
     @objc private func showErrorHUD() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showError("操作失败，请重试", position: getCurrentPosition())
     }
-    
+
     @objc private func showTextHUD() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showMessage("这是一个纯文本的HUD提示信息，可以显示很长的文本内容", position: getCurrentPosition())
     }
-    
+
     @objc private func showInfoHUD() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showInfo("这是一条信息提示", position: getCurrentPosition())
     }
-    
+
     @objc private func showCustomHUD() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         let customImage = createCustomImage()
         TFYProgressMacOSHUD.showImage(customImage, status: "自定义动画HUD", position: getCurrentPosition())
     }
@@ -488,8 +515,8 @@ class HUDDemoViewController: NSViewController {
         currentHUD?.show()
         
         // 添加抖动动画
-        if let animation = animationEnhancer {
-            animation.addShakeAnimation(to: currentHUD!.containerView)
+        if let animation = animationEnhancer, let hud = currentHUD {
+            animation.addShakeAnimation(to: hud.containerView)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -508,8 +535,8 @@ class HUDDemoViewController: NSViewController {
         currentHUD?.show()
         
         // 添加脉冲动画
-        if let animation = animationEnhancer {
-            animation.addPulseAnimation(to: currentHUD!.containerView)
+        if let animation = animationEnhancer, let hud = currentHUD {
+            animation.addPulseAnimation(to: hud.containerView)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
@@ -528,8 +555,8 @@ class HUDDemoViewController: NSViewController {
         currentHUD?.show()
         
         // 添加成功动画
-        if let animation = animationEnhancer {
-            animation.addSuccessAnimation(to: currentHUD!.containerView)
+        if let animation = animationEnhancer, let hud = currentHUD {
+            animation.addSuccessAnimation(to: hud.containerView)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -548,8 +575,8 @@ class HUDDemoViewController: NSViewController {
         currentHUD?.show()
         
         // 添加错误动画
-        if let animation = animationEnhancer {
-            animation.addErrorAnimation(to: currentHUD!.containerView)
+        if let animation = animationEnhancer, let hud = currentHUD {
+            animation.addErrorAnimation(to: hud.containerView)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -560,79 +587,119 @@ class HUDDemoViewController: NSViewController {
     // MARK: - Progress View Demo Methods
     @objc private func showRingProgress() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showProgressWithStyle(0.7, style: .ring, status: "环形进度演示", position: getCurrentPosition())
     }
-    
+
     @objc private func showHorizontalProgress() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showProgressWithStyle(0.5, style: .horizontal, status: "水平进度演示", position: getCurrentPosition())
     }
-    
+
     @objc private func showPieProgress() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showProgressWithStyle(0.9, style: .pie, status: "饼图进度演示", position: getCurrentPosition())
     }
-    
+
     @objc private func showPercentageProgress() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showProgressWithPercentage(0.8, status: "百分比进度演示", position: getCurrentPosition())
     }
     
     // MARK: - Position Demo Methods
     @objc private func showCenterHUD() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showSuccess("居中显示", position: .center)
     }
-    
+
     @objc private func showTopHUD() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showInfo("顶部显示", position: .top)
     }
-    
+
     @objc private func showBottomHUD() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showMessage("底部显示", position: .bottom)
     }
-    
+
     @objc private func showCornerHUD() {
         hideCurrentHUD()
+        applySharedHUDConfig()
         TFYProgressMacOSHUD.showError("角落显示", position: .topRight)
     }
     
     // MARK: - Configuration Action Methods
     @objc private func themeChanged(_ sender: NSPopUpButton) {
         print("主题已更改为: \(sender.titleOfSelectedItem ?? "")")
-        if currentHUD != nil {
+        if let hud = currentHUD {
             configureCurrentHUD()
+        } else {
+            TFYProgressMacOSHUD.configureShared(theme: getCurrentThemeName())
         }
     }
-    
+
     @objc private func animationChanged(_ sender: NSPopUpButton) {
         print("动画已更改为: \(sender.titleOfSelectedItem ?? "")")
         if currentHUD != nil {
             configureCurrentHUD()
+        } else {
+            TFYProgressMacOSHUD.configureShared(animationType: getCurrentAnimationType(), animationDuration: durationFromTextField())
         }
     }
-    
+
     @objc private func positionChanged(_ sender: NSPopUpButton) {
         print("位置已更改为: \(sender.titleOfSelectedItem ?? "")")
+        let pos = getCurrentPosition()
         if let hud = currentHUD {
-            hud.position = getCurrentPosition()
+            hud.position = pos
+        } else {
+            TFYProgressMacOSHUD.configureShared(position: pos)
         }
     }
-    
+
     @objc private func autoHideChanged(_ sender: NSButton) {
         let enabled = sender.state == .on
         print("自动隐藏: \(enabled ? "开启" : "关闭")")
         if let hud = currentHUD {
             hud.autoHide = enabled
+        } else {
+            let raw = Double(delayTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 2.0
+            TFYProgressMacOSHUD.configureShared(autoHide: enabled, hideDelay: raw > 0 ? raw : 2.0)
         }
     }
+
+    private func durationFromTextField() -> TimeInterval {
+        let raw = Double(durationTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0.3
+        return raw > 0 ? raw : 0.3
+    }
     
+    /// 将当前界面上的配置（主题、动画、位置、自动隐藏、延迟、动画时长）应用到静态方法使用的 shared HUD
+    private func applySharedHUDConfig() {
+        let raw = Double(delayTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 2.0
+        let delay = raw > 0 ? raw : 2.0
+        let durationRaw = Double(durationTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0.3
+        let duration = durationRaw > 0 ? durationRaw : 0.3
+        TFYProgressMacOSHUD.configureShared(
+            autoHide: autoHideSwitch.state == .on,
+            hideDelay: delay,
+            theme: getCurrentThemeName(),
+            animationType: getCurrentAnimationType(),
+            animationDuration: duration,
+            position: getCurrentPosition()
+        )
+    }
+
     // MARK: - Helper Methods
     private func hideCurrentHUD() {
         currentHUD?.hide()
         currentHUD = nil
+        TFYProgressMacOSHUD.hideHUD()
     }
     
     private func createCustomImage() -> NSImage {

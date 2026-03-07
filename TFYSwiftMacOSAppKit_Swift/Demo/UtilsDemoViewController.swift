@@ -123,10 +123,21 @@ class UtilsDemoViewController: NSViewController {
         
         buttonArea.addSubview(fileButton)
         
+        // 打开/保存文件（TFYSwiftOpenPanel）
+        let openPanelButton = NSButton()
+        openPanelButton.chain
+            .frame(NSRect(x: 130, y: 40, width: 120, height: 30))
+            .title("打开/保存文件")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testOpenPanel))
+           
+        
+        buttonArea.addSubview(openPanelButton)
+        
         // 加密工具按钮
         let cryptoButton = NSButton()
         cryptoButton.chain
-            .frame(NSRect(x: 130, y: 40, width: 120, height: 30))
+            .frame(NSRect(x: 260, y: 40, width: 120, height: 30))
             .title("加密工具")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(testCrypto))
@@ -549,6 +560,44 @@ class UtilsDemoViewController: NSViewController {
             }
         } else {
             appendResult("AES加密失败")
+        }
+    }
+    
+    @objc private func testOpenPanel() {
+        appendResult("=== 打开/保存文件（TFYSwiftOpenPanel）===")
+        guard #available(macOS 10.15, *) else {
+            appendResult("需要 macOS 10.15+")
+            return
+        }
+        TFYSwiftOpenPanel.selectFile(title: "选择文件", message: "请选择一个文件") { [weak self] url in
+            if let url = url {
+                self?.appendResult("已选择文件: \(url.path)")
+            } else {
+                self?.appendResult("用户取消选择文件")
+            }
+            self?.runSavePanelDemo()
+        }
+    }
+    
+    private func runSavePanelDemo() {
+        guard #available(macOS 10.15, *) else { return }
+        let defaultName = "demo_\(Int(Date().timeIntervalSince1970)).txt"
+        TFYSwiftOpenPanel.saveFile(title: "保存文件", message: "请选择保存位置", fileName: defaultName) { [weak self] result in
+            if result.wasCancelled {
+                self?.appendResult("用户取消保存")
+                return
+            }
+            guard let url = result.url else {
+                self?.appendResult("未获取到保存 URL")
+                return
+            }
+            self?.appendResult("已选择保存位置: \(url.path)")
+            do {
+                try "TFYSwiftOpenPanel 保存演示\n时间: \(Date())".write(to: url, atomically: true, encoding: .utf8)
+                self?.appendResult("文件已写入成功")
+            } catch {
+                self?.appendResult("文件写入失败: \(error.localizedDescription)")
+            }
         }
     }
 } 

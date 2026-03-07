@@ -47,22 +47,16 @@ public class TFYLayoutManager: NSObject {
         // 检查是否有文字内容
         let hasText = !hud.statusLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         
-        // Container view constraints - 根据是否有文字决定大小
+        // Container view 只设大小与边距，位置由 updatePosition() 按 position 统一设置，避免与“顶部/底部/角落”冲突
         if hasText {
-            // 有文字时使用自适应大小
             allConstraints.append(contentsOf: [
-                container.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
-                container.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
                 container.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
                 container.heightAnchor.constraint(greaterThanOrEqualToConstant: 100),
                 container.leadingAnchor.constraint(greaterThanOrEqualTo: hud.leadingAnchor, constant: 40),
                 container.trailingAnchor.constraint(lessThanOrEqualTo: hud.trailingAnchor, constant: -40)
             ])
         } else {
-            // 无文字时使用固定大小
             allConstraints.append(contentsOf: [
-                container.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
-                container.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
                 container.widthAnchor.constraint(equalToConstant: 200),
                 container.heightAnchor.constraint(equalToConstant: 120),
                 container.leadingAnchor.constraint(greaterThanOrEqualTo: hud.leadingAnchor, constant: 40),
@@ -95,6 +89,7 @@ public class TFYLayoutManager: NSObject {
         ])
         
         // Status label constraints - 根据是否有文字调整
+        hud.statusLabel.isHidden = !hasText
         if hasText {
             allConstraints.append(contentsOf: [
                 hud.statusLabel.topAnchor.constraint(equalTo: hud.activityIndicator.bottomAnchor, constant: 12),
@@ -103,18 +98,15 @@ public class TFYLayoutManager: NSObject {
                 hud.statusLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
                 hud.statusLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 20)
             ])
-        } else {
-            // 无文字时隐藏状态标签
-            hud.statusLabel.isHidden = true
         }
         
         NSLayoutConstraint.activate(allConstraints)
         activeConstraints.append(contentsOf: allConstraints)
     }
     
-    // 添加新方法
+    // 添加新方法（会先清除已有约束，避免与 setupHUDConstraints 重复）
     func setupSubviewsConstraints(_ hud: TFYProgressMacOSHUD) {
-        // 确保所有子视图都禁用自动约束转换
+        invalidateLayout()
         hud.containerView.translatesAutoresizingMaskIntoConstraints = false
         hud.statusLabel.translatesAutoresizingMaskIntoConstraints = false
         hud.activityIndicator.translatesAutoresizingMaskIntoConstraints = false
@@ -126,20 +118,14 @@ public class TFYLayoutManager: NSObject {
         // 检查是否有文字内容
         let hasText = !hud.statusLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         
-        // 容器视图约束 - 根据是否有文字决定大小
+        // 容器只设大小，位置由 HUD.updatePosition() 统一设置
         if hasText {
-            // 有文字时使用自适应大小
             constraints.append(contentsOf: [
-                hud.containerView.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
-                hud.containerView.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
                 hud.containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
                 hud.containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100)
             ])
         } else {
-            // 无文字时使用固定大小
             constraints.append(contentsOf: [
-                hud.containerView.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
-                hud.containerView.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
                 hud.containerView.widthAnchor.constraint(equalToConstant: 200),
                 hud.containerView.heightAnchor.constraint(equalToConstant: 120)
             ])
@@ -259,20 +245,14 @@ public class TFYLayoutManager: NSObject {
         // 检查是否有文字内容
         let hasText = !hud.statusLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         
-        // Base container constraints - 根据是否有文字决定大小
+        // 容器只设大小，位置由 HUD.updatePosition() 统一设置
         if hasText {
-            // 有文字时使用自适应大小
             constraints.append(contentsOf: [
-                container.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
-                container.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
                 container.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
                 container.heightAnchor.constraint(greaterThanOrEqualToConstant: 100)
             ])
         } else {
-            // 无文字时使用固定大小
             constraints.append(contentsOf: [
-                container.centerXAnchor.constraint(equalTo: hud.centerXAnchor),
-                container.centerYAnchor.constraint(equalTo: hud.centerYAnchor),
                 container.widthAnchor.constraint(equalToConstant: 200),
                 container.heightAnchor.constraint(equalToConstant: 120)
             ])

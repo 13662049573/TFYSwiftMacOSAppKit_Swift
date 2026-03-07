@@ -48,15 +48,16 @@ public class TFYProgressMacOSHUD: NSView {
     }
     
     public var autoHide: Bool = true
-    public var hideDelay: TimeInterval = 3.0
+    /// 自动隐藏延迟（秒），默认 2 秒
+    public var hideDelay: TimeInterval = 2.0
     public var animationDuration: TimeInterval = 0.3
     
     private let layoutManager: TFYLayoutManager
     private let themeManager: TFYThemeManager
     private let animation: TFYAnimationEnhancer
-    private var hideTimer: Timer?
+    /// 使用 GCD 而非 Timer，避免 macOS 下 Run Loop 处于 EventTracking 模式时定时器不触发导致不自动消失
+    private var hideWorkItem: DispatchWorkItem?
     private var positionConstraints: [NSLayoutConstraint] = []
-    private var activeConstraints: [NSLayoutConstraint] = []
     
     // MARK: - Initialization
     override init(frame: NSRect) {
@@ -212,73 +213,21 @@ public class TFYProgressMacOSHUD: NSView {
         NSLayoutConstraint.activate(positionConstraints)
     }
     
-    /// 动态更新HUD大小
+    /// 动态更新 HUD 大小（统一通过 layoutManager 重设约束，避免与位置约束冲突）
     public func updateSizeForText() {
-        // 检查是否有文字内容
         let hasText = !statusLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        
-        // 移除现有的容器大小约束
-        containerView.constraints.forEach { constraint in
-            if constraint.firstAttribute == .width || constraint.firstAttribute == .height {
-                constraint.isActive = false
-            }
-        }
-        
-        // 根据是否有文字设置新的约束
-        if hasText {
-            // 有文字时使用自适应大小
-            NSLayoutConstraint.activate([
-                containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
-                containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100)
-            ])
-            statusLabel.isHidden = false
-        } else {
-            // 无文字时使用固定大小
-            NSLayoutConstraint.activate([
-                containerView.widthAnchor.constraint(equalToConstant: 200),
-                containerView.heightAnchor.constraint(equalToConstant: 120)
-            ])
-            statusLabel.isHidden = true
-        }
-        
-        // 强制布局更新
+        statusLabel.isHidden = !hasText
+        layoutManager.invalidateLayout()
+        layoutManager.setupHUDConstraints(self)
+        layoutManager.setupAdaptiveLayout(for: self)
+        updatePosition()
         needsLayout = true
         layout()
     }
     
-    /// 确保HUD大小稳定
+    /// 确保 HUD 大小稳定（复用 updateSizeForText 的逻辑）
     public func ensureStableSize() {
-        // 确保容器视图有固定大小
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 检查是否有文字内容
-        let hasText = !statusLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        
-        // 移除可能冲突的约束
-        containerView.constraints.forEach { constraint in
-            if constraint.firstAttribute == .width || constraint.firstAttribute == .height {
-                constraint.isActive = false
-            }
-        }
-        
-        // 根据是否有文字设置约束
-        if hasText {
-            // 有文字时使用自适应大小
-            NSLayoutConstraint.activate([
-                containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
-                containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100)
-            ])
-        } else {
-            // 无文字时使用固定大小
-            NSLayoutConstraint.activate([
-                containerView.widthAnchor.constraint(equalToConstant: 200),
-                containerView.heightAnchor.constraint(equalToConstant: 120)
-            ])
-        }
-        
-        // 强制布局更新
-        needsLayout = true
-        layout()
+        updateSizeForText()
     }
     
     /// 显示HUD
@@ -358,16 +307,13 @@ public class TFYProgressMacOSHUD: NSView {
             activityIndicator.startAnimation()
         }
         
-        // 只在首次设置时更新布局，避免重复设置约束
-        if activeConstraints.isEmpty {
-            DispatchQueue.main.async {
-                self.layoutManager.setupHUDConstraints(self)
-                self.layoutManager.setupAdaptiveLayout(for: self)
-                
-                // 强制布局更新
-                self.needsLayout = true
-                self.layout()
-            }
+        // 模式变化时重新设置布局约束，保证各模式下的尺寸与位置正确
+        DispatchQueue.main.async {
+            self.layoutManager.setupHUDConstraints(self)
+            self.layoutManager.setupAdaptiveLayout(for: self)
+            self.updatePosition()
+            self.needsLayout = true
+            self.layout()
         }
     }
     
@@ -394,9 +340,9 @@ public class TFYProgressMacOSHUD: NSView {
             hud.position = position
             hud.customImageView.image = createErrorImage()
             hud.statusLabel.stringValue = status
-            hud.statusLabel.textColor = .systemRed
             hud.updateSizeForText() // 更新大小
             hud.show()
+            hud.statusLabel.textColor = .systemRed
             if hud.autoHide {
                 hud.hide(afterDelay: hud.hideDelay)
             }
@@ -464,6 +410,9 @@ public class TFYProgressMacOSHUD: NSView {
             hud.statusLabel.stringValue = status ?? ""
             hud.updateSizeForText() // 更新大小
             hud.show()
+            if hud.autoHide {
+                hud.hide(afterDelay: hud.hideDelay)
+            }
         }
     }
     
@@ -518,9 +467,14 @@ public class TFYProgressMacOSHUD: NSView {
         progressView.showPercentage = show
     }
     
-    /// 设置主题
+    /// 设置主题（支持 "system" 表示跟随系统深浅色）；设置后立即应用到当前 HUD 的布局与颜色
     public func setTheme(_ themeName: String) {
-        themeManager.applyTheme(themeName)
+        if themeName == "system" {
+            themeManager.applyThemeType(.system)
+        } else {
+            themeManager.applyTheme(themeName)
+        }
+        themeManager.applyTheme(to: self)
     }
     
     /// 设置动画持续时间
@@ -576,12 +530,29 @@ public class TFYProgressMacOSHUD: NSView {
         }
     }
     
+    /// 在调用 showSuccess/showError 等静态方法前调用，使配置选项（主题、动画、自动隐藏等）生效
+    public static func configureShared(
+        autoHide: Bool? = nil,
+        hideDelay: TimeInterval? = nil,
+        theme: String? = nil,
+        animationType: TFYAnimationType? = nil,
+        animationDuration: TimeInterval? = nil,
+        position: TFYHUDPosition? = nil
+    ) {
+        if let v = autoHide { shared.autoHide = v }
+        if let v = hideDelay { shared.hideDelay = v }
+        if let v = theme { shared.setTheme(v) }
+        if let v = animationType { shared.setAnimationType(v) }
+        if let v = animationDuration { shared.setAnimationDuration(v) }
+        if let v = position { shared.position = v }
+    }
+
     public static func hideHUD() {
         DispatchQueue.main.async {
             shared.hide()
         }
     }
-    
+
     public static func hideHUD(afterDelay delay: TimeInterval) {
         DispatchQueue.main.async {
             shared.hide(afterDelay: delay)
@@ -590,18 +561,41 @@ public class TFYProgressMacOSHUD: NSView {
     
     // MARK: - Private Methods
     public func show() {
+        // Singleton 可能尚未加入窗口（无 mainWindow 时延迟加入）
+        if superview == nil,
+           let window = NSApp.mainWindow,
+           let contentView = window.contentView {
+            contentView.wantsLayer = true
+            frame = contentView.bounds
+            autoresizingMask = [.width, .height]
+            contentView.addSubview(self)
+            translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+                trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+                topAnchor.constraint(equalTo: contentView.topAnchor),
+                bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            ])
+        }
+
         // 确保HUD在最上层
         if let superview = superview {
             superview.addSubview(self, positioned: .above, relativeTo: nil)
         }
-        
+
+        // 有 superview 时应用位置约束（commonInit 时可能还没有 superview）
+        updatePosition()
+
+        // 每次显示时重新应用主题，保证文案颜色正确（如 showError 后的 showSuccess）
+        themeManager.applyTheme(to: self)
+
         // 确保HUD大小稳定
         ensureStableSize()
-        
+
         // 设置可见并应用动画
         isHidden = false
         animation.setup(with: self)
-        
+
         // 应用动画
         DispatchQueue.main.async {
             self.animation.applyAnimation(to: self)
@@ -610,43 +604,49 @@ public class TFYProgressMacOSHUD: NSView {
     
     public func hide() {
         animation.reset(self)
-        hideTimer?.invalidate()
-        hideTimer = nil
-        
+        hideWorkItem?.cancel()
+        hideWorkItem = nil
+
         // 延迟隐藏，让动画完成
         DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
             self.isHidden = true
         }
     }
-    
+
     private func hide(afterDelay delay: TimeInterval) {
-        hideTimer?.invalidate()
-        hideTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+        hideWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
             self?.hide()
         }
+        hideWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
     }
-    
+
+    deinit {
+        hideWorkItem?.cancel()
+        hideWorkItem = nil
+    }
+
     // MARK: - Singleton
     private static var shared: TFYProgressMacOSHUD = {
-        guard let window = NSApplication.shared.mainWindow,
-              let contentView = window.contentView else {
-            fatalError("No main window found")
+        let hud = TFYProgressMacOSHUD(frame: .zero)
+        hud.isHidden = true
+
+        if let window = NSApplication.shared.mainWindow,
+           let contentView = window.contentView {
+            contentView.wantsLayer = true
+            hud.frame = contentView.bounds
+            hud.autoresizingMask = [.width, .height]
+            contentView.addSubview(hud)
+            hud.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                hud.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+                hud.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+                hud.topAnchor.constraint(equalTo: contentView.topAnchor),
+                hud.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            ])
         }
 
-        contentView.wantsLayer = true
-        let hud = TFYProgressMacOSHUD(frame: contentView.bounds)
-        hud.autoresizingMask = [.width, .height]
-        contentView.addSubview(hud)
-        
-        hud.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            hud.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            hud.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            hud.topAnchor.constraint(equalTo: contentView.topAnchor),
-            hud.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
-        ])
-        
-        hud.isHidden = true
         return hud
     }()
 }

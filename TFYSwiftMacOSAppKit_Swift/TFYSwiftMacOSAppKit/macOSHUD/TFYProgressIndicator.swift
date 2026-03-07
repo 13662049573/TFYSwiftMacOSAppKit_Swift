@@ -136,12 +136,13 @@ public class TFYProgressIndicator: NSView {
     }
     
     func setColor(_ color: NSColor) {
-        // Method 1: Using Core Image filter
-        let colorFilter = CIFilter(name: "CIColorMonochrome")
-        colorFilter?.setDefaults()
-        colorFilter?.setValue(CIColor(color: color), forKey: "inputColor")
-        colorFilter?.setValue(1.0, forKey: "inputIntensity")
-        progressIndicator.contentFilters = [colorFilter].compactMap { $0 }
+        // Method 1: Using Core Image filter (only apply when available)
+        if let colorFilter = CIFilter(name: "CIColorMonochrome") {
+            colorFilter.setDefaults()
+            colorFilter.setValue(CIColor(color: color), forKey: "inputColor")
+            colorFilter.setValue(1.0, forKey: "inputIntensity")
+            progressIndicator.contentFilters = [colorFilter]
+        }
         
         // Method 2: Set layer properties
         progressIndicator.layer?.backgroundColor = NSColor.clear.cgColor

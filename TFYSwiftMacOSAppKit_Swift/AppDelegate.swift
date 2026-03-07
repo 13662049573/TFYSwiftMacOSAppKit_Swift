@@ -11,6 +11,9 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        // Repair main menu hierarchy to avoid "Internal inconsistency in menus" (root menu sometimes has no items after load)
+        repairMainMenuIfNeeded()
+
         // Insert code here to initialize your application
         let showVc:TFYSwiftHomeController = TFYSwiftHomeController()
         showVc.preferredContentSize = NSSize(width: 400, height: 600)
@@ -40,6 +43,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
-
+    /// Re-sets main menu so AppKit re-syncs the menu bar; helps avoid "Internal inconsistency in menus" when storyboard loads.
+    private func repairMainMenuIfNeeded() {
+        guard let menu = NSApplication.shared.mainMenu else { return }
+        NSApplication.shared.mainMenu = menu
+        // Restore system behavior for Services and Window menus (we removed systemMenu from storyboard to fix hierarchy)
+        for item in menu.items {
+            if item.submenu?.title == "Services" {
+                NSApplication.shared.servicesMenu = item.submenu
+                break
+            }
+        }
+        for item in menu.items {
+            if item.submenu?.title == "Window" {
+                NSApplication.shared.windowsMenu = item.submenu
+                break
+            }
+        }
+    }
 }
 

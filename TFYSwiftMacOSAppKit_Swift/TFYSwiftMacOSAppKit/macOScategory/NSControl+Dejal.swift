@@ -8,7 +8,7 @@
 
 import Cocoa
 
-public extension NSControl {
+@MainActor public extension NSControl {
     
     // MARK: - 私有辅助方法
     
@@ -60,24 +60,35 @@ public extension NSControl {
         let attributedString = NSMutableAttributedString(attributedString: attributedStringValue)
         let textsToSearch = changeTexts ?? [stringValue]
         let valuesToUse = value
+        let fullLength = stringValue.utf16.count
+        
+        guard fullLength > 0, !valuesToUse.isEmpty else {
+            return
+        }
         
         for (index, markContent) in textsToSearch.enumerated() {
-            var searchRange = NSRange(location: 0, length: stringValue.utf16.count)
+            guard !markContent.isEmpty else { continue }
             
-            while true {
-                guard let range = stringValue.range(of: markContent,
-                                                  options: options,
-                                                  range: Range(searchRange, in: stringValue)!) else { break }
+            var searchRange = NSRange(location: 0, length: fullLength)
+            
+            while searchRange.location < fullLength,
+                  let rangeBounds = Range(searchRange, in: stringValue),
+                  let range = stringValue.range(of: markContent,
+                                                options: options,
+                                                range: rangeBounds) {
                 
                 let start = stringValue.distance(from: stringValue.startIndex, to: range.lowerBound)
                 let end = stringValue.distance(from: stringValue.startIndex, to: range.upperBound)
                 let nsRange = NSRange(location: start, length: end - start)
                 
-                let value = valuesToUse.indices.contains(index) ? valuesToUse[index] : valuesToUse.first!
+                let value = valuesToUse.indices.contains(index) ? valuesToUse[index] : valuesToUse[0]
                 attributedString.addAttribute(attributeKey, value: value, range: nsRange)
                 
-                searchRange = NSRange(location: nsRange.upperBound,
-                                    length: stringValue.utf16.count - nsRange.upperBound)
+                let nextLocation = nsRange.upperBound
+                if nextLocation >= fullLength {
+                    break
+                }
+                searchRange = NSRange(location: nextLocation, length: fullLength - nextLocation)
             }
         }
         self.attributedStringValue = attributedString
@@ -220,7 +231,8 @@ public extension NSControl {
     /// 修改CoreText字距
     func changeCTKern(with textCTKern: NSNumber) {
         let attributedString = NSMutableAttributedString(attributedString: attributedStringValue)
-        attributedString.addAttribute(.kern, value: textCTKern, range: NSRange(0..<stringValue.count))
+        let fullRange = NSRange(location: 0, length: attributedString.length)
+        attributedString.addAttribute(.kern, value: textCTKern, range: fullRange)
         self.attributedStringValue = attributedString
     }
     
@@ -231,6 +243,7 @@ public extension NSControl {
     ///   - imageSpan: 图片间距
     func changeText(text: String, frontImages: [NSImage], imageSpan: CGFloat) {
         let textAttrStr = NSMutableAttributedString()
+        let currentFont = self.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
         
         // 添加图片
         for img in frontImages {
@@ -238,9 +251,9 @@ public extension NSControl {
             attach.image = img
             
             // 计算图片尺寸
-            let imgH = font!.pointSize
+            let imgH = currentFont.pointSize
             let imgW = (img.size.width / img.size.height) * imgH
-            let textPaddingTop = (font!.capHeight - font!.pointSize) / 2
+            let textPaddingTop = (currentFont.capHeight - currentFont.pointSize) / 2
             
             // 设置图片位置和大小
             attach.bounds = CGRect(x: 0, y: -textPaddingTop, width: imgW, height: imgH)
@@ -264,6 +277,28 @@ public extension NSControl {
     }
     
     // MARK: - 新增实用方法
+    
+    /// 统一设置一组文本属性
+    /// - Parameters:
+    ///   - attributes: 属性字典
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    ///   - options: 文本匹配选项
+    func setAttributes(_ attributes: [NSAttributedString.Key: Any],
+                       changeText: String? = nil,
+                       options: String.CompareOptions = [.caseInsensitive, .regularExpression]) {
+        guard !attributes.isEmpty else { return }
+        
+        let attributedString = NSMutableAttributedString(attributedString: attributedStringValue)
+        let textToSearch = changeText ?? stringValue
+        
+        guard !textToSearch.isEmpty,
+              let textRange = findTextRange(stringValue, forKeyword: textToSearch, options: options) else {
+            return
+        }
+        
+        attributedString.addAttributes(attributes, range: textRange)
+        self.attributedStringValue = attributedString
+    }
     
     /// 设置富文本样式
     /// - Parameters:

@@ -22,6 +22,7 @@ public class TFYThemeManager: NSObject {
     private(set) var currentTheme: [String: Any]?
     private weak var currentHUD: TFYProgressMacOSHUD?
     private var currentThemeType: TFYThemeType = .dark
+    private var isObservingSystemTheme: Bool = false
     
     // MARK: - Initialization
     override init() {
@@ -174,7 +175,6 @@ public class TFYThemeManager: NSObject {
     
     func applyThemeType(_ themeType: TFYThemeType) {
         currentThemeType = themeType
-        
         switch themeType {
         case .light:
             applyTheme("light")
@@ -185,6 +185,7 @@ public class TFYThemeManager: NSObject {
         case .system:
             let isDark = NSApp.effectiveAppearance.name.rawValue.contains("Dark")
             applyTheme(isDark ? "dark" : "light")
+            observeSystemThemeChanges()
         }
     }
     
@@ -228,11 +229,12 @@ public class TFYThemeManager: NSObject {
             hud.containerView.layer?.shadowRadius = shadowRadius
         }
         
-        if let shadowOpacity = theme["shadowOpacity"] as? Float {
-            hud.containerView.layer?.shadowOpacity = shadowOpacity
+        if let shadowOpacityValue = theme["shadowOpacity"] {
+            let opacity = (shadowOpacityValue as? CGFloat) ?? (shadowOpacityValue as? NSNumber).map { CGFloat($0.doubleValue) } ?? 0.4
+            hud.containerView.layer?.shadowOpacity = Float(opacity)
         }
         
-        hud.containerView.layer?.shadowOffset = NSSize(width: 0, height: -3)
+        hud.containerView.layer?.shadowOffset = CGSize(width: 0, height: -3)
         
         // Configure text color
         if let textColor = theme["textColor"] as? NSColor {
@@ -244,6 +246,10 @@ public class TFYThemeManager: NSObject {
             hud.progressView.progressColor = progressColor
             hud.activityIndicator.setColor(progressColor)
         }
+
+        hud.containerView.wantsLayer = true
+        hud.containerView.layer?.setNeedsDisplay()
+        hud.layer?.setNeedsDisplay()
     }
     
     // MARK: - Custom Theme Creation
@@ -276,6 +282,8 @@ public class TFYThemeManager: NSObject {
     
     // MARK: - System Theme Observation
     func observeSystemThemeChanges() {
+        guard !isObservingSystemTheme else { return }
+        isObservingSystemTheme = true
         DistributedNotificationCenter.default().addObserver(
             self,
             selector: #selector(handleSystemThemeChange),
@@ -335,7 +343,10 @@ public class TFYThemeManager: NSObject {
     
     // MARK: - Cleanup
     func cleanup() {
-        DistributedNotificationCenter.default().removeObserver(self)
+        if isObservingSystemTheme {
+            DistributedNotificationCenter.default().removeObserver(self)
+            isObservingSystemTheme = false
+        }
         themes.removeAll()
         currentTheme = nil
         currentHUD = nil

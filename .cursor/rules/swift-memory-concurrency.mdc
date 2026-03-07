@@ -1,0 +1,47 @@
+---
+description: Swift 内存管理与并发——引用循环、Sendable、MainActor、async/await
+globs: "**/*.swift"
+alwaysApply: false
+---
+
+# Swift 内存与并发规则
+
+## 内存管理
+
+- 在闭包、委托、通知、KVO 等可能形成循环引用的地方使用 `[weak self]` 或 `[unowned self]`；仅在生命周期短于 self 且确定不会悬空时用 `unowned`。
+- 使用 `defer` 或 `withCheckedContinuation` 等确保资源释放与状态一致。
+- 不在闭包中无谓地强引用大对象；需要时用 `weak` 并做可选绑定。
+
+## 并发与 Sendable
+
+- 跨并发域传递的类型尽量遵循 `Sendable`；若类型含可变状态，用 `@unchecked Sendable` 时需在文档中说明线程安全保证。
+- 标记仅在主线程访问的类或方法为 `@MainActor`；UI 更新与 UI 相关状态必须在主线程执行。
+- 异步工作用 `async`/`await`；需要与旧回调桥接时使用 `withCheckedContinuation` 或 `withTaskCancellationHandler`，并正确处理取消。
+
+## 主线程与 UI
+
+- 所有 UI 更新（UIKit/AppKit/SwiftUI）必须在主线程执行；从后台线程回调时使用 `MainActor.run` 或 `DispatchQueue.main.async`。
+- ViewModel 或 Presenter 若被 UI 持有且会更新 UI，可整体标记为 `@MainActor`，避免到处写 `DispatchQueue.main`。
+
+## 示例
+
+```swift
+// 闭包中避免循环引用
+service.fetchData { [weak self] result in
+    guard let self else { return }
+    self.updateUI(with: result)
+}
+
+// UI 相关类型主线程
+@MainActor
+final class ViewModel: ObservableObject { ... }
+
+// 异步接口
+func load() async throws -> Data {
+    try await withCheckedThrowingContinuation { continuation in
+        legacyAPI.load { result in
+            continuation.resume(with: result)
+        }
+    }
+}
+```

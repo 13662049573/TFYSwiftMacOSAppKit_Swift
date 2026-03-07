@@ -1,0 +1,25 @@
+---
+description: Xcode 与 SPM 项目结构——工程组织、Target、资源与构建
+globs: "**/*.swift"
+alwaysApply: false
+---
+
+# Xcode 与 SPM 规则
+
+## 项目结构
+
+- 按功能或层级组织目录（如 Features、Core、Resources）；避免单目录下文件过多。
+- 每个 Target 职责单一：App、Extension、Framework/库 分离；共享代码放在共享 Target 或 SPM 包中。
+- 资源（图片、本地化、xib/storyboard）归属明确 Target；Asset Catalog 按模块或用途分组。
+
+## Swift Package Manager
+
+- 包结构遵循 SPM 约定：`Sources/<PackageName>/`、`Tests/`；`Package.swift` 中声明 target 与依赖。
+- 对外暴露的 API 通过 `public` 控制；内部实现用 `internal`。
+- 依赖版本使用范围（如 `from: "1.0.0"` 或 `.upToNextMajor`），并定期更新以获取安全与兼容性修复。
+
+## 构建与配置
+
+- 使用 Build Configuration（Debug/Release）区分环境；敏感配置不写死在代码中，使用 xcconfig 或环境变量。
+- 多平台（iOS/macOS）共享代码时用 `#if os(iOS)` / `#if os(macOS)` 或条件编译 target，保持共享部分清晰。
+- 确保在修改后项目能成功编译（`xcodebuild` 或 `swift build`），并注意所支持的最低系统版本。

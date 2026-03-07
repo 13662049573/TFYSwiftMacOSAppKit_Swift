@@ -1,0 +1,31 @@
+---
+description: Apple 平台与 HIG——iOS/macOS 生命周期、HIG、适配与数据持久化
+globs: "**/*.swift"
+alwaysApply: false
+---
+
+# Apple 平台与 HIG 规则
+
+## 应用生命周期
+
+- 正确处理进入前台/后台、终止与恢复；需要时使用 `scenePhase`（SwiftUI）或 `UIApplicationDelegate`/`NSApplicationDelegate` 生命周期方法。
+- 后台任务用 `beginBackgroundTask`（iOS）或 `NSApplication` 相关 API 在退到后台时完成收尾工作并适时结束任务。
+- 多窗口/多 Scene 时明确状态归属与同步策略。
+
+## Human Interface Guidelines
+
+- **iOS**：遵循 iOS HIG（导航、标签栏、列表、表单、模态、手势）；注意安全区域与不同设备尺寸。
+- **macOS**：遵循 macOS HIG（菜单栏、窗口、工具栏、偏好设置）；支持键盘导航与可访问性。
+- 文案与图标符合平台习惯；支持本地化与动态类型。
+
+## 适配与可访问性
+
+- 使用 Auto Layout / SwiftUI 布局适配不同屏幕与方向；避免硬编码尺寸。
+- 为交互元素设置 `accessibilityLabel`、`accessibilityHint`，必要时使用 `accessibilityTraits` 与自定义转子。
+- 支持 VoiceOver 与 Reduce Motion 等系统设置；测试键盘与辅助焦点顺序。
+
+## 数据与持久化
+
+- 敏感数据使用 Keychain；用户偏好使用 UserDefaults 或 App Storage。
+- 结构化数据使用 Core Data / SwiftData 时，注意线程模型（如 main context 与 background context）与迁移。
+- 文件与缓存放在合适的沙盒目录（Documents、Caches、Application Support）；不把大文件或缓存放在 Documents 根目录以免被 iCloud 备份。

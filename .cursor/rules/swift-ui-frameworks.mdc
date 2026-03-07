@@ -1,0 +1,26 @@
+---
+description: Swift UI 框架——SwiftUI、UIKit、AppKit 的通用模式与互操作
+globs: "**/*.swift"
+alwaysApply: false
+---
+
+# Swift UI 框架规则
+
+## SwiftUI
+
+- 视图尽量无状态；状态用 `@State`、`@StateObject`、`@ObservedObject`、`@EnvironmentObject` 表达，并放在合适的层级。
+- 大视图拆成小 View 与 `@ViewBuilder`；复用逻辑用 `ViewModifier` 或抽取子 View。
+- 列表用 `List`/`LazyVStack` 等懒加载容器，避免一次性构建大量视图；需要时用 `id(_:)` 稳定标识。
+- 遵循平台 HIG：导航、弹窗、表单样式与平台一致；支持动态类型与无障碍（VoiceOver、标签、分组）。
+
+## UIKit / AppKit
+
+- 布局：优先 Auto Layout（NSLayoutConstraint 或 UIStackView）；纯代码布局时集中管理约束并注意优先级与冲突。
+- 生命周期：在 `viewDidLoad`/`viewWillAppear` 等做初始化与订阅，在 `deinit` 或对应 teardown 中取消订阅与清理，避免循环引用。
+- 与 SwiftUI 混用：用 `UIHostingController`/`NSHostingController` 嵌入 SwiftUI；用 `UIViewRepresentable`/`NSViewRepresentable` 嵌入 UIKit/AppKit，并正确实现 `updateUIView`/`updateNSView` 与协调器。
+
+## 通用
+
+- 颜色、字体、间距尽量通过 Design System 或 Asset Catalog 统一管理；支持深色模式与可访问性。
+- 避免在 UI 层写复杂业务或网络逻辑；通过 ViewModel/Presenter/Interactor 等分层处理。
+- 动画与转场保持 60fps；耗时计算与 I/O 放后台，结果回主线程再更新 UI。

@@ -451,7 +451,7 @@ public extension NSKeyedUnarchiver {
         metadata["sizeInMB"] = Double(data.count) / (1024 * 1024)
         
         if let object = try? NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSObject.self], from: data) {
-            metadata["rootClass"] = NSStringFromClass(type(of: object) as! AnyClass)
+            metadata["rootClass"] = String(describing: Swift.type(of: object))
             metadata["isValid"] = true
         } else {
             metadata["isValid"] = false

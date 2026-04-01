@@ -112,11 +112,13 @@ public class TFYStatusItemWindowController: NSWindowController {
     private func updateWindowFrame() {
         guard let statusItemRect = statusItemView?.getStatusItemFrame(),
               let window = window,
-              let screen = NSScreen.main else { return }
+              let configuration = windowConfiguration else { return }
+        
+        guard let screen = window.screen ?? NSScreen.main else { return }
         
         let windowFrame = CGRect(
             x: statusItemRect.minX - window.frame.width / 2 + statusItemRect.width / 2,
-            y: min(statusItemRect.minY, screen.frame.height) - window.frame.height - windowConfiguration!.windowToStatusItemMargin,
+            y: min(statusItemRect.minY, screen.visibleFrame.maxY) - window.frame.height - configuration.windowToStatusItemMargin,
             width: window.frame.width,
             height: window.frame.height
         )

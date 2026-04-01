@@ -313,45 +313,46 @@ public final class TFYSwiftJsonUtils: NSObject {
     // MARK: - 网络请求支持
     public static func fromURL<T: Decodable>(_ type: T.Type, url: URL, timeout: TimeInterval = 30) throws -> T {
         let semaphore = DispatchSemaphore(value: 0)
-        var result: T?
-        var error: Error?
+        var responseData: Data?
+        var requestError: Error?
         
         let task = URLSession.shared.dataTask(with: url) { data, response, taskError in
             defer { semaphore.signal() }
             
             if let taskError = taskError {
-                error = taskError
+                requestError = taskError
                 return
             }
             
             guard let data = data else {
-                error = JsonUtilsError.invalidData
+                requestError = JsonUtilsError.invalidData
                 return
             }
             
-            do {
-                result = try jsonDecoder.decode(type, from: data)
-            } catch let decodeError {
-                error = decodeError
-            }
+            responseData = data
         }
         
         task.resume()
         
         let timeoutResult = semaphore.wait(timeout: .now() + timeout)
         if timeoutResult == .timedOut {
+            task.cancel()
             throw JsonUtilsError.timeoutError
         }
         
-        if let error = error {
-            throw JsonUtilsError.networkError(error)
+        if let requestError = requestError {
+            throw JsonUtilsError.networkError(requestError)
         }
         
-        guard let result = result else {
+        guard let responseData = responseData else {
             throw JsonUtilsError.invalidData
         }
         
-        return result
+        do {
+            return try jsonDecoder.decode(type, from: responseData)
+        } catch let decodeError {
+            throw JsonUtilsError.decodingError(decodeError)
+        }
     }
     
     // MARK: - 验证功能

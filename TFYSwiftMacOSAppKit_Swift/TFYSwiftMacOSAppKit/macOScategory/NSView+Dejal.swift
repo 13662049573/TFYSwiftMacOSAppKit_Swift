@@ -129,13 +129,13 @@ private let retainButtonTitle: String = "重新获取"
 public extension NSView {
     
     private struct AssociatedObjectKeys {
-        static var timeKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "timeKey".hashValue)!
-        static var formatKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "formatKey".hashValue)!
-        static var stopTimeKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "stopTimeKey".hashValue)!
-        static var timerKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "timerKey".hashValue)!
-        static var userTimeKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "userTimeKey".hashValue)!
-        static var clickHandlerKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "clickHandlerKey".hashValue)!
-        static var longPressHandlerKey: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "longPressHandlerKey".hashValue)!
+        static var timeKey: UInt8 = 0
+        static var formatKey: UInt8 = 0
+        static var stopTimeKey: UInt8 = 0
+        static var timerKey: UInt8 = 0
+        static var userTimeKey: UInt8 = 0
+        static var clickHandlerKey: UInt8 = 0
+        static var longPressHandlerKey: UInt8 = 0
     }
 
     func removeAllSubviews() {
@@ -145,68 +145,73 @@ public extension NSView {
     }
 
     func viewController() -> NSViewController? {
-        // 更简洁的获取视图控制器的方式
-        if let window = window {
-            if let delegate = window.delegate as? NSViewController {
-                return delegate
+        var responder: NSResponder? = nextResponder
+        while let currentResponder = responder {
+            if let viewController = currentResponder as? NSViewController {
+                return viewController
             }
+            responder = currentResponder.nextResponder
         }
-        return nil
+        
+        return window?.contentViewController
     }
 
     var timeInterval: TimeInterval {
         set {
-            objc_setAssociatedObject(self, AssociatedObjectKeys.timeKey, NSNumber(value: newValue),.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, &AssociatedObjectKeys.timeKey, NSNumber(value: newValue), .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            let number: NSNumber = objc_getAssociatedObject(self, AssociatedObjectKeys.timeKey) as! NSNumber
-            return number.doubleValue
+            return (objc_getAssociatedObject(self, &AssociatedObjectKeys.timeKey) as? NSNumber)?.doubleValue ?? 0
         }
     }
 
     private var userTimeInterval: TimeInterval {
         set {
-            objc_setAssociatedObject(self, AssociatedObjectKeys.userTimeKey, NSNumber(value: newValue),.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, &AssociatedObjectKeys.userTimeKey, NSNumber(value: newValue), .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            let number: NSNumber = objc_getAssociatedObject(self, AssociatedObjectKeys.userTimeKey) as! NSNumber
-            return number.doubleValue
+            return (objc_getAssociatedObject(self, &AssociatedObjectKeys.userTimeKey) as? NSNumber)?.doubleValue ?? 0
         }
     }
 
     var titleFormat: String? {
         set {
-            objc_setAssociatedObject(self, AssociatedObjectKeys.formatKey, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, &AssociatedObjectKeys.formatKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            return objc_getAssociatedObject(self, AssociatedObjectKeys.formatKey) as? String
+            return objc_getAssociatedObject(self, &AssociatedObjectKeys.formatKey) as? String
         }
     }
 
     private var stopTime: Int {
         set {
-            objc_setAssociatedObject(self, AssociatedObjectKeys.stopTimeKey, NSNumber(integerLiteral: newValue),.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, &AssociatedObjectKeys.stopTimeKey, NSNumber(integerLiteral: newValue), .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            let number: NSNumber = objc_getAssociatedObject(self, AssociatedObjectKeys.stopTimeKey) as! NSNumber
-            return number.intValue
+            return (objc_getAssociatedObject(self, &AssociatedObjectKeys.stopTimeKey) as? NSNumber)?.intValue ?? 0
         }
     }
 
     private var timer: DispatchSourceTimer? {
         set {
-            objc_setAssociatedObject(self, AssociatedObjectKeys.timerKey, newValue,.OBJC_ASSOCIATION_COPY)
+            objc_setAssociatedObject(self, &AssociatedObjectKeys.timerKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         get {
-            return objc_getAssociatedObject(self, AssociatedObjectKeys.timerKey) as? DispatchSourceTimer
+            return objc_getAssociatedObject(self, &AssociatedObjectKeys.timerKey) as? DispatchSourceTimer
         }
     }
 
     func startOrStopTimer(start: Bool, block: @escaping (String, Int) -> Void) {
         if start {
-            // Initialize timeInterval and titleFormat only if they are not set
-            timeInterval = timeInterval == 0 ? defaultTimeInterval : timeInterval
-            titleFormat = titleFormat ?? buttonTitleFormat
+            timer?.cancel()
+            
+            let initialInterval = timeInterval > 0 ? timeInterval : defaultTimeInterval
+            timeInterval = initialInterval
+            if userTimeInterval <= 0 {
+                userTimeInterval = initialInterval
+            }
+            let format = titleFormat ?? buttonTitleFormat
+            titleFormat = format
 
             let globalQueue = DispatchQueue.global(qos: .default)
             timer = DispatchSource.makeTimerSource(queue: globalQueue)
@@ -219,7 +224,7 @@ public extension NSView {
                     self.timeInterval -= 1
                     DispatchQueue.main.async {
                         self.stopTime = 1
-                        block(String(format: self.titleFormat!, self.timeInterval), 0)
+                        block(String(format: format, Int(self.timeInterval)), 0)
                     }
                 }
             }
@@ -229,6 +234,7 @@ public extension NSView {
                     self.stopTime = 0
                     block(retainButtonTitle, 1)
                     self.timeInterval = self.userTimeInterval > 0 ? self.userTimeInterval : defaultTimeInterval
+                    self.timer = nil
                 }
             }
             timer?.resume()
@@ -262,7 +268,7 @@ public extension NSView {
         // Declare position as a variable
         var positionValue = position
 
-        while !superview.isFlipped {
+        while !superview.isFlipped, let parentSuperview = superview.superview {
             // Adjust the parent view's mask:
             let mask = superview.autoresizingMask
             subviewMasks.append(NSNumber(value: mask.rawValue))
@@ -292,7 +298,7 @@ public extension NSView {
             // Move to the parent view and repeat the process
             oldSuperview = superview
             positionValue = NSMaxY(superview.frame)
-            superview = superview.superview!
+            superview = parentSuperview
         }
 
         return subviewMasks
@@ -303,10 +309,10 @@ public extension NSView {
         var oldSuperview = superview
         var enumerator = masks.makeIterator()
 
-        while !superview.isFlipped {
+        while !superview.isFlipped, let parentSuperview = superview.superview {
             // Restore the mask for the parent view:
             guard let maskValue = enumerator.next() else {
-                fatalError("Mask array exhausted unexpectedly")
+                return
             }
             let autoresizingMask = NSView.AutoresizingMask(rawValue: maskValue.uintValue)
             superview.autoresizingMask = autoresizingMask
@@ -314,7 +320,7 @@ public extension NSView {
             // Restore masks for subviews:
             for subview in superview.subviews where subview != oldSuperview {
                 guard let subviewMaskValue = enumerator.next() else {
-                    fatalError("Mask array exhausted unexpectedly")
+                    return
                 }
                 let subviewAutoresizingMask = NSView.AutoresizingMask(rawValue: subviewMaskValue.uintValue)
                 subview.autoresizingMask = subviewAutoresizingMask
@@ -322,7 +328,7 @@ public extension NSView {
 
             // Move to the parent view and repeat the process
             oldSuperview = superview
-            superview = superview.superview!
+            superview = parentSuperview
         }
     }
     
@@ -375,13 +381,13 @@ public extension NSView {
         self.addGestureRecognizer(gesture)
         
         // 存储回调
-        objc_setAssociatedObject(self, AssociatedObjectKeys.clickHandlerKey, action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        objc_setAssociatedObject(self, &AssociatedObjectKeys.clickHandlerKey, action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
         
         return gesture
     }
     
     @objc private func handleClick(_ gesture: NSClickGestureRecognizer) {
-        if let action = objc_getAssociatedObject(self, AssociatedObjectKeys.clickHandlerKey) as? (NSView) -> Void {
+        if let action = objc_getAssociatedObject(self, &AssociatedObjectKeys.clickHandlerKey) as? (NSView) -> Void {
             action(self)
         }
     }
@@ -397,13 +403,13 @@ public extension NSView {
         self.addGestureRecognizer(gesture)
         
         // 存储回调
-        objc_setAssociatedObject(self, AssociatedObjectKeys.longPressHandlerKey, action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        objc_setAssociatedObject(self, &AssociatedObjectKeys.longPressHandlerKey, action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
         
         return gesture
     }
     
     @objc private func handleLongPress(_ gesture: NSPressGestureRecognizer) {
-        if let action = objc_getAssociatedObject(self, AssociatedObjectKeys.longPressHandlerKey) as? (NSView) -> Void {
+        if let action = objc_getAssociatedObject(self, &AssociatedObjectKeys.longPressHandlerKey) as? (NSView) -> Void {
             action(self)
         }
     }

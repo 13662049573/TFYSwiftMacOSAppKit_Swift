@@ -8,34 +8,50 @@
 
 import Cocoa
 
+private final class TFYTextFieldObservationBag {
+    var textChangeObserver: NSObjectProtocol?
+    var focusBeginObserver: NSObjectProtocol?
+    var focusEndObserver: NSObjectProtocol?
+    var maxLengthObserver: NSObjectProtocol?
+    
+    deinit {
+        let notificationCenter = NotificationCenter.default
+        [textChangeObserver, focusBeginObserver, focusEndObserver, maxLengthObserver]
+            .compactMap { $0 }
+            .forEach(notificationCenter.removeObserver)
+    }
+}
+
 public extension NSTextField {
     
     private struct AssociatedKeys {
-        static var placeholderColorName:UnsafeRawPointer = UnsafeRawPointer(bitPattern: "textColor".hashValue)!
-        static var textChangeHandler: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "textChangeHandler".hashValue)!
-        static var validationHandler: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "validationHandler".hashValue)!
+        static var placeholderColorName: UInt8 = 0
+        static var textChangeHandler: UInt8 = 0
+        static var validationHandler: UInt8 = 0
+        static var maxLength: UInt8 = 0
+        static var observationBag: UInt8 = 0
     }
     
     var placeholderStringColor:NSColor {
         set {
-            objc_setAssociatedObject(self, AssociatedKeys.placeholderColorName,newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, &AssociatedKeys.placeholderColorName, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
             msSetPlaceholder(placeholder: self.placeholderString, color: newValue)
         }
         get {
-            return (objc_getAssociatedObject(self, AssociatedKeys.placeholderColorName) as? NSColor)!
+            return (objc_getAssociatedObject(self, &AssociatedKeys.placeholderColorName) as? NSColor) ?? .placeholderTextColor
         }
     }
     
     func msSetPlaceholder(placeholder: String?, color: NSColor) {
-        let font = self.font
+        let font = self.font ?? .systemFont(ofSize: NSFont.systemFontSize)
         let attrs: [NSAttributedString.Key: Any] = [
-           .font: font!,
+           .font: font,
            .foregroundColor: color
         ]
         let titleStr = placeholder ?? ""
         if titleStr.count > 0 {
             let attributedString = NSMutableAttributedString(string: titleStr, attributes: attrs)
-            let style = NSParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle
+            let style = NSMutableParagraphStyle()
             style.alignment = self.alignment
             attributedString.addAttribute(.paragraphStyle, value: style, range: NSRange(location: 0, length: titleStr.count))
             self.placeholderAttributedString = attributedString
@@ -85,13 +101,25 @@ public extension NSTextField {
     /// 设置文本变化回调
     /// - Parameter handler: 文本变化回调
     func setTextChangeHandler(_ handler: @escaping (String) -> Void) {
-        objc_setAssociatedObject(self, AssociatedKeys.textChangeHandler, handler, .OBJC_ASSOCIATION_COPY_NONATOMIC)
-        self.target = self
-        self.action = #selector(handleTextChange(_:))
+        objc_setAssociatedObject(self, &AssociatedKeys.textChangeHandler, handler, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        
+        let bag = ensureObservationBag()
+        if bag.textChangeObserver == nil {
+            bag.textChangeObserver = NotificationCenter.default.addObserver(
+                forName: NSControl.textDidChangeNotification,
+                object: self,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                if let handler = objc_getAssociatedObject(self, &AssociatedKeys.textChangeHandler) as? (String) -> Void {
+                    handler(self.stringValue)
+                }
+            }
+        }
     }
     
     @objc private func handleTextChange(_ sender: NSTextField) {
-        if let handler = objc_getAssociatedObject(self, AssociatedKeys.textChangeHandler) as? (String) -> Void {
+        if let handler = objc_getAssociatedObject(self, &AssociatedKeys.textChangeHandler) as? (String) -> Void {
             handler(sender.stringValue)
         }
     }
@@ -99,13 +127,13 @@ public extension NSTextField {
     /// 设置文本验证回调
     /// - Parameter handler: 验证回调，返回是否有效
     func setValidationHandler(_ handler: @escaping (String) -> Bool) {
-        objc_setAssociatedObject(self, AssociatedKeys.validationHandler, handler, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        objc_setAssociatedObject(self, &AssociatedKeys.validationHandler, handler, .OBJC_ASSOCIATION_COPY_NONATOMIC)
     }
     
     /// 验证当前文本
     /// - Returns: 是否有效
     func validateText() -> Bool {
-        if let handler = objc_getAssociatedObject(self, AssociatedKeys.validationHandler) as? (String) -> Bool {
+        if let handler = objc_getAssociatedObject(self, &AssociatedKeys.validationHandler) as? (String) -> Bool {
             return handler(stringValue)
         }
         return true
@@ -113,8 +141,27 @@ public extension NSTextField {
     
     /// 添加焦点效果
     func addFocusEffect() {
-        NotificationCenter.default.addObserver(self, selector: #selector(textFieldDidBeginEditing), name: NSControl.textDidBeginEditingNotification, object: self)
-        NotificationCenter.default.addObserver(self, selector: #selector(textFieldDidEndEditing), name: NSControl.textDidEndEditingNotification, object: self)
+        let bag = ensureObservationBag()
+        
+        if bag.focusBeginObserver == nil {
+            bag.focusBeginObserver = NotificationCenter.default.addObserver(
+                forName: NSControl.textDidBeginEditingNotification,
+                object: self,
+                queue: .main
+            ) { [weak self] _ in
+                self?.textFieldDidBeginEditing()
+            }
+        }
+        
+        if bag.focusEndObserver == nil {
+            bag.focusEndObserver = NotificationCenter.default.addObserver(
+                forName: NSControl.textDidEndEditingNotification,
+                object: self,
+                queue: .main
+            ) { [weak self] _ in
+                self?.textFieldDidEndEditing()
+            }
+        }
     }
     
     @objc private func textFieldDidBeginEditing() {
@@ -134,13 +181,23 @@ public extension NSTextField {
     /// 设置最大字符数
     /// - Parameter maxLength: 最大字符数
     func setMaxLength(_ maxLength: Int) {
-        self.target = self
-        self.action = #selector(handleTextDidChange(_:))
-        objc_setAssociatedObject(self, "maxLength", maxLength, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        objc_setAssociatedObject(self, &AssociatedKeys.maxLength, maxLength, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        
+        let bag = ensureObservationBag()
+        if bag.maxLengthObserver == nil {
+            bag.maxLengthObserver = NotificationCenter.default.addObserver(
+                forName: NSControl.textDidChangeNotification,
+                object: self,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                self.enforceMaxLength()
+            }
+        }
     }
     
     @objc private func handleTextDidChange(_ sender: NSTextField) {
-        if let maxLength = objc_getAssociatedObject(self, "maxLength") as? Int {
+        if let maxLength = objc_getAssociatedObject(self, &AssociatedKeys.maxLength) as? Int {
             if sender.stringValue.count > maxLength {
                 sender.stringValue = String(sender.stringValue.prefix(maxLength))
             }
@@ -247,7 +304,8 @@ public extension NSTextField {
         self.isEnabled = true
         self.addGestureRecognizer(obj)
         obj.addAction { recognizer in
-            action(recognizer as! NSPressGestureRecognizer)
+            guard let gesture = recognizer as? NSPressGestureRecognizer else { return }
+            action(gesture)
         }
         return obj
     }
@@ -297,7 +355,8 @@ public extension NSTextField {
         self.isEnabled = true
         self.addGestureRecognizer(obj)
         obj.addAction { recognizer in
-            action(recognizer as! NSMagnificationGestureRecognizer)
+            guard let gesture = recognizer as? NSMagnificationGestureRecognizer else { return }
+            action(gesture)
         }
         return obj
     }
@@ -309,8 +368,26 @@ public extension NSTextField {
         self.isEnabled = true
         self.addGestureRecognizer(obj)
         obj.addAction { recognizer in
-            action(recognizer as! NSRotationGestureRecognizer)
+            guard let gesture = recognizer as? NSRotationGestureRecognizer else { return }
+            action(gesture)
         }
         return obj
+    }
+    
+    private func ensureObservationBag() -> TFYTextFieldObservationBag {
+        if let bag = objc_getAssociatedObject(self, &AssociatedKeys.observationBag) as? TFYTextFieldObservationBag {
+            return bag
+        }
+        
+        let bag = TFYTextFieldObservationBag()
+        objc_setAssociatedObject(self, &AssociatedKeys.observationBag, bag, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        return bag
+    }
+    
+    private func enforceMaxLength() {
+        if let maxLength = objc_getAssociatedObject(self, &AssociatedKeys.maxLength) as? Int,
+           stringValue.count > maxLength {
+            stringValue = String(stringValue.prefix(maxLength))
+        }
     }
 }

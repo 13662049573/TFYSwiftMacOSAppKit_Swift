@@ -2,12 +2,15 @@ Pod::Spec.new do |spec|
 
   spec.name         = "TFYSwiftMacOSAppKit"
 
-  spec.version      = "1.2.0"
+  spec.version      = "1.3.0"
   
-  spec.summary      = "Swift code for macOS development, encapsulation library. Basic components. Minimum support Mac 12.0"
+  spec.summary      = "AppKit-focused macOS Swift toolkit with chain APIs, custom controls, HUD, status item, and utilities."
 
   spec.description  = <<-DESC
-                        Swift code for macOS development, encapsulation library. Basic components. Minimum support Mac 12.0. This library provides a set of high-level UI components and utilities to help developers build macOS applications more efficiently.
+                        TFYSwiftMacOSAppKit is a macOS AppKit toolkit written in Swift.
+                        It provides chain-style APIs, custom controls, category extensions,
+                        status item presentation, HUD components, cache/JSON/timer/GCD utilities,
+                        and a fully upgraded demo app for real-world integration and verification.
                    DESC
 
   spec.homepage     = "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift"
@@ -17,8 +20,9 @@ Pod::Spec.new do |spec|
   spec.author       = { "田风有" => "420144542@qq.com" }
 
   spec.platform     = :osx
-  spec.osx.deployment_target = "13.0"
+  spec.osx.deployment_target = "12.4"
   spec.swift_version = '5.0'
+  spec.default_subspecs = 'macOSBase', 'macOSfoundation', 'macOScategory', 'macOScontainer', 'macOSchain', 'macOSHUD'
 
   spec.source       = { :git => "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", :tag => spec.version }
 
@@ -86,8 +90,7 @@ Pod::Spec.new do |spec|
 
   # 添加编译选项
   spec.pod_target_xcconfig = { 
-    'SWIFT_VERSION' => '5.0',
-    'SWIFT_OPTIMIZATION_LEVEL' => '-Onone'
+    'SWIFT_VERSION' => '5.0'
   }
 
 end

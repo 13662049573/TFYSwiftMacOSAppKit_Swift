@@ -13,26 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Repair main menu hierarchy to avoid "Internal inconsistency in menus" (root menu sometimes has no items after load)
         repairMainMenuIfNeeded()
-
-        // Insert code here to initialize your application
-        let showVc:TFYSwiftHomeController = TFYSwiftHomeController()
-        showVc.preferredContentSize = NSSize(width: 400, height: 600)
-        
-        let view:NSView = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 30))
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.orange.cgColor
-
-//        // 配置图片和视图控制器
-//        TFYStatusItem.shared.configureSafely(with: .init(
-//            image: NSImage(named: "mood_analysis_select_5"),
-//            viewController: showVc
-//        ))
-
-        // 配置自定义视图和视图控制器
-        TFYStatusItem.shared.configureSafely(with: .init(
-            customView: view,
-            viewController: showVc
-        ))
+        showMainWindowIfNeeded()
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
@@ -40,6 +21,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+        return true
+    }
+    
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            showMainWindowIfNeeded()
+        }
         return true
     }
 
@@ -61,5 +49,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
     }
+    
+    private func showMainWindowIfNeeded() {
+        let targetWindow: NSWindow?
+        
+        if let existingWindow = NSApp.windows.first(where: { !$0.isMiniaturized }) {
+            targetWindow = existingWindow
+        } else if let controller = NSStoryboard.main?.instantiateInitialController() as? NSWindowController {
+            controller.showWindow(self)
+            targetWindow = controller.window
+        } else {
+            targetWindow = nil
+        }
+        
+        guard let window = targetWindow else { return }
+        window.title = "TFYSwiftMacOSAppKit Demo"
+        window.setContentSize(NSSize(width: 1280, height: 860))
+        window.minSize = NSSize(width: 1120, height: 760)
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
 }
-

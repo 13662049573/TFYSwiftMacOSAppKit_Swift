@@ -97,7 +97,7 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     private var _presentationMode: TFYStatusItemPresentationMode = .undefined
     private var statusItemWindowController: TFYStatusItemWindowController?
     
-    @Published private(set) var isStatusItemWindowVisible: Bool = true
+    @Published private(set) var isStatusItemWindowVisible: Bool = false
     
     // MARK: - 初始化方法
     private override init() {
@@ -157,6 +157,8 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
             let containerView = TFYStatusItemContainerView(frame: view.bounds)
             containerView.target = self
             containerView.action = #selector(handleStatusItemButtonAction(_:))
+            view.frame = containerView.bounds
+            view.autoresizingMask = [.width, .height]
             containerView.addSubview(view)
             
             customViewContainer = containerView
@@ -186,6 +188,9 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     }
     
     private func setupStatusItem() {
+        if let statusItem = statusItem {
+            NSStatusBar.system.removeStatusItem(statusItem)
+        }
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         windowConfiguration = TFYStatusItemWindowConfiguration.defaultConfiguration()
     }
@@ -202,6 +207,7 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     }
     
     private func setupPinnedObserver() {
+        observerisPinned?.invalidate()
         observerisPinned = windowConfiguration?.observe(\.isPinned) { [weak self] _, change in
             if let oldValue = change.oldValue, !oldValue {
                 self?.handlePinnedStateChange(false)
@@ -221,7 +227,6 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     }
     
     @objc private func handleStatusItemButtonAction(_ sender: Any) {
-        isStatusItemWindowVisible = !isStatusItemWindowVisible
         if isStatusItemWindowVisible {
             dismissStatusItemWindow()
         } else {
@@ -318,6 +323,8 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
         dismissStatusItemWindow()
         if !isPinned && proximityDragDetectionEnabled {
             enableDragEventMonitor()
+        } else {
+            disableDragEventMonitor()
         }
     }
     
@@ -326,11 +333,13 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     /// 显示状态栏窗口
     public func showStatusItemWindow() {
         statusItemWindowController?.showStatusItemWindow()
+        isStatusItemWindowVisible = true
     }
     
     /// 关闭状态栏窗口
     public func dismissStatusItemWindow() {
         statusItemWindowController?.dismissStatusItemWindow()
+        isStatusItemWindowVisible = false
     }
     
     /// 获取状态栏项的frame
@@ -346,6 +355,10 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
         customViewContainer = nil
         customView = nil
         _presentationMode = .undefined
+        isStatusItemWindowVisible = false
+        observerStatusItemFrame?.invalidate()
+        observerisPinned?.invalidate()
+        disableDragEventMonitor()
         
         // 重新设置状态栏项
         if let button = statusItem?.button {
@@ -353,6 +366,11 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
             button.target = nil
             button.action = nil
             button.subviews.forEach { $0.removeFromSuperview() }
+        }
+        
+        if let statusItem = statusItem {
+            NSStatusBar.system.removeStatusItem(statusItem)
+            self.statusItem = nil
         }
         
         // 重新初始化

@@ -364,7 +364,9 @@ import Cocoa
             })
         }
         if delay > 0 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: fadeOut)
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                fadeOut()
+            }
         } else {
             fadeOut()
         }

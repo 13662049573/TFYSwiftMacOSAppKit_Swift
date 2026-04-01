@@ -11,6 +11,8 @@ class UtilsDemoViewController: NSViewController {
     
     private var resultTextView: NSTextView!
     private var cacheManager: TFYSwiftCacheKit?
+    private var activeTimer: TFYSwiftTimer?
+    private var countDownTimer: TFYSwiftCountDownTimer?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -145,12 +147,48 @@ class UtilsDemoViewController: NSViewController {
         
         buttonArea.addSubview(cryptoButton)
         
+        let clearButton = NSButton()
+        clearButton.chain
+            .frame(NSRect(x: 390, y: 40, width: 120, height: 30))
+            .title("清空日志")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(clearResults))
+        
+        buttonArea.addSubview(clearButton)
+        
+        let debounceButton = NSButton()
+        debounceButton.chain
+            .frame(NSRect(x: 520, y: 40, width: 120, height: 30))
+            .title("防抖/节流")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testDebounceAndThrottle))
+        
+        buttonArea.addSubview(debounceButton)
+        
+        let jsonFileButton = NSButton()
+        jsonFileButton.chain
+            .frame(NSRect(x: 0, y: 80, width: 120, height: 30))
+            .title("JSON文件")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testJsonFileIO))
+        
+        buttonArea.addSubview(jsonFileButton)
+        
+        let countDownButton = NSButton()
+        countDownButton.chain
+            .frame(NSRect(x: 130, y: 80, width: 120, height: 30))
+            .title("倒计时")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testCountDownTimer))
+        
+        buttonArea.addSubview(countDownButton)
+        
         // 设置约束
         NSLayoutConstraint.activate([
             buttonArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 60),
             buttonArea.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             buttonArea.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            buttonArea.heightAnchor.constraint(equalToConstant: 80)
+            buttonArea.heightAnchor.constraint(equalToConstant: 120)
         ])
     }
     
@@ -186,7 +224,7 @@ class UtilsDemoViewController: NSViewController {
         
         // 设置约束
         NSLayoutConstraint.activate([
-            resultArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 160),
+            resultArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 200),
             resultArea.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             resultArea.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             resultArea.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20)
@@ -418,11 +456,13 @@ class UtilsDemoViewController: NSViewController {
     
     @objc private func testTimer() {
         appendResult("=== 定时器测试 ===")
+        activeTimer?.cancel()
         
         // 创建重复定时器
         let timer = TFYSwiftTimer.repeatingTimer(interval: .seconds(2)) { [weak self] timer in
             self?.appendResult("定时器触发: \(Date())")
         }
+        activeTimer = timer
         
         // 启动定时器
         do {
@@ -436,6 +476,7 @@ class UtilsDemoViewController: NSViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
             timer.stop()
             self.appendResult("定时器已停止")
+            self.activeTimer = nil
         }
     }
     
@@ -599,5 +640,69 @@ class UtilsDemoViewController: NSViewController {
                 self?.appendResult("文件写入失败: \(error.localizedDescription)")
             }
         }
+    }
+    
+    @objc private func clearResults() {
+        resultTextView.string = "工具类测试结果将显示在这里...\n"
+        appendResult("日志已清空")
+    }
+    
+    @objc private func testDebounceAndThrottle() {
+        appendResult("=== 防抖 / 节流测试 ===")
+        appendResult("连续触发 5 次 debounce，预期只执行最后 1 次")
+        
+        for index in 1...5 {
+            TFYSwiftTimer.debounce(interval: .milliseconds(250), identifier: "utils-demo-debounce") { [weak self] in
+                self?.appendResult("debounce 最终执行，来自第 \(index) 次触发")
+            }
+        }
+        
+        appendResult("连续触发 5 次 throttle，预期只执行第 1 次")
+        for index in 1...5 {
+            TFYSwiftTimer.throttle(interval: .milliseconds(400), identifier: "utils-demo-throttle") { [weak self] in
+                self?.appendResult("throttle 执行，来自第 \(index) 次触发")
+            }
+        }
+    }
+    
+    @objc private func testJsonFileIO() {
+        appendResult("=== JSON 文件读写测试 ===")
+        
+        struct DemoProfile: Codable {
+            let id: Int
+            let name: String
+            let tags: [String]
+        }
+        
+        let profile = DemoProfile(id: 7, name: "TFY Demo", tags: ["macOS", "AppKit", "Utilities"])
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent("tfy_demo_profile.json")
+        
+        do {
+            try TFYSwiftJsonUtils.saveToFile(profile, filePath: fileURL.path)
+            appendResult("JSON 已写入临时目录: \(fileURL.path)")
+            
+            let loadedProfile = try TFYSwiftJsonUtils.loadFromFile(DemoProfile.self, filePath: fileURL.path)
+            appendResult("JSON 读取成功: \(loadedProfile.name) / tags: \(loadedProfile.tags.joined(separator: ", "))")
+        } catch {
+            appendResult("JSON 文件读写失败: \(error.localizedDescription)")
+        }
+    }
+    
+    @objc private func testCountDownTimer() {
+        appendResult("=== 倒计时测试 ===")
+        countDownTimer?.cancel()
+        
+        let timer = TFYSwiftCountDownTimer(interval: .seconds(1), times: 5) { [weak self] timer, leftTimes in
+            let progressText = String(format: "%.0f%%", timer.progress * 100)
+            self?.appendResult("倒计时剩余: \(leftTimes) 秒，进度: \(progressText)")
+            if leftTimes == 0 {
+                self?.appendResult("倒计时结束")
+                self?.countDownTimer = nil
+            }
+        }
+        
+        countDownTimer = timer
+        timer.start()
+        appendResult("倒计时已启动，总时长 5 秒")
     }
 } 

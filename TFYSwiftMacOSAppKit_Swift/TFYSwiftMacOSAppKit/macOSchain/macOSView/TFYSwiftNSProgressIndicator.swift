@@ -18,13 +18,17 @@ public extension Chain where Base: NSProgressIndicator {
     
     @discardableResult
     func bezeled(_ bezeled: Bool) -> Self {
-        base.isBezeled = bezeled
+        if #unavailable(macOS 14.0) {
+            base.isBezeled = bezeled
+        }
         return self
     }
     
     @discardableResult
     func controlTint(_ tint: NSControlTint) -> Self {
-        base.controlTint = tint
+        if #unavailable(macOS 14.0) {
+            base.controlTint = tint
+        }
         return self
     }
     

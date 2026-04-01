@@ -56,8 +56,8 @@ public extension NSImage {
     ///   - alpha: 徽章的透明度
     ///   - scale: 徽章的缩放比例
     func applyBadge(badge: NSImage?, withAlpha alpha: CGFloat, scale: CGFloat) {
-        guard let badge = badge else { return }
-        let newBadge = badge.copy() as! NSImage
+        guard let badge = badge,
+              let newBadge = badge.copy() as? NSImage else { return }
         // 根据缩放比例调整徽章大小
         newBadge.size = NSSize(width: size.width * scale, height: size.height * scale)
         
@@ -132,7 +132,10 @@ public extension NSImage {
     /// - Returns: 渐变图像
     static func gradientImage(colors: [NSColor], size: NSSize, direction: NSGradient.DrawingOptions = .drawsBeforeStartingLocation) -> NSImage {
         let image = NSImage(size: size)
-        let gradient = NSGradient(colors: colors)!
+        
+        guard let gradient = NSGradient(colors: colors), !colors.isEmpty else {
+            return image
+        }
         
         image.lockFocus()
         gradient.draw(in: NSRect(origin: .zero, size: size), angle: 0)

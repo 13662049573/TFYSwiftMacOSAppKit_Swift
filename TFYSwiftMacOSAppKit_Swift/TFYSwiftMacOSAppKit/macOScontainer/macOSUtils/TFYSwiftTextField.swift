@@ -61,12 +61,6 @@ public class TFYSwiftTextField: NSTextField {
         cell?.isBezeled = false
         cell?.isBordered = false
         preferredMaxLayoutWidth = 100
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(textDidChangeNotification(_:)), name: NSControl.textDidChangeNotification, object: self)
-    }
-    
-    @objc private func textDidChangeNotification(_ notification: Notification) {
-        delegate_swift?.textFieldDidChange?(textField: self)
     }
     
     public override func textDidChange(_ notification: Notification) {
@@ -104,7 +98,5 @@ public class TFYSwiftTextField: NSTextField {
     }
     
     deinit {
-        NotificationCenter.default.removeObserver(self)
     }
 }
-

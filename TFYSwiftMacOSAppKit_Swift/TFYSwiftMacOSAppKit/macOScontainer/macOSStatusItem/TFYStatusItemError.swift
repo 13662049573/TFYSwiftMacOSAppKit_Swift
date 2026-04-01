@@ -9,14 +9,14 @@
 import Foundation
 
 /// 状态栏项错误类型
-public enum TFYStatusItemError: Error {
+public enum TFYStatusItemError: Error, LocalizedError {
     case alreadyInitialized
     case invalidContentSize
     case configurationMissing
     case invalidImage
     case invalidView
     
-    var localizedDescription: String {
+    public var errorDescription: String? {
         switch self {
         case .alreadyInitialized:
             return "状态栏项已经初始化"

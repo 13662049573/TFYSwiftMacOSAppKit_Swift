@@ -1,0 +1,36 @@
+name: macOS Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app
+
+      - name: Swift Package Build
+        run: swift build
+
+      - name: Swift Package Smoke Checks
+        run: swift run TFYSwiftMacOSAppKitSmoke
+
+      - name: Xcode Debug Build
+        run: |
+          xcodebuild \
+            -project TFYSwiftMacOSAppKit_Swift.xcodeproj \
+            -scheme TFYSwiftMacOSAppKit_Swift \
+            -destination 'platform=macOS' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            build

@@ -17,21 +17,22 @@ public class TFYSwiftSecureTextField: NSSecureTextField {
     /// 文字是否居中 默认 NO
     public var isTextAlignmentVerticalCenter:Bool = true {
         didSet {
-            (self.cell as! TFYSwiftSecureTextFieldCell).isTextAlignmentVerticalCenter = isTextAlignmentVerticalCenter
+            (self.cell as? TFYSwiftSecureTextFieldCell)?.isTextAlignmentVerticalCenter = isTextAlignmentVerticalCenter
         }
     }
     
     /// 修改光标离X轴的距离 默认 0 isTextAlignmentVerticalCenter 为 YES 的时候 使用
     public var Xcursor:CGFloat = 10 {
         didSet {
-            (self.cell as! TFYSwiftSecureTextFieldCell).Xcursor = Xcursor
+            (self.cell as? TFYSwiftSecureTextFieldCell)?.Xcursor = Xcursor
         }
     }
     
     weak public var delegate_swift: (any TFYSwiftSecureTextDelegate)?
     
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: coder)
+        registerForNotifications()
     }
     
     public override init(frame frameRect: NSRect) {
@@ -44,8 +45,6 @@ public class TFYSwiftSecureTextField: NSSecureTextField {
         cell?.lineBreakMode = .byWordWrapping
         cell?.truncatesLastVisibleLine = true
         cell?.isEditable = true
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(delegate_swift?.securetextFieldDidChange(textField:)), name: NSControl.textDidChangeNotification, object: self)
     }
     
     public override func textDidChange(_ notification: Notification) {
@@ -55,20 +54,20 @@ public class TFYSwiftSecureTextField: NSSecureTextField {
     public override func becomeFirstResponder() -> Bool {
         let success = super.becomeFirstResponder()
         if success {
-            let textView:NSTextView = self.currentEditor() as! NSTextView
-            textView.insertionPointColor = textColor
+            if let textView = self.currentEditor() as? NSTextView {
+                textView.insertionPointColor = textColor ?? .textColor
+            }
         }
         return success
     }
     
     public override var alignment: NSTextAlignment {
         didSet {
-            let placeholderString = self.placeholderString
-            if (placeholderString != nil) {
-                let attributedString:NSMutableAttributedString = NSMutableAttributedString(string: placeholderString!)
-                let style:NSMutableParagraphStyle = (NSParagraphStyle.default as! NSMutableParagraphStyle)
+            if let placeholderString = self.placeholderString {
+                let attributedString = NSMutableAttributedString(string: placeholderString)
+                let style = NSMutableParagraphStyle()
                 style.alignment = alignment
-                attributedString.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSMakeRange(0, placeholderString!.utf16.count))
+                attributedString.addAttribute(.paragraphStyle, value: style, range: NSMakeRange(0, placeholderString.utf16.count))
                 placeholderAttributedString = attributedString
             }
         }

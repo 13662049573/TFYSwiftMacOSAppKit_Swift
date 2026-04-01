@@ -280,10 +280,18 @@ public class TFYSwiftCacheKit: NSObject {
     
     // MARK: - 初始化
     private override init() {
-        guard let cacheDir = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true).first else {
-            fatalError("TFYSwiftCacheKit: 无法获取缓存目录")
+        let baseDirectoryURL: URL
+        if let cachesDirectoryURL = try? FileManager.default.url(
+            for: .cachesDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        ) {
+            baseDirectoryURL = cachesDirectoryURL
+        } else {
+            baseDirectoryURL = FileManager.default.temporaryDirectory
         }
-        diskCachePath = (cacheDir as NSString).appendingPathComponent("TFYCache")
+        diskCachePath = baseDirectoryURL.appendingPathComponent("TFYCache", isDirectory: true).path
         
         super.init()
         
@@ -300,12 +308,10 @@ public class TFYSwiftCacheKit: NSObject {
     }
     
     private func setupDiskCache() {
-        if !fileManager.fileExists(atPath: diskCachePath) {
-            do {
-                try fileManager.createDirectory(atPath: diskCachePath, withIntermediateDirectories: true, attributes: nil)
-            } catch {
-                print("TFYSwiftCacheKit: 创建缓存目录失败: \(error.localizedDescription)")
-            }
+        do {
+            try ensureDiskCacheDirectoryExists()
+        } catch {
+            print("TFYSwiftCacheKit: 创建缓存目录失败: \(error.localizedDescription)")
         }
     }
     
@@ -371,6 +377,7 @@ public class TFYSwiftCacheKit: NSObject {
         
         config = newConfig
         setupMemoryCache()
+        setupDiskCache()
         return true
     }
     
@@ -433,15 +440,16 @@ public class TFYSwiftCacheKit: NSObject {
     ///   - key: 缓存键
     ///   - completion: 完成回调（主线程）
     public func setDiskCache(_ data: Data, forKey key: String, completion: @escaping (Result<Void, TFYCacheError>) -> Void) {
-        cacheQueue.async {
-            self.cleanDiskIfNeeded()
-            do {
-                let filePath = self.diskCachePath(forKey: key)
-                try data.write(to: URL(fileURLWithPath: filePath))
-                DispatchQueue.main.async { completion(.success(())) }
-            } catch {
-                DispatchQueue.main.async { completion(.failure(.saveFailed(error))) }
+        guard validateCacheKey(key) else {
+            dispatchToMain {
+                completion(.failure(.invalidKey))
             }
+            return
+        }
+        
+        cacheQueue.async {
+            let result = self.writeDiskCacheSync(data, forKey: key)
+            self.dispatchResult(result, completion: completion)
         }
     }
     
@@ -450,21 +458,16 @@ public class TFYSwiftCacheKit: NSObject {
     ///   - key: 缓存键
     ///   - completion: 完成回调（主线程）
     public func getDiskCache(forKey key: String, completion: @escaping (Result<Data, TFYCacheError>) -> Void) {
+        guard validateCacheKey(key) else {
+            dispatchToMain {
+                completion(.failure(.invalidKey))
+            }
+            return
+        }
+        
         cacheQueue.async {
-            self.cleanExpiredCacheIfNeeded()
-            let filePath = self.diskCachePath(forKey: key)
-            
-            guard self.fileManager.fileExists(atPath: filePath) else {
-                DispatchQueue.main.async { completion(.failure(.dataNotFound)) }
-                return
-            }
-            
-            do {
-                let data = try Data(contentsOf: URL(fileURLWithPath: filePath))
-                DispatchQueue.main.async { completion(.success(data)) }
-            } catch {
-                DispatchQueue.main.async { completion(.failure(.loadFailed(error))) }
-            }
+            let result = self.readDiskCacheSync(forKey: key)
+            self.dispatchResult(result, completion: completion)
         }
     }
     
@@ -473,6 +476,13 @@ public class TFYSwiftCacheKit: NSObject {
     ///   - key: 缓存键
     ///   - completion: 完成回调
     public func removeDiskCache(forKey key: String, completion: @escaping (Result<Void, TFYCacheError>) -> Void) {
+        guard validateCacheKey(key) else {
+            dispatchToMain {
+                completion(.failure(.invalidKey))
+            }
+            return
+        }
+        
         cacheQueue.async {
             let filePath = self.diskCachePath(forKey: key)
             
@@ -480,9 +490,13 @@ public class TFYSwiftCacheKit: NSObject {
                 if self.fileManager.fileExists(atPath: filePath) {
                     try self.fileManager.removeItem(atPath: filePath)
                 }
-                DispatchQueue.main.async { completion(.success(())) }
+                self.dispatchToMain {
+                    completion(.success(()))
+                }
             } catch {
-                DispatchQueue.main.async { completion(.failure(.saveFailed(error))) }
+                self.dispatchToMain {
+                    completion(.failure(.saveFailed(error)))
+                }
             }
         }
     }
@@ -492,14 +506,19 @@ public class TFYSwiftCacheKit: NSObject {
     public func clearDiskCache(completion: @escaping (Result<Void, TFYCacheError>) -> Void) {
         cacheQueue.async {
             do {
+                try self.ensureDiskCacheDirectoryExists()
                 let contents = try self.fileManager.contentsOfDirectory(atPath: self.diskCachePath)
                 for file in contents {
                     let filePath = (self.diskCachePath as NSString).appendingPathComponent(file)
                     try self.fileManager.removeItem(atPath: filePath)
                 }
-                DispatchQueue.main.async { completion(.success(())) }
+                self.dispatchToMain {
+                    completion(.success(()))
+                }
             } catch {
-                DispatchQueue.main.async { completion(.failure(.saveFailed(error))) }
+                self.dispatchToMain {
+                    completion(.failure(.saveFailed(error)))
+                }
             }
         }
     }
@@ -620,6 +639,7 @@ public class TFYSwiftCacheKit: NSObject {
     public func getCacheSize(completion: @escaping (Result<Int, TFYCacheError>) -> Void) {
         cacheQueue.async {
             do {
+                try self.ensureDiskCacheDirectoryExists()
                 let contents = try self.fileManager.contentsOfDirectory(atPath: self.diskCachePath)
                 var totalSize = 0
                 
@@ -631,11 +651,11 @@ public class TFYSwiftCacheKit: NSObject {
                     }
                 }
                 
-                DispatchQueue.main.async {
+                self.dispatchToMain {
                     completion(.success(totalSize))
                 }
             } catch {
-                DispatchQueue.main.async {
+                self.dispatchToMain {
                     completion(.failure(.loadFailed(error)))
                 }
             }
@@ -647,6 +667,7 @@ public class TFYSwiftCacheKit: NSObject {
     public func cleanExpiredCache(completion: @escaping (Result<Void, TFYCacheError>) -> Void) {
         cacheQueue.async {
             do {
+                try self.ensureDiskCacheDirectoryExists()
                 let contents = try self.fileManager.contentsOfDirectory(atPath: self.diskCachePath)
                 let expirationDate = Date().addingTimeInterval(-self.config.expirationInterval)
                 
@@ -660,11 +681,11 @@ public class TFYSwiftCacheKit: NSObject {
                     }
                 }
                 
-                DispatchQueue.main.async {
+                self.dispatchToMain {
                     completion(.success(()))
                 }
             } catch {
-                DispatchQueue.main.async {
+                self.dispatchToMain {
                     completion(.failure(.saveFailed(error)))
                 }
             }
@@ -711,16 +732,81 @@ public class TFYSwiftCacheKit: NSObject {
                 return hashedKey
             }
             
-            let hashedKey = key.data(using: .utf8)?.base64EncodedString() ?? sanitizeCacheKey(key)
+            let hashedKey = fileSystemSafeHash(for: key)
             keyHashMapping[key] = hashedKey
             return hashedKey
         }
+    }
+    
+    private func fileSystemSafeHash(for key: String) -> String {
+        guard let data = key.data(using: .utf8) else {
+            return sanitizeCacheKey(key)
+        }
+        
+        return data.base64EncodedString()
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "=", with: "")
     }
     
     private func diskCachePath(forKey key: String) -> String {
         let hashedKey = hashCacheKey(key)
         let fileName = "\(hashedKey).\(config.fileExtension)"
         return (diskCachePath as NSString).appendingPathComponent(fileName)
+    }
+    
+    private func ensureDiskCacheDirectoryExists() throws {
+        guard !diskCachePath.isEmpty else {
+            throw TFYCacheError.invalidData
+        }
+        
+        if !fileManager.fileExists(atPath: diskCachePath) {
+            try fileManager.createDirectory(atPath: diskCachePath, withIntermediateDirectories: true, attributes: nil)
+        }
+    }
+    
+    private func writeDiskCacheSync(_ data: Data, forKey key: String) -> Result<Void, TFYCacheError> {
+        do {
+            try ensureDiskCacheDirectoryExists()
+            cleanDiskIfNeeded()
+            let filePath = diskCachePath(forKey: key)
+            try data.write(to: URL(fileURLWithPath: filePath), options: .atomic)
+            return .success(())
+        } catch let cacheError as TFYCacheError {
+            return .failure(cacheError)
+        } catch {
+            return .failure(.saveFailed(error))
+        }
+    }
+    
+    private func readDiskCacheSync(forKey key: String) -> Result<Data, TFYCacheError> {
+        cleanExpiredCacheIfNeeded()
+        let filePath = diskCachePath(forKey: key)
+        
+        guard fileManager.fileExists(atPath: filePath) else {
+            return .failure(.dataNotFound)
+        }
+        
+        do {
+            let data = try Data(contentsOf: URL(fileURLWithPath: filePath))
+            return .success(data)
+        } catch {
+            return .failure(.loadFailed(error))
+        }
+    }
+    
+    private func dispatchToMain(_ block: @escaping () -> Void) {
+        if Thread.isMainThread {
+            block()
+        } else {
+            DispatchQueue.main.async(execute: block)
+        }
+    }
+    
+    private func dispatchResult<T>(_ result: Result<T, TFYCacheError>, completion: @escaping (Result<T, TFYCacheError>) -> Void) {
+        dispatchToMain {
+            completion(result)
+        }
     }
     
     /// 自动清理过期缓存（仅内部调用，非主线程）
@@ -833,36 +919,60 @@ public extension TFYSwiftCacheKit {
 public extension TFYSwiftCacheKit {
     /// 同步设置缓存（避免死锁）
     func setCacheSync<T: Codable>(_ value: T, forKey key: String) -> Result<Void, TFYCacheError> {
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: Result<Void, TFYCacheError>!
-        
-        // 始终在后台队列执行，避免死锁
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.setCache(value, forKey: key) { res in
-                result = res
-                semaphore.signal()
-            }
+        guard validateCacheKey(key) else {
+            return .failure(.invalidKey)
         }
         
-        semaphore.wait()
-        return result
+        setMemoryCache(value, forKey: key)
+        
+        do {
+            let data = try JSONEncoder().encode(value)
+            return cacheQueue.sync {
+                writeDiskCacheSync(data, forKey: key)
+            }
+        } catch {
+            return .failure(.saveFailed(error))
+        }
     }
     
     /// 同步获取缓存（避免死锁）
     func getCacheSync<T: Codable>(_ type: T.Type, forKey key: String) -> Result<T, TFYCacheError> {
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: Result<T, TFYCacheError>!
-        
-        // 始终在后台队列执行，避免死锁
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.getCache(type, forKey: key) { res in
-                result = res
-                semaphore.signal()
-            }
+        guard validateCacheKey(key) else {
+            return .failure(.invalidKey)
         }
         
-        semaphore.wait()
-        return result
+        if let memoryValue: T = getMemoryCache(forKey: key) {
+            statsQueue.async {
+                self.cacheStats.recordHit(source: .memory)
+            }
+            return .success(memoryValue)
+        }
+        
+        let diskResult: Result<Data, TFYCacheError> = cacheQueue.sync {
+            readDiskCacheSync(forKey: key)
+        }
+        
+        switch diskResult {
+        case .success(let data):
+            do {
+                let value = try JSONDecoder().decode(type, from: data)
+                setMemoryCache(value, forKey: key)
+                statsQueue.async {
+                    self.cacheStats.recordHit(source: .disk)
+                }
+                return .success(value)
+            } catch {
+                statsQueue.async {
+                    self.cacheStats.recordMiss()
+                }
+                return .failure(.loadFailed(error))
+            }
+        case .failure(let error):
+            statsQueue.async {
+                self.cacheStats.recordMiss()
+            }
+            return .failure(error)
+        }
     }
     
     /// 异步设置缓存（推荐使用）

@@ -47,10 +47,20 @@ public enum TFYTimerState {
 @available(macOS 10.15, *)
 public class TFYSwiftTimer: NSObject {
     
+    private enum DispatchSourceLifecycle {
+        case suspended
+        case resumed
+        case cancelled
+    }
+    
     // MARK: - Properties
     
     /// 内部定时器
-    private var internalTimer: DispatchSourceTimer!
+    private let internalTimer: DispatchSourceTimer
+    
+    /// DispatchSourceTimer 生命周期锁，避免重复 resume/suspend/cancel 导致崩溃
+    private let lifecycleLock = NSLock()
+    private var dispatchSourceLifecycle: DispatchSourceLifecycle = .suspended
     
     /// 是否正在运行
     private var isRunning = false
@@ -108,21 +118,18 @@ public class TFYSwiftTimer: NSObject {
         self.queue = queue
         self.leeway = leeway
         self.creationDate = Date()
+        self.internalTimer = DispatchSource.makeTimerSource(queue: queue)
         
         super.init()
         
-        internalTimer = DispatchSource.makeTimerSource(queue: queue)
         internalTimer.setEventHandler { [weak self] in
-            self?.handler(self)
+            self?.handleTimerFired()
         }
         internalTimer.schedule(deadline: .now() + interval, repeating: repeats ? interval : .never, leeway: leeway)
     }
     
     deinit {
-        if !isRunning {
-            internalTimer.resume() // 确保定时器被恢复以正确释放
-        }
-        internalTimer.cancel()
+        cancelDispatchSourceIfNeeded()
     }
     
     // MARK: - Factory Methods
@@ -165,8 +172,8 @@ public class TFYSwiftTimer: NSObject {
         guard state != .cancelled else { return }
         handler(self)
         if !repeats {
-            state = .finished
-            internalTimer.cancel()
+            finishTimer()
+            cancelDispatchSourceIfNeeded()
         }
     }
     
@@ -179,7 +186,7 @@ public class TFYSwiftTimer: NSObject {
             throw TFYTimerError.timerCancelled
         }
         
-        internalTimer.resume()
+        resumeDispatchSourceIfNeeded()
         isRunning = true
         state = .running
         startDate = Date()
@@ -192,7 +199,7 @@ public class TFYSwiftTimer: NSObject {
             throw TFYTimerError.timerNotRunning
         }
         
-        internalTimer.suspend()
+        suspendDispatchSourceIfNeeded()
         isRunning = false
         state = .paused
         pauseDate = Date()
@@ -204,7 +211,7 @@ public class TFYSwiftTimer: NSObject {
             throw TFYTimerError.timerNotRunning
         }
         
-        internalTimer.resume()
+        resumeDispatchSourceIfNeeded()
         isRunning = true
         state = .running
         pauseDate = nil
@@ -212,7 +219,10 @@ public class TFYSwiftTimer: NSObject {
     
     /// 停止定时器
     public func stop() {
-        internalTimer.suspend()
+        guard state != .cancelled else { return }
+        if state == .running {
+            suspendDispatchSourceIfNeeded()
+        }
         isRunning = false
         state = .idle
         startDate = nil
@@ -221,7 +231,7 @@ public class TFYSwiftTimer: NSObject {
     
     /// 取消定时器
     public func cancel() {
-        internalTimer.cancel()
+        cancelDispatchSourceIfNeeded()
         isRunning = false
         state = .cancelled
         startDate = nil
@@ -268,6 +278,54 @@ public class TFYSwiftTimer: NSObject {
         let endDate = pauseDate ?? Date()
         return endDate.timeIntervalSince(startDate)
     }
+    
+    private func handleTimerFired() {
+        guard state != .cancelled else { return }
+        handler(self)
+        if !repeats {
+            finishTimer()
+            cancelDispatchSourceIfNeeded()
+        }
+    }
+    
+    private func finishTimer() {
+        isRunning = false
+        state = .finished
+        pauseDate = nil
+    }
+    
+    private func withLifecycleLock<T>(_ work: () -> T) -> T {
+        lifecycleLock.lock()
+        defer { lifecycleLock.unlock() }
+        return work()
+    }
+    
+    private func resumeDispatchSourceIfNeeded() {
+        withLifecycleLock {
+            guard dispatchSourceLifecycle == .suspended else { return }
+            internalTimer.resume()
+            dispatchSourceLifecycle = .resumed
+        }
+    }
+    
+    private func suspendDispatchSourceIfNeeded() {
+        withLifecycleLock {
+            guard dispatchSourceLifecycle == .resumed else { return }
+            internalTimer.suspend()
+            dispatchSourceLifecycle = .suspended
+        }
+    }
+    
+    private func cancelDispatchSourceIfNeeded() {
+        withLifecycleLock {
+            guard dispatchSourceLifecycle != .cancelled else { return }
+            if dispatchSourceLifecycle == .suspended {
+                internalTimer.resume()
+            }
+            internalTimer.cancel()
+            dispatchSourceLifecycle = .cancelled
+        }
+    }
 }
 
 // MARK: - Debounce and Throttle
@@ -277,6 +335,42 @@ public extension TFYSwiftTimer {
     
     /// 防抖和节流工作项存储
     private static var workItems = [String: DispatchWorkItem]()
+    private static let workItemsLock = NSLock()
+    
+    private static func replaceWorkItem(_ item: DispatchWorkItem, for identifier: String) -> DispatchWorkItem? {
+        workItemsLock.lock()
+        defer { workItemsLock.unlock() }
+        let previous = workItems[identifier]
+        workItems[identifier] = item
+        return previous
+    }
+    
+    private static func storeWorkItemIfNeeded(_ item: DispatchWorkItem, for identifier: String) -> Bool {
+        workItemsLock.lock()
+        defer { workItemsLock.unlock() }
+        guard workItems[identifier] == nil else { return false }
+        workItems[identifier] = item
+        return true
+    }
+    
+    private static func removeWorkItem(identifier: String, matching item: DispatchWorkItem? = nil) {
+        workItemsLock.lock()
+        defer { workItemsLock.unlock() }
+        
+        if let item = item,
+           let currentItem = workItems[identifier],
+           currentItem !== item {
+            return
+        }
+        
+        workItems.removeValue(forKey: identifier)
+    }
+    
+    private static func workItem(for identifier: String) -> DispatchWorkItem? {
+        workItemsLock.lock()
+        defer { workItemsLock.unlock() }
+        return workItems[identifier]
+    }
     
     /// 防抖定时器
     /// - Parameters:
@@ -285,9 +379,19 @@ public extension TFYSwiftTimer {
     ///   - queue: 执行队列
     ///   - handler: 处理器闭包
     static func debounce(interval: DispatchTimeInterval, identifier: String, queue: DispatchQueue = .main, handler: @escaping () -> Void) {
-        workItems[identifier]?.cancel()
-        let item = DispatchWorkItem(block: handler)
-        workItems[identifier] = item
+        var item: DispatchWorkItem?
+        item = DispatchWorkItem {
+            defer {
+                if let item = item {
+                    removeWorkItem(identifier: identifier, matching: item)
+                }
+            }
+            guard let item = item, !item.isCancelled else { return }
+            handler()
+        }
+        
+        guard let item = item else { return }
+        replaceWorkItem(item, for: identifier)?.cancel()
         queue.asyncAfter(deadline: .now() + interval, execute: item)
     }
     
@@ -298,23 +402,35 @@ public extension TFYSwiftTimer {
     ///   - queue: 执行队列
     ///   - handler: 处理器闭包
     static func throttle(interval: DispatchTimeInterval, identifier: String, queue: DispatchQueue = .main, handler: @escaping () -> Void) {
-        guard workItems[identifier] == nil else { return }
-        let item = DispatchWorkItem(block: handler)
-        workItems[identifier] = item
+        var item: DispatchWorkItem?
+        item = DispatchWorkItem {
+            defer {
+                if let item = item {
+                    removeWorkItem(identifier: identifier, matching: item)
+                }
+            }
+            guard let item = item, !item.isCancelled else { return }
+            handler()
+        }
+        
+        guard let item = item, storeWorkItemIfNeeded(item, for: identifier) else { return }
         queue.asyncAfter(deadline: .now() + interval, execute: item)
     }
     
     /// 取消节流定时器
     /// - Parameter identifier: 唯一标识符
     static func cancelThrottlingTimer(identifier: String) {
-        workItems[identifier]?.cancel()
-        workItems.removeValue(forKey: identifier)
+        workItem(for: identifier)?.cancel()
+        removeWorkItem(identifier: identifier)
     }
     
     /// 清理所有工作项
     static func cleanupWorkItems() {
-        workItems.values.forEach { $0.cancel() }
+        workItemsLock.lock()
+        let items = workItems.values
         workItems.removeAll()
+        workItemsLock.unlock()
+        items.forEach { $0.cancel() }
     }
 }
 

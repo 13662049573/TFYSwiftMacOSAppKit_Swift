@@ -95,11 +95,12 @@ public class TFYStatusItemWindow: NSPanel {
     }
     
     private func setupBackgroundViewIfNeeded(with bounds: NSRect) {
-        guard backgroundView == nil else { return }
+        guard backgroundView == nil,
+              let configuration = configuration else { return }
         
         backgroundView = TFYStatusItemWindowBackgroundView(
             frame: bounds,
-            windowConfiguration: configuration!
+            windowConfiguration: configuration
         )
         configureBackgroundView(backgroundView!, bounds: bounds)
         super.contentView = backgroundView
@@ -119,6 +120,7 @@ public class TFYStatusItemWindow: NSPanel {
     }
     
     private func configureBackgroundView(_ view: NSView, bounds: NSRect) {
+        view.frame = bounds
         configureView(view, bounds: bounds)
     }
     

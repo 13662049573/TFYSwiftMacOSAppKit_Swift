@@ -64,8 +64,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         guard let window = targetWindow else { return }
         window.title = "TFYSwiftMacOSAppKit Demo"
-        window.setContentSize(NSSize(width: 1280, height: 860))
-        window.minSize = NSSize(width: 1120, height: 760)
+        window.setContentSize(NSSize(width: 1600, height: 960))
+        window.minSize = NSSize(width: 1440, height: 860)
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)

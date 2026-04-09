@@ -9,52 +9,51 @@
 import Cocoa
 
 public class LinkInfo {
-    let key: String
-    let value: String?
-    init(key: String, value: String?) {
+    public let key: String
+    public let value: String?
+    
+    public init(key: String, value: String?) {
         self.key = key
         self.value = value
     }
 }
 
 // 定义关联键结构体
-struct GestureRecognizerAssociatedKeys {
-    static var functionName: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "functionName".hashValue)!
-    static var closure: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "closure".hashValue)!
-    static var clickGestureClosure: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "NSClickGestureRecognizer+closure".hashValue)!
-    static var longPressClosure: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "NSPressGestureRecognizer+closure".hashValue)!
-    static var panClosure: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "NSPanGestureRecognizer+closure".hashValue)!
-    static var rotationClosure: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "NSRotationGestureRecognizer+closure".hashValue)!
-    static var magnificationClosure: UnsafeRawPointer = UnsafeRawPointer(bitPattern: "NSMagnificationGestureRecognizer+closure".hashValue)!
+private enum GestureRecognizerAssociatedKeys {
+    static var functionName: UInt8 = 0
+    static var closure: UInt8 = 0
+    static var clickGestureClosure: UInt8 = 0
+    static var longPressClosure: UInt8 = 0
+    static var panClosure: UInt8 = 0
+    static var rotationClosure: UInt8 = 0
+    static var magnificationClosure: UInt8 = 0
 }
 
 @objc public extension NSGestureRecognizer {
     // 方法名称(用于自定义)
     var functionName: String {
         get {
-            if let obj = objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.functionName) as? String {
+            if let obj = objc_getAssociatedObject(self, &GestureRecognizerAssociatedKeys.functionName) as? String {
                 return obj
             }
             let string = String(describing: self.classForCoder)
-            objc_setAssociatedObject(self, GestureRecognizerAssociatedKeys.functionName, string,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, &GestureRecognizerAssociatedKeys.functionName, string,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
             return string
         }
         set {
-            objc_setAssociatedObject(self, GestureRecognizerAssociatedKeys.functionName, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            objc_setAssociatedObject(self, &GestureRecognizerAssociatedKeys.functionName, newValue,.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
     
     // 闭包回调
     func addAction(_ closure: @escaping (NSGestureRecognizer) -> Void) {
-        if objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.closure) == nil {
-            objc_setAssociatedObject(self, GestureRecognizerAssociatedKeys.closure, closure,.OBJC_ASSOCIATION_COPY_NONATOMIC)
-            self.target = self
-            self.action = #selector(invokeGesture)
-        }
+        objc_setAssociatedObject(self, &GestureRecognizerAssociatedKeys.closure, closure,.OBJC_ASSOCIATION_COPY_NONATOMIC)
+        self.target = self
+        self.action = #selector(invokeGesture)
     }
     
     @objc private func invokeGesture() {
-        if let closure = objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.closure) as? ((NSGestureRecognizer) -> Void) {
+        if let closure = objc_getAssociatedObject(self, &GestureRecognizerAssociatedKeys.closure) as? ((NSGestureRecognizer) -> Void) {
             closure(self)
         }
     }
@@ -76,18 +75,14 @@ struct GestureRecognizerAssociatedKeys {
 public extension NSClickGestureRecognizer {
     // 闭包回调
     @objc override func addAction(_ closure: @escaping (NSClickGestureRecognizer) -> Void) {
-        if objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.clickGestureClosure) == nil {
-            objc_setAssociatedObject(self, GestureRecognizerAssociatedKeys.clickGestureClosure, closure,.OBJC_ASSOCIATION_COPY_NONATOMIC)
-            self.target = self
-            self.action = #selector(invokeClickGesture)
-        }
+        objc_setAssociatedObject(self, &GestureRecognizerAssociatedKeys.clickGestureClosure, closure,.OBJC_ASSOCIATION_COPY_NONATOMIC)
+        self.target = self
+        self.action = #selector(invokeClickGesture)
     }
     
     @objc private func invokeClickGesture() {
-        let closure = objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.clickGestureClosure) as? ((NSClickGestureRecognizer) -> Void)
-        if closure != nil {
-            closure!(self)
-        }
+        let closure = objc_getAssociatedObject(self, &GestureRecognizerAssociatedKeys.clickGestureClosure) as? ((NSClickGestureRecognizer) -> Void)
+        closure?(self)
     }
 
     func didTapLabelAttributedText(_ linkInfos: [LinkInfo],
@@ -166,15 +161,13 @@ public extension NSPressGestureRecognizer {
     /// 添加长按手势回调
     /// - Parameter closure: 长按回调
     func addLongPressAction(_ closure: @escaping (NSPressGestureRecognizer) -> Void) {
-        if objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.longPressClosure) == nil {
-            objc_setAssociatedObject(self, GestureRecognizerAssociatedKeys.longPressClosure, closure, .OBJC_ASSOCIATION_COPY_NONATOMIC)
-            self.target = self
-            self.action = #selector(invokeLongPressGesture)
-        }
+        objc_setAssociatedObject(self, &GestureRecognizerAssociatedKeys.longPressClosure, closure, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        self.target = self
+        self.action = #selector(invokeLongPressGesture)
     }
     
     @objc private func invokeLongPressGesture() {
-        if let closure = objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.longPressClosure) as? ((NSPressGestureRecognizer) -> Void) {
+        if let closure = objc_getAssociatedObject(self, &GestureRecognizerAssociatedKeys.longPressClosure) as? ((NSPressGestureRecognizer) -> Void) {
             closure(self)
         }
     }
@@ -185,15 +178,13 @@ public extension NSPanGestureRecognizer {
     /// 添加拖拽手势回调
     /// - Parameter closure: 拖拽回调
     func addPanAction(_ closure: @escaping (NSPanGestureRecognizer) -> Void) {
-        if objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.panClosure) == nil {
-            objc_setAssociatedObject(self, GestureRecognizerAssociatedKeys.panClosure, closure, .OBJC_ASSOCIATION_COPY_NONATOMIC)
-            self.target = self
-            self.action = #selector(invokePanGesture)
-        }
+        objc_setAssociatedObject(self, &GestureRecognizerAssociatedKeys.panClosure, closure, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        self.target = self
+        self.action = #selector(invokePanGesture)
     }
     
     @objc private func invokePanGesture() {
-        if let closure = objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.panClosure) as? ((NSPanGestureRecognizer) -> Void) {
+        if let closure = objc_getAssociatedObject(self, &GestureRecognizerAssociatedKeys.panClosure) as? ((NSPanGestureRecognizer) -> Void) {
             closure(self)
         }
     }
@@ -204,15 +195,13 @@ public extension NSRotationGestureRecognizer {
     /// 添加旋转手势回调
     /// - Parameter closure: 旋转回调
     func addRotationAction(_ closure: @escaping (NSRotationGestureRecognizer) -> Void) {
-        if objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.rotationClosure) == nil {
-            objc_setAssociatedObject(self, GestureRecognizerAssociatedKeys.rotationClosure, closure, .OBJC_ASSOCIATION_COPY_NONATOMIC)
-            self.target = self
-            self.action = #selector(invokeRotationGesture)
-        }
+        objc_setAssociatedObject(self, &GestureRecognizerAssociatedKeys.rotationClosure, closure, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        self.target = self
+        self.action = #selector(invokeRotationGesture)
     }
     
     @objc private func invokeRotationGesture() {
-        if let closure = objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.rotationClosure) as? ((NSRotationGestureRecognizer) -> Void) {
+        if let closure = objc_getAssociatedObject(self, &GestureRecognizerAssociatedKeys.rotationClosure) as? ((NSRotationGestureRecognizer) -> Void) {
             closure(self)
         }
     }
@@ -223,15 +212,13 @@ public extension NSMagnificationGestureRecognizer {
     /// 添加缩放手势回调
     /// - Parameter closure: 缩放回调
     func addMagnificationAction(_ closure: @escaping (NSMagnificationGestureRecognizer) -> Void) {
-        if objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.magnificationClosure) == nil {
-            objc_setAssociatedObject(self, GestureRecognizerAssociatedKeys.magnificationClosure, closure, .OBJC_ASSOCIATION_COPY_NONATOMIC)
-            self.target = self
-            self.action = #selector(invokeMagnificationGesture)
-        }
+        objc_setAssociatedObject(self, &GestureRecognizerAssociatedKeys.magnificationClosure, closure, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        self.target = self
+        self.action = #selector(invokeMagnificationGesture)
     }
     
     @objc private func invokeMagnificationGesture() {
-        if let closure = objc_getAssociatedObject(self, GestureRecognizerAssociatedKeys.magnificationClosure) as? ((NSMagnificationGestureRecognizer) -> Void) {
+        if let closure = objc_getAssociatedObject(self, &GestureRecognizerAssociatedKeys.magnificationClosure) as? ((NSMagnificationGestureRecognizer) -> Void) {
             closure(self)
         }
     }

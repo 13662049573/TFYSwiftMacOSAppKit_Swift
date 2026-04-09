@@ -11,6 +11,56 @@ import Cocoa
 public extension Chain where Base: NSTextField {
     
     @discardableResult
+    func wraps(_ wraps: Bool) -> Self {
+        base.cell?.wraps = wraps
+        return self
+    }
+
+    @discardableResult
+    func placeholderStringColor(_ color: NSColor) -> Self {
+        base.placeholderStringColor = color
+        return self
+    }
+
+    @discardableResult
+    func textChangeHandler(_ handler: @escaping (String) -> Void) -> Self {
+        base.setTextChangeHandler(handler)
+        return self
+    }
+
+    @discardableResult
+    func validationHandler(_ handler: @escaping (String) -> Bool) -> Self {
+        base.setValidationHandler(handler)
+        return self
+    }
+
+    @discardableResult
+    func focusEffect(_ enabled: Bool) -> Self {
+        if enabled {
+            base.addFocusEffect()
+        }
+        return self
+    }
+
+    @discardableResult
+    func maxLength(_ maxLength: Int) -> Self {
+        base.setMaxLength(maxLength)
+        return self
+    }
+
+    @discardableResult
+    func readOnly(_ readOnly: Bool) -> Self {
+        base.setReadOnly(readOnly)
+        return self
+    }
+
+    @discardableResult
+    func cursorPosition(_ position: Int) -> Self {
+        base.setCursorPosition(position)
+        return self
+    }
+    
+    @discardableResult
     func placeholderString(_ placeholderString: String) -> Self {
         base.placeholderString = placeholderString
         return self

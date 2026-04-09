@@ -11,20 +11,21 @@ import Cocoa
 class TFYSwiftHomeController: NSViewController {
 
     override func loadView() {
-        let view:NSView = NSView(frame: NSRect(x: 0, y: 0, width: 400, height: 600))
-        self.view = view
+        self.view = NSView().chain
+            .frame(NSRect(x: 0, y: 0, width: 400, height: 600))
+            .build
     }
     
     lazy var textfiled: NSTextField = {
-        let filed = NSTextField(frame: NSRect(x: 20, y: 200, width: self.view.macos_width-40, height: 50))
-        filed.chain
+        NSTextField().chain
+            .frame(NSRect(x: 20, y: 200, width: self.view.macos_width - 40, height: 50))
             .font(NSFont.systemFont(ofSize: 14, weight: .semibold))
             .wantsLayer(true)
             .backgroundColor(.white)
             .text("sssssssss")
             .textColor(.red)
             .focusRingType(.none)
-        return filed
+            .build
     }()
     
     override func viewDidLoad() {

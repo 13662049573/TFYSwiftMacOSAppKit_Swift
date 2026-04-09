@@ -1015,7 +1015,7 @@ public extension TFYSwiftCacheKit {
             if errors.isEmpty {
                 completion(.success(()))
             } else {
-                completion(.failure(errors.first!))
+                completion(.failure(errors.first ?? .invalidData))
             }
         }
     }
@@ -1046,7 +1046,7 @@ public extension TFYSwiftCacheKit {
             if errors.isEmpty {
                 completion(.success(results))
             } else {
-                completion(.failure(errors.first!))
+                completion(.failure(errors.first ?? .invalidData))
             }
         }
     }

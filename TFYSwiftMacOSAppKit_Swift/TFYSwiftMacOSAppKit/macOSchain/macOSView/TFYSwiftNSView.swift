@@ -11,6 +11,12 @@ import Cocoa
 public extension Chain where Base: NSView {
     
     @discardableResult
+    func translatesAutoresizingMaskIntoConstraints(_ enabled: Bool) -> Self {
+        base.translatesAutoresizingMaskIntoConstraints = enabled
+        return self
+    }
+    
+    @discardableResult
     func bounds(_ bounds: NSRect) -> Self {
         base.bounds = bounds
         return self
@@ -186,7 +192,13 @@ public extension Chain where Base: NSView {
     
     @discardableResult
     func addToSublayer(_ layer: CALayer) -> Self {
-        layer.addSublayer(base.layer!)
+        base.wantsLayer = true
+        if base.layer == nil {
+            base.layer = CALayer()
+        }
+        if let baseLayer = base.layer {
+            layer.addSublayer(baseLayer)
+        }
         return self
     }
     
@@ -204,7 +216,11 @@ public extension Chain where Base: NSView {
     
     @discardableResult
     func contents(_ contents:Any) -> Self {
-        base.layer!.contents = contents
+        base.wantsLayer = true
+        if base.layer == nil {
+            base.layer = CALayer()
+        }
+        base.layer?.contents = contents
         return self
     }
     

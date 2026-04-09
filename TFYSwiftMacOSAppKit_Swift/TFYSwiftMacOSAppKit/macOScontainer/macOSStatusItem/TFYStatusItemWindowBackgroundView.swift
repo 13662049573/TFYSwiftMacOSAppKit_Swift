@@ -14,7 +14,9 @@ public class TFYStatusItemWindowBackgroundView: NSView {
     // MARK: - Properties
     
     /// 窗口配置
-    public weak var windowConfiguration: TFYStatusItemWindowConfiguration?
+    public var windowConfiguration: TFYStatusItemWindowConfiguration? {
+        didSet { needsDisplay = true }
+    }
     
     // MARK: - Initialization
     
@@ -29,7 +31,9 @@ public class TFYStatusItemWindowBackgroundView: NSView {
     }
     
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        self.windowConfiguration = TFYStatusItemWindowConfiguration.defaultConfiguration()
+        super.init(coder: coder)
+        wantsLayer = true
     }
     
     // MARK: - Drawing
@@ -40,6 +44,11 @@ public class TFYStatusItemWindowBackgroundView: NSView {
         let windowPath = createWindowPath(in: dirtyRect)
         backgroundColor.setFill()
         windowPath.fill()
+    }
+
+    public override func layout() {
+        super.layout()
+        needsDisplay = true
     }
     
     /// 创建窗口路径

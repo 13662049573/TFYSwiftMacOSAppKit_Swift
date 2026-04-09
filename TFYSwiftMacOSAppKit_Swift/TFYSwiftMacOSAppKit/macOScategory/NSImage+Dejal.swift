@@ -409,14 +409,15 @@ public extension NSImage {
         """
         
         // 创建并应用Metal内核
-        guard let kernel = try? CIKernel(functionName: "randomPolygonDots",
-                                       fromMetalLibraryData: metalCode.data(using: .utf8)!) else {
+        guard let metalData = metalCode.data(using: .utf8),
+              let kernel = try? CIKernel(functionName: "randomPolygonDots",
+                                       fromMetalLibraryData: metalData) else {
             return ciImage
         }
         
         return kernel.apply(extent: ciImage.extent,
                           roiCallback: { _, rect in rect },
-                          arguments: [ciImage])!
+                          arguments: [ciImage]) ?? ciImage
     }
     
     // MARK: - 新增实用方法
@@ -428,6 +429,7 @@ public extension NSImage {
         
         let width = Int(size.width)
         let height = Int(size.height)
+        guard width > 0, height > 0 else { return nil }
         let bytesPerPixel = 4
         let bytesPerRow = width * bytesPerPixel
         let bitsPerComponent = 8
@@ -524,6 +526,9 @@ public extension NSImage {
     /// - Parameter maxSize: 最大尺寸
     /// - Returns: 缩略图
     func thumbnail(maxSize: NSSize) -> NSImage {
+        guard size.width > 0, size.height > 0 else {
+            return copy() as? NSImage ?? self
+        }
         let scale = min(maxSize.width / size.width, maxSize.height / size.height)
         let newSize = NSSize(width: size.width * scale, height: size.height * scale)
         return resized(to: newSize)
@@ -563,6 +568,12 @@ public extension NSImage {
         ].map { transform.transform($0) }
         let xs = points.map { $0.x }
         let ys = points.map { $0.y }
-        return NSRect(x: xs.min()!, y: ys.min()!, width: xs.max()! - xs.min()!, height: ys.max()! - ys.min()!)
+        guard let minX = xs.min(),
+              let maxX = xs.max(),
+              let minY = ys.min(),
+              let maxY = ys.max() else {
+            return rect
+        }
+        return NSRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
     }
 }

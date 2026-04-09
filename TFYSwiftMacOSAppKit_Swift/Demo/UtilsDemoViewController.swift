@@ -7,12 +7,24 @@
 
 import Cocoa
 
-class UtilsDemoViewController: NSViewController {
+final class UtilsDemoViewController: NSViewController {
     
     private var resultTextView: NSTextView!
+    private var previewImageView: NSImageView!
+    private var previewInfoLabel: NSTextField!
     private var cacheManager: TFYSwiftCacheKit?
     private var activeTimer: TFYSwiftTimer?
     private var countDownTimer: TFYSwiftCountDownTimer?
+    private lazy var logDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter
+    }()
+    
+    deinit {
+        activeTimer?.cancel()
+        countDownTimer?.cancel()
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,8 +34,9 @@ class UtilsDemoViewController: NSViewController {
     
     private func setupUtilsDemo() {
         // 创建主容器视图
-        let containerView = NSView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
+        let containerView = NSView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
         view.addSubview(containerView)
         
         // 设置约束
@@ -35,8 +48,7 @@ class UtilsDemoViewController: NSViewController {
         ])
         
         // 创建标题
-        let titleLabel = NSTextField()
-        titleLabel.chain
+        let titleLabel = NSTextField().chain
             .text("工具类功能演示")
             .font(.boldSystemFont(ofSize: 20))
             .textColor(.labelColor)
@@ -45,8 +57,15 @@ class UtilsDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: 20, width: 300, height: 30))
-        
+            .build
         containerView.addSubview(titleLabel)
+        
+        let subtitleLabel = NSTextField(labelWithString: "这一页集中验证网络、缓存、JSON、定时器、GCD、文件面板、加密与图片拼接能力；右侧会展示最近一次可视化结果。").chain
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+            .frame(NSRect(x: 20, y: 52, width: 820, height: 18))
+            .build
+        containerView.addSubview(subtitleLabel)
         
         // 创建按钮区域
         createButtonArea(in: containerView)
@@ -56,136 +75,142 @@ class UtilsDemoViewController: NSViewController {
     }
     
     private func createButtonArea(in containerView: NSView) {
-        let buttonArea = NSView()
-        buttonArea.translatesAutoresizingMaskIntoConstraints = false
+        let buttonArea = NSView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
         containerView.addSubview(buttonArea)
         
         // 网络工具按钮
-        let networkButton = NSButton()
-        networkButton.chain
+        let networkButton = NSButton().chain
             .frame(NSRect(x: 0, y: 0, width: 120, height: 30))
             .title("网络信息")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(getNetworkInfo))
-            
-        
+            .build
         buttonArea.addSubview(networkButton)
         
         // 缓存测试按钮
-        let cacheButton = NSButton()
-        cacheButton.chain
+        let cacheButton = NSButton().chain
             .frame(NSRect(x: 130, y: 0, width: 120, height: 30))
             .title("缓存测试")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(testCache))
-            
-        
+            .build
         buttonArea.addSubview(cacheButton)
         
         // JSON工具按钮
-        let jsonButton = NSButton()
-        jsonButton.chain
+        let jsonButton = NSButton().chain
             .frame(NSRect(x: 260, y: 0, width: 120, height: 30))
             .title("JSON工具")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(testJsonUtils))
-           
-        
+            .build
         buttonArea.addSubview(jsonButton)
         
         // 定时器按钮
-        let timerButton = NSButton()
-        timerButton.chain
+        let timerButton = NSButton().chain
             .frame(NSRect(x: 390, y: 0, width: 120, height: 30))
             .title("定时器")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(testTimer))
-            
+            .build
         buttonArea.addSubview(timerButton)
         
         // GCD工具按钮
-        let gcdButton = NSButton()
-        gcdButton.chain
+        let gcdButton = NSButton().chain
             .frame(NSRect(x: 520, y: 0, width: 120, height: 30))
             .title("GCD工具")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(testGCD))
-            
-        
+            .build
         buttonArea.addSubview(gcdButton)
         
         // 文件操作按钮
-        let fileButton = NSButton()
-        fileButton.chain
+        let fileButton = NSButton().chain
             .frame(NSRect(x: 0, y: 40, width: 120, height: 30))
             .title("文件操作")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(testFileOperations))
-           
-        
+            .build
         buttonArea.addSubview(fileButton)
         
         // 打开/保存文件（TFYSwiftOpenPanel）
-        let openPanelButton = NSButton()
-        openPanelButton.chain
+        let openPanelButton = NSButton().chain
             .frame(NSRect(x: 130, y: 40, width: 120, height: 30))
             .title("打开/保存文件")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(testOpenPanel))
-           
-        
+            .build
         buttonArea.addSubview(openPanelButton)
         
         // 加密工具按钮
-        let cryptoButton = NSButton()
-        cryptoButton.chain
+        let cryptoButton = NSButton().chain
             .frame(NSRect(x: 260, y: 40, width: 120, height: 30))
             .title("加密工具")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(testCrypto))
-           
-        
+            .build
         buttonArea.addSubview(cryptoButton)
         
-        let clearButton = NSButton()
-        clearButton.chain
+        let clearButton = NSButton().chain
             .frame(NSRect(x: 390, y: 40, width: 120, height: 30))
             .title("清空日志")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(clearResults))
-        
+            .build
         buttonArea.addSubview(clearButton)
         
-        let debounceButton = NSButton()
-        debounceButton.chain
+        let debounceButton = NSButton().chain
             .frame(NSRect(x: 520, y: 40, width: 120, height: 30))
             .title("防抖/节流")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(testDebounceAndThrottle))
-        
+            .build
         buttonArea.addSubview(debounceButton)
         
-        let jsonFileButton = NSButton()
-        jsonFileButton.chain
+        let jsonFileButton = NSButton().chain
             .frame(NSRect(x: 0, y: 80, width: 120, height: 30))
             .title("JSON文件")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(testJsonFileIO))
-        
+            .build
         buttonArea.addSubview(jsonFileButton)
         
-        let countDownButton = NSButton()
-        countDownButton.chain
+        let countDownButton = NSButton().chain
             .frame(NSRect(x: 130, y: 80, width: 120, height: 30))
             .title("倒计时")
             .font(.systemFont(ofSize: 12))
             .addTarget(self, action: #selector(testCountDownTimer))
-        
+            .build
         buttonArea.addSubview(countDownButton)
+        
+        let stitchButton = NSButton().chain
+            .frame(NSRect(x: 260, y: 80, width: 120, height: 30))
+            .title("图片拼接")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testImageStitching))
+            .build
+        buttonArea.addSubview(stitchButton)
+        
+        let clearCacheButton = NSButton().chain
+            .frame(NSRect(x: 390, y: 80, width: 120, height: 30))
+            .title("清理缓存")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(clearCaches))
+            .build
+        buttonArea.addSubview(clearCacheButton)
+        
+        let expiredCacheButton = NSButton().chain
+            .frame(NSRect(x: 520, y: 80, width: 120, height: 30))
+            .title("清理过期缓存")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(cleanExpiredCaches))
+            .build
+        buttonArea.addSubview(expiredCacheButton)
         
         // 设置约束
         NSLayoutConstraint.activate([
-            buttonArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 60),
+            buttonArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 86),
             buttonArea.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             buttonArea.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             buttonArea.heightAnchor.constraint(equalToConstant: 120)
@@ -193,14 +218,14 @@ class UtilsDemoViewController: NSViewController {
     }
     
     private func createResultArea(in containerView: NSView) {
-        let resultArea = NSView()
-        resultArea.translatesAutoresizingMaskIntoConstraints = false
+        let resultArea = NSView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
         containerView.addSubview(resultArea)
         
         // 结果标题
-        let resultTitleLabel = NSTextField()
-        resultTitleLabel.chain
-            .text("测试结果")
+        let resultTitleLabel = NSTextField().chain
+            .text("运行日志")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
             .backgroundColor(.clear)
@@ -208,23 +233,73 @@ class UtilsDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 0, y: 0, width: 100, height: 20))
-        
+            .build
         resultArea.addSubview(resultTitleLabel)
         
-        // 结果文本框
-        resultTextView = NSTextView()
-        resultTextView.chain
-            .frame(NSRect(x: 0, y: 30, width: 600, height: 300))
+        let previewTitleLabel = NSTextField(labelWithString: "实时预览").chain
+            .font(.systemFont(ofSize: 16, weight: .medium))
+            .textColor(.labelColor)
+            .frame(NSRect(x: 790, y: 0, width: 120, height: 20))
+            .build
+        resultArea.addSubview(previewTitleLabel)
+        
+        let resultScrollView = NSScrollView().chain
+            .frame(NSRect(x: 0, y: 30, width: 760, height: 360))
+            .borderType(.bezelBorder)
+            .hasVerticalScroller(true)
+            .autohidesScrollers(true)
+            .build
+        resultArea.addSubview(resultScrollView)
+        
+        resultTextView = NSTextView().chain
+            .frame(NSRect(x: 0, y: 0, width: 760, height: 360))
+            .editable(false)
+            .selectable(true)
             .backgroundColor(.textBackgroundColor)
             .textColor(.textColor)
-            .font(.systemFont(ofSize: 12))
+            .font(.monospacedSystemFont(ofSize: 12, weight: .regular))
             .string("工具类测试结果将显示在这里...\n")
+            .build
+        resultScrollView.chain.documentView(resultTextView)
         
-        resultArea.addSubview(resultTextView)
+        let previewContainer = NSView().chain
+            .frame(NSRect(x: 790, y: 30, width: 360, height: 360))
+            .wantsLayer(true)
+            .backgroundColor(.windowBackgroundColor)
+            .cornerRadius(16)
+            .borderWidth(1)
+            .borderColor(.separatorColor)
+            .build
+        resultArea.addSubview(previewContainer)
+        
+        previewImageView = NSImageView().chain
+            .frame(NSRect(x: 18, y: 92, width: 324, height: 240))
+            .imageScaling(.scaleProportionallyUpOrDown)
+            .wantsLayer(true)
+            .backgroundColor(.textBackgroundColor)
+            .cornerRadius(12)
+            .build
+        previewContainer.addSubview(previewImageView)
+        
+        previewInfoLabel = NSTextField(labelWithString: "最近一次可视结果会显示在这里。\n优先展示图片缓存、拼接结果和最近保存的图片产物。").chain
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+            .maximumNumberOfLines(0)
+            .lineBreakMode(.byWordWrapping)
+            .wraps(true)
+            .frame(NSRect(x: 18, y: 18, width: 324, height: 58))
+            .build
+        previewContainer.addSubview(previewInfoLabel)
+        updatePreview(
+            image: NSImage(systemSymbolName: "wrench.and.screwdriver.fill", accessibilityDescription: nil)?
+                .tintedImage(withColor: .systemBlue),
+            title: "工具页已就绪",
+            details: "点击左侧按钮运行工具能力，右侧会跟随更新可视化结果。"
+        )
         
         // 设置约束
         NSLayoutConstraint.activate([
-            resultArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 200),
+            resultArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 230),
             resultArea.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             resultArea.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             resultArea.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20)
@@ -237,12 +312,36 @@ class UtilsDemoViewController: NSViewController {
     
     private func appendResult(_ text: String) {
         DispatchQueue.main.async {
+            let timestamp = self.logDateFormatter.string(from: Date())
             let currentText = self.resultTextView.string
-            self.resultTextView.string = currentText + text + "\n"
-            
-            // 滚动到底部
-            let scrollView = self.resultTextView.enclosingScrollView
-            scrollView?.documentView?.scroll(NSPoint(x: 0, y: 0))
+            self.resultTextView.string = currentText + "[\(timestamp)] " + text + "\n"
+            self.resultTextView.scrollToEndOfDocument(nil)
+        }
+    }
+    
+    private func updatePreview(image: NSImage?, title: String, details: String) {
+        DispatchQueue.main.async {
+            self.previewImageView.image = image
+            self.previewInfoLabel.stringValue = "\(title)\n\(details)"
+        }
+    }
+    
+    private func makeDemoImages() -> [NSImage] {
+        let symbols: [(String, NSColor)] = [
+            ("swift", .systemOrange),
+            ("shippingbox.fill", .systemBlue),
+            ("externaldrive.fill", .systemGreen),
+            ("clock.arrow.circlepath", .systemPink),
+            ("sparkles", .systemPurple),
+            ("checkmark.seal.fill", .systemTeal)
+        ]
+        
+        return symbols.map { symbolName, color in
+            let baseImage = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil) ?? NSImage.image(withColor: color)
+            return baseImage
+                .resized(to: NSSize(width: 84, height: 84))
+                .tintedImage(withColor: color)
+                .roundedImage(cornerRadius: 20)
         }
     }
     
@@ -340,6 +439,11 @@ class UtilsDemoViewController: NSViewController {
                         switch getResult {
                         case .success(let cachedImage):
                             self.appendResult("图片缓存读取成功，尺寸: \(cachedImage.size)")
+                            self.updatePreview(
+                                image: cachedImage,
+                                title: "缓存图片读取成功",
+                                details: "TFYSwiftCacheKit 已完成图片缓存回读，尺寸 \(Int(cachedImage.size.width)) x \(Int(cachedImage.size.height))。"
+                            )
                         case .failure(let error):
                             self.appendResult("图片缓存读取失败: \(error.localizedDescription)")
                         }
@@ -364,6 +468,10 @@ class UtilsDemoViewController: NSViewController {
             case .failure(let error):
                 self.appendResult("获取缓存大小失败: \(error.localizedDescription)")
             }
+        }
+        
+        if let previewImage = NSImage(systemSymbolName: "externaldrive.fill", accessibilityDescription: nil)?.tintedImage(withColor: .systemBlue) {
+            updatePreview(image: previewImage, title: "缓存能力已触发", details: "已执行字符串、对象和图片缓存读写；详细结果请查看左侧日志。")
         }
     }
     
@@ -517,7 +625,8 @@ class UtilsDemoViewController: NSViewController {
         appendResult("=== 文件操作测试 ===")
         
         // 获取文档目录
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
         let testFilePath = documentsPath.appendingPathComponent("test_file.txt")
         
         // 写入文件
@@ -704,5 +813,69 @@ class UtilsDemoViewController: NSViewController {
         countDownTimer = timer
         timer.start()
         appendResult("倒计时已启动，总时长 5 秒")
+    }
+    
+    @objc private func testImageStitching() {
+        appendResult("=== 图片拼接测试 ===")
+        
+        let demoImages = makeDemoImages()
+        let gridSize = CGSize(width: 320, height: 320)
+        let horizontalSize = CGSize(width: 520, height: 120)
+        
+        if let stitchedGrid = TFYStitchImage.createNineGrid(images: demoImages, size: gridSize, gap: 10, cornerRadius: 18) {
+            updatePreview(
+                image: stitchedGrid,
+                title: "TFYStitchImage 九宫格拼接",
+                details: "共 \(demoImages.count) 张示例图，输出尺寸 \(Int(gridSize.width)) x \(Int(gridSize.height))。"
+            )
+            
+            let exportURL = FileManager.default.temporaryDirectory.appendingPathComponent("tfy_stitch_grid_demo.png")
+            do {
+                try stitchedGrid.save(to: exportURL, format: .png)
+                appendResult("九宫格拼接成功，已导出到: \(exportURL.path)")
+            } catch {
+                appendResult("九宫格结果导出失败: \(error.localizedDescription)")
+            }
+        } else {
+            appendResult("九宫格拼接失败")
+        }
+        
+        if let horizontal = TFYStitchImage.createHorizontal(images: demoImages.prefix(4).map { $0 }, size: horizontalSize, gap: 8) {
+            appendResult("横向拼接成功，尺寸: \(Int(horizontal.size.width)) x \(Int(horizontal.size.height))")
+        } else {
+            appendResult("横向拼接失败")
+        }
+    }
+    
+    @objc private func clearCaches() {
+        appendResult("=== 缓存清理 ===")
+        cacheManager?.clearMemoryCache()
+        appendResult("内存缓存已触发清理")
+        
+        cacheManager?.clearDiskCache { [weak self] result in
+            switch result {
+            case .success:
+                self?.appendResult("磁盘缓存已清理完成")
+                self?.updatePreview(
+                    image: NSImage(systemSymbolName: "trash.fill", accessibilityDescription: nil)?.tintedImage(withColor: .systemRed),
+                    title: "缓存已清理",
+                    details: "内存缓存和磁盘缓存已执行清理，可重新点击“缓存测试”验证行为。"
+                )
+            case .failure(let error):
+                self?.appendResult("磁盘缓存清理失败: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    @objc private func cleanExpiredCaches() {
+        appendResult("=== 过期缓存清理 ===")
+        cacheManager?.cleanExpiredCache { [weak self] result in
+            switch result {
+            case .success:
+                self?.appendResult("过期缓存清理完成")
+            case .failure(let error):
+                self?.appendResult("过期缓存清理失败: \(error.localizedDescription)")
+            }
+        }
     }
 } 

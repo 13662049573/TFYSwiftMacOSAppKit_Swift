@@ -10,7 +10,7 @@ import Cocoa
 class MainDemoViewController: NSViewController {
     
     private var tabView: NSTabView!
-    private let releaseVersion = "1.3.0"
+    private let releaseVersion = "1.4.0"
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -19,8 +19,9 @@ class MainDemoViewController: NSViewController {
     
     private func setupMainDemo() {
         // 创建主容器视图
-        let containerView = NSView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
+        let containerView = NSView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
         view.addSubview(containerView)
         
         // 设置约束
@@ -32,8 +33,7 @@ class MainDemoViewController: NSViewController {
         ])
         
         // 创建标题
-        let titleLabel = NSTextField()
-        titleLabel.chain
+        let titleLabel = NSTextField().chain
             .text("TFYSwiftMacOSAppKit 功能演示")
             .font(.boldSystemFont(ofSize: 24))
             .textColor(.labelColor)
@@ -42,7 +42,7 @@ class MainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: 20, width: 400, height: 30))
-        
+            .build
         containerView.addSubview(titleLabel)
         
         // 创建标签视图
@@ -53,8 +53,9 @@ class MainDemoViewController: NSViewController {
     }
     
     private func createTabView(in containerView: NSView) {
-        tabView = NSTabView()
-        tabView.translatesAutoresizingMaskIntoConstraints = false
+        tabView = NSTabView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
         containerView.addSubview(tabView)
         
         // 设置约束
@@ -147,16 +148,18 @@ class MainDemoViewController: NSViewController {
     
     private func createOverviewViewController() -> NSViewController {
         let viewController = NSViewController()
-        let scrollView = NSScrollView()
-        scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
-        scrollView.autohidesScrollers = true
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        let scrollView = NSScrollView().chain
+            .hasVerticalScroller(true)
+            .hasHorizontalScroller(false)
+            .autohidesScrollers(true)
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
         viewController.view.addSubview(scrollView)
         
-        let contentView = NSView()
-        contentView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.documentView = contentView
+        let contentView = NSView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
+        scrollView.chain.documentView(contentView)
         
         // 设置约束
         NSLayoutConstraint.activate([
@@ -179,8 +182,7 @@ class MainDemoViewController: NSViewController {
         var yOffset: CGFloat = 20
         
         // 库介绍
-        let introLabel = NSTextField()
-        introLabel.chain
+        let introLabel = NSTextField().chain
             .text("TFYSwiftMacOSAppKit 是一个面向 macOS AppKit 场景的 Swift 工具库与组件集合")
             .font(.boldSystemFont(ofSize: 18))
             .textColor(.labelColor)
@@ -189,13 +191,12 @@ class MainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: yOffset, width: 600, height: 25))
-        
+            .build
         contentView.addSubview(introLabel)
         yOffset += 40
         
-        let summaryLabel = NSTextField()
-        summaryLabel.chain
-            .text("这个 Demo App 现在覆盖链式编程、自定义控件、分类扩展、工具类、HUD 与状态栏容器，适合作为接入前的功能总览与行为验证。")
+        let summaryLabel = NSTextField().chain
+            .text("这个 Demo App 现在覆盖链式编程、自定义控件、分类扩展、工具类、HUD、直接进度视图与状态栏容器，并为工具与图像能力补充了可视化预览，适合作为接入前的功能总览与行为验证。")
             .font(.systemFont(ofSize: 13))
             .textColor(.secondaryLabelColor)
             .backgroundColor(.clear)
@@ -203,7 +204,8 @@ class MainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: yOffset, width: 720, height: 36))
-        summaryLabel.cell?.wraps = true
+            .wraps(true)
+            .build
         summaryLabel.maximumNumberOfLines = 0
         contentView.addSubview(summaryLabel)
         yOffset += 52
@@ -215,15 +217,14 @@ class MainDemoViewController: NSViewController {
             "🎨 UI组件 - 丰富的UI组件和自定义控件",
             "👆 手势识别 - 完整的手势识别系统",
             "🎭 图层动画 - 强大的CALayer动画支持",
-            "🛠️ 工具类 - 网络、缓存、JSON、文件面板、定时器、GCD等",
+            "🛠️ 工具类 - 网络、缓存、JSON、文件面板、定时器、GCD、图片拼接与实时预览",
             "💫 HUD指示器 - 美观的进度和状态指示器",
             "📱 状态栏项 - 完整的状态栏项管理",
             "🧪 分类扩展 - NSView / NSTextField / NSControl / NSImage / NotificationCenter 等增强能力"
         ]
         
         for (_, feature) in features.enumerated() {
-            let featureLabel = NSTextField()
-            featureLabel.chain
+            let featureLabel = NSTextField().chain
                 .text(feature)
                 .font(.systemFont(ofSize: 14))
                 .textColor(.labelColor)
@@ -232,7 +233,7 @@ class MainDemoViewController: NSViewController {
                 .editable(false)
                 .selectable(false)
                 .frame(NSRect(x: 20, y: yOffset, width: 600, height: 20))
-            
+                .build
             contentView.addSubview(featureLabel)
             yOffset += 25
         }
@@ -240,8 +241,7 @@ class MainDemoViewController: NSViewController {
         yOffset += 15
         
         // 组件与 Demo 对应表
-        let mappingTitle = NSTextField()
-        mappingTitle.chain
+        let mappingTitle = NSTextField().chain
             .text("组件与 Demo 对应（请切换上方标签页查看各功能演示）")
             .font(.boldSystemFont(ofSize: 16))
             .textColor(.labelColor)
@@ -250,6 +250,7 @@ class MainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: yOffset, width: 600, height: 22))
+            .build
         contentView.addSubview(mappingTitle)
         yOffset += 28
         
@@ -257,14 +258,13 @@ class MainDemoViewController: NSViewController {
             "【概览】本页：库介绍与组件一览",
             "【组件控件】TFYSwiftTextField、TFYSwiftSecureTextField、TFYSwiftButton、TFYSwiftLabel、图片与二维码处理能力",
             "【链式调用】Chain 协议、NSView/NSButton/NSTextField/CALayer/CAGradientLayer/CAShapeLayer、NSClick/NSPan/NSRotation 等手势链式 API",
-            "【分类扩展】NSView+Dejal / NSTextField+Dejal / NSControl+Dejal / NSImage+Dejal / NotificationCenter+Dejal 的交互式示例",
-            "【工具类】TFYSwiftUtils(网络/WiFi/加密)、TFYSwiftCacheKit、TFYSwiftJsonUtils、TFYSwiftTimer、TFYSwiftGCD、TFYSwiftOpenPanel(打开/保存文件)",
-            "【HUD】TFYProgressMacOSHUD、TFYAnimationEnhancer、TFYThemeManager、TFYProgressView、TFYProgressIndicator：成功/错误/信息/文本/加载/进度/自定义、主题/动画/位置/自动隐藏",
+            "【分类扩展】NSView+Dejal / NSTextField+Dejal / NSTextView+Dejal / NSControl+Dejal / NSImage+Dejal / NotificationCenter+Dejal 的交互式示例",
+            "【工具类】TFYSwiftUtils(网络/WiFi/加密)、TFYSwiftCacheKit、TFYSwiftJsonUtils、TFYSwiftTimer、TFYSwiftGCD、TFYSwiftOpenPanel(打开/保存文件)、TFYStitchImage(图片拼接) 与实时预览",
+            "【HUD】TFYProgressMacOSHUD、TFYAnimationEnhancer、TFYThemeManager、TFYProgressView、TFYProgressIndicator：成功/错误/信息/文本/加载/进度/自定义、主题/动画/位置/自动隐藏、直接进度视图调节",
             "【状态栏】TFYStatusItem、TFYStatusItemWindow、TFYStatusItemWindowController：创建/销毁、配置重建、过渡动画、拖拽检测、弹窗展示"
         ]
         for item in mappingItems {
-            let label = NSTextField()
-            label.chain
+            let label = NSTextField().chain
                 .text("• " + item)
                 .font(.systemFont(ofSize: 12))
                 .textColor(.secondaryLabelColor)
@@ -273,7 +273,8 @@ class MainDemoViewController: NSViewController {
                 .editable(false)
                 .selectable(false)
                 .frame(NSRect(x: 20, y: yOffset, width: 600, height: 18))
-            label.cell?.wraps = true
+                .wraps(true)
+                .build
             label.maximumNumberOfLines = 0
             contentView.addSubview(label)
             yOffset += 20
@@ -282,8 +283,7 @@ class MainDemoViewController: NSViewController {
         yOffset += 15
         
         // 使用示例
-        let exampleLabel = NSTextField()
-        exampleLabel.chain
+        let exampleLabel = NSTextField().chain
             .text("使用示例:")
             .font(.boldSystemFont(ofSize: 16))
             .textColor(.labelColor)
@@ -292,25 +292,46 @@ class MainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: yOffset, width: 200, height: 20))
-        
+            .build
         contentView.addSubview(exampleLabel)
         yOffset += 30
         
         // 代码示例
         let codeExamples = [
             "// 链式调用示例",
-            "let button = NSButton()",
-            "button.chain",
+            "let button = NSButton().chain",
             "    .title(\"点击我\")",
             "    .font(.systemFont(ofSize: 16))",
             "    .textColor(.white)",
             "    .backgroundColor(.systemBlue)",
             "    .frame(NSRect(x: 0, y: 0, width: 100, height: 30))",
+            "    .build",
             "",
-            "// 自定义文本框示例",
-            "let textField = TFYSwiftTextField()",
-            "textField.placeholderColor = .systemOrange",
-            "textField.setMaxLength(12)",
+            "// 容器与自定义文本框示例",
+            "let cardView = NSView().chain",
+            "    .wantsLayer(true)",
+            "    .backgroundColor(NSColor.windowBackgroundColor)",
+            "    .cornerRadius(18)",
+            "    .translatesAutoresizingMaskIntoConstraints(false)",
+            "    .build",
+            "",
+            "let textField = TFYSwiftTextField().chain",
+            "    .placeholderString(\"请输入内容\")",
+            "    .placeholderColor(.systemOrange)",
+            "    .maxLength(12)",
+            "    .focusEffect(true)",
+            "    .textChangeHandler { text in print(text) }",
+            "    .frame(NSRect(x: 20, y: 20, width: 220, height: 36))",
+            "    .build",
+            "",
+            "// NSTextView 扩展示例",
+            "let textView = NSTextView().chain",
+            "    .wraps(true)",
+            "    .lineSpacing(3)",
+            "    .clickableTexts([\"HUD\": \"Progress HUD\"]) { key, value, _ in",
+            "        print(key, value)",
+            "    }",
+            "    .build",
             "",
             "// HUD示例",
             "TFYProgressMacOSHUD.showSuccess(\"操作成功!\")",
@@ -321,8 +342,7 @@ class MainDemoViewController: NSViewController {
         ]
         
         for code in codeExamples {
-            let codeLabel = NSTextField()
-            codeLabel.chain
+            let codeLabel = NSTextField().chain
                 .text(code)
                 .font(.monospacedSystemFont(ofSize: 12, weight: .regular))
                 .textColor(.secondaryLabelColor)
@@ -330,8 +350,10 @@ class MainDemoViewController: NSViewController {
                 .bordered(false)
                 .editable(false)
                 .selectable(false)
-                .frame(NSRect(x: 20, y: yOffset, width: 600, height: 18))
-            
+                .wraps(true)
+                .maximumNumberOfLines(0)
+                .frame(NSRect(x: 20, y: yOffset, width: 680, height: 18))
+                .build
             contentView.addSubview(codeLabel)
             yOffset += 20
         }
@@ -341,13 +363,13 @@ class MainDemoViewController: NSViewController {
     }
     
     private func createBottomInfoArea(in containerView: NSView) {
-        let infoView = NSView()
-        infoView.translatesAutoresizingMaskIntoConstraints = false
+        let infoView = NSView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
         containerView.addSubview(infoView)
         
         // 版本信息
-        let versionLabel = NSTextField()
-        versionLabel.chain
+        let versionLabel = NSTextField().chain
             .text("TFYSwiftMacOSAppKit v\(releaseVersion)")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
@@ -356,12 +378,11 @@ class MainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: 0, width: 200, height: 20))
-        
+            .build
         infoView.addSubview(versionLabel)
         
         // 版权信息
-        let copyrightLabel = NSTextField()
-        copyrightLabel.chain
+        let copyrightLabel = NSTextField().chain
             .text("Demo Lab · AppKit / CocoaPods / SwiftPM")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
@@ -370,7 +391,7 @@ class MainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 250, y: 0, width: 360, height: 20))
-        
+            .build
         infoView.addSubview(copyrightLabel)
         
         // 设置约束

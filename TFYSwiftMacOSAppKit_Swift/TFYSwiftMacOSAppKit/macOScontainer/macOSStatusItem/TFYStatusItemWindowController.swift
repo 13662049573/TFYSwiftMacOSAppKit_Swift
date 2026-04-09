@@ -52,11 +52,12 @@ public class TFYStatusItemWindowController: NSWindowController {
         super.init(window: TFYStatusItemWindow.statusItemWindowWithConfiguration(configuration: windowConfiguration))
         
         self.contentViewController = contentViewController
+        resizeWindowToPreferredContentSizeIfNeeded()
         setupNotifications()
     }
     
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        return nil
     }
     
     deinit {
@@ -87,6 +88,7 @@ public class TFYStatusItemWindowController: NSWindowController {
     func updateContentViewController(_ contentViewController: NSViewController) {
         self.contentViewController = nil
         self.contentViewController = contentViewController
+        resizeWindowToPreferredContentSizeIfNeeded()
         updateWindowFrame()
     }
     
@@ -94,6 +96,7 @@ public class TFYStatusItemWindowController: NSWindowController {
         guard !animationIsRunning,
               let window = window as? TFYStatusItemWindow else { return }
         
+        resizeWindowToPreferredContentSizeIfNeeded()
         updateWindowFrame()
         window.alphaValue = 0.0
         showWindow(nil)
@@ -108,6 +111,19 @@ public class TFYStatusItemWindowController: NSWindowController {
     }
     
     // MARK: - Private Methods
+
+    private func resizeWindowToPreferredContentSizeIfNeeded() {
+        guard let window,
+              let contentViewController else { return }
+        
+        let preferredContentSize = contentViewController.preferredContentSize
+        guard preferredContentSize != .zero else { return }
+        
+        let targetFrame = window.frameRect(forContentRect: NSRect(origin: .zero, size: preferredContentSize))
+        var updatedFrame = window.frame
+        updatedFrame.size = targetFrame.size
+        window.setFrame(updatedFrame, display: false)
+    }
     
     private func updateWindowFrame() {
         guard let statusItemRect = statusItemView?.getStatusItemFrame(),

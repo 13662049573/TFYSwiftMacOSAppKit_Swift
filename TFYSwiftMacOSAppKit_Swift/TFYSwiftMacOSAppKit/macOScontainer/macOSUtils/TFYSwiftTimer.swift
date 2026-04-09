@@ -510,17 +510,18 @@ public class TFYSwiftCountDownTimer: NSObject {
     ///   - queue: 执行队列
     ///   - handler: 处理器闭包
     public init(interval: DispatchTimeInterval, times: Int, queue: DispatchQueue = .main, handler: @escaping (TFYSwiftCountDownTimer, _ leftTimes: Int) -> Void) {
-        guard times > 0 else {
-            fatalError("倒计时次数必须大于0")
-        }
-        
         self.interval = interval
-        self.leftTimes = times
-        self.originalTimes = times
+        self.leftTimes = max(times, 0)
+        self.originalTimes = max(times, 0)
         self.handler = handler
         self.queue = queue
         
         super.init()
+
+        if times <= 0 {
+            assertionFailure("倒计时次数必须大于0")
+            state = .finished
+        }
     }
     
     // MARK: - Control Methods
@@ -528,6 +529,11 @@ public class TFYSwiftCountDownTimer: NSObject {
     /// 启动倒计时
     public func start() {
         guard state != .running else { return }
+        guard originalTimes > 0 else {
+            state = .finished
+            handler(self, 0)
+            return
+        }
         state = .running
         try? internalTimer.start()
     }

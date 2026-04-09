@@ -82,28 +82,39 @@ public class TFYStatusItemWindow: NSPanel {
         guard let contentView = contentView,
               userContentView !== contentView else { return }
         
-        let bounds = contentView.bounds
-        setupBackgroundViewIfNeeded(with: bounds)
+        let contentBounds = NSRect(origin: .zero, size: contentView.bounds.size)
+        let windowBounds = frameRect(forContentRect: contentBounds)
+        setupBackgroundViewIfNeeded(with: windowBounds)
+        backgroundView?.frame = windowBounds
         
         if let oldContentView = userContentView {
             oldContentView.removeFromSuperview()
         }
         
         userContentView = contentView
-        configureUserContentView(contentView, bounds: bounds)
+        configureUserContentView(contentView, bounds: windowBounds)
         backgroundView?.addSubview(contentView)
     }
     
     private func setupBackgroundViewIfNeeded(with bounds: NSRect) {
-        guard backgroundView == nil,
-              let configuration = configuration else { return }
-        
-        backgroundView = TFYStatusItemWindowBackgroundView(
-            frame: bounds,
-            windowConfiguration: configuration
-        )
-        configureBackgroundView(backgroundView!, bounds: bounds)
-        super.contentView = backgroundView
+        guard let configuration = configuration else { return }
+
+        if backgroundView == nil {
+            backgroundView = TFYStatusItemWindowBackgroundView(
+                frame: bounds,
+                windowConfiguration: configuration
+            )
+            if let backgroundView {
+                configureBackgroundView(backgroundView, bounds: bounds)
+                super.contentView = backgroundView
+            }
+            return
+        }
+
+        backgroundView?.windowConfiguration = configuration
+        if let backgroundView {
+            configureBackgroundView(backgroundView, bounds: bounds)
+        }
     }
     
     private func configureView(_ view: NSView, bounds: NSRect) {

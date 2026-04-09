@@ -25,21 +25,30 @@ public class TFYSwiftLabel: TFYSwiftTextField {
     }
     
     @MainActor required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: coder)
+        setupUI()
     }
     
     fileprivate func setupUI() {
         self.isTextAlignmentVerticalCenter = false
         isEditable = false
+        isSelectable = false
         textColor = .black
         font = NSFont.systemFont(ofSize: 15)
     }
     
+    private func triggerActionIfNeeded() {
+        mouseDownBlock?(self)
+    }
+
+    public override func mouseDown(with event: NSEvent) {
+        super.mouseDown(with: event)
+        triggerActionIfNeeded()
+    }
+    
     public override func moveDown(_ sender: Any?) {
         super.moveDown(sender)
-        if mouseDownBlock != nil {
-            mouseDownBlock!(self)
-        }
+        triggerActionIfNeeded()
     }
     
     public func actionBlock(block:@escaping actionBlock) {

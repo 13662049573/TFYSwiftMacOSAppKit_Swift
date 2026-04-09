@@ -22,15 +22,17 @@ final class ComponentsDemoViewController: NSViewController {
     }
     
     private func setupDemo() {
-        let scrollView = NSScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.hasVerticalScroller = true
-        scrollView.autohidesScrollers = true
+        let scrollView = NSScrollView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .hasVerticalScroller(true)
+            .autohidesScrollers(true)
+            .build
         view.addSubview(scrollView)
         
-        let contentView = NSView()
-        contentView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.documentView = contentView
+        let contentView = NSView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
+        scrollView.chain.documentView(contentView)
         
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -69,15 +71,16 @@ final class ComponentsDemoViewController: NSViewController {
         contentView.addSubview(sectionLabel)
         currentOffset += 30
         
-        let actionButton = TFYSwiftButton(frame: NSRect(x: 20, y: currentOffset, width: 180, height: 40))
-        actionButton.title = "TFYSwiftButton 悬浮按钮"
-        actionButton.font = .systemFont(ofSize: 13, weight: .semibold)
-        actionButton.titleTextColor = .white
-        actionButton.backgroundColor = .systemBlue
-        actionButton.hoverBackgroundColor = .systemIndigo
-        actionButton.layer?.cornerRadius = 12
-        actionButton.target = self
-        actionButton.action = #selector(handlePrimaryComponentAction)
+        let actionButton = TFYSwiftButton().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 180, height: 40))
+            .title("TFYSwiftButton 悬浮按钮")
+            .font(.systemFont(ofSize: 13, weight: .semibold))
+            .titleTextColor(.white)
+            .backgroundColor(.systemBlue)
+            .hoverBackgroundColor(.systemIndigo)
+            .cornerRadius(12)
+            .addTarget(self, action: #selector(handlePrimaryComponentAction))
+            .build
         contentView.addSubview(actionButton)
         
         let infoLabel = makeBodyLabel("按钮支持 hover 背景色、内边距、文本颜色控制；可直接用于工具栏样式或业务操作按钮。", width: 420, height: 38)
@@ -85,19 +88,22 @@ final class ComponentsDemoViewController: NSViewController {
         contentView.addSubview(infoLabel)
         currentOffset += 60
         
-        textActionLabel = TFYSwiftLabel(frame: NSRect(x: 20, y: currentOffset, width: 320, height: 28))
-        textActionLabel.stringValue = "TFYSwiftLabel：点击我写入下方日志"
-        textActionLabel.font = .systemFont(ofSize: 13, weight: .medium)
-        textActionLabel.textColor = .systemPurple
-        _ = textActionLabel.addGestureTap { [weak self] _ in
-            self?.appendLog("TFYSwiftLabel 点击事件已触发")
-        }
+        textActionLabel = TFYSwiftLabel().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 320, height: 28))
+            .text("TFYSwiftLabel：点击我写入下方日志")
+            .font(.systemFont(ofSize: 13, weight: .medium))
+            .textColor(.systemPurple)
+            .mouseDownBlock { [weak self] _ in
+                self?.appendLog("TFYSwiftLabel 点击事件已触发")
+            }
+            .build
         contentView.addSubview(textActionLabel)
         
-        let componentBadge = NSTextField(labelWithString: "控件均来自 macOScontainer/macOSUtils")
-        componentBadge.font = .systemFont(ofSize: 12)
-        componentBadge.textColor = .secondaryLabelColor
-        componentBadge.frame = NSRect(x: 360, y: currentOffset + 4, width: 320, height: 20)
+        let componentBadge = NSTextField(labelWithString: "控件均来自 macOScontainer/macOSUtils").chain
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+            .frame(NSRect(x: 360, y: currentOffset + 4, width: 320, height: 20))
+            .build
         contentView.addSubview(componentBadge)
         
         return currentOffset + 52
@@ -111,30 +117,34 @@ final class ComponentsDemoViewController: NSViewController {
         contentView.addSubview(sectionLabel)
         currentOffset += 30
         
-        customInput = TFYSwiftTextField(frame: NSRect(x: 20, y: currentOffset, width: 280, height: 38))
-        customInput.placeholderString = "请输入至少 4 个字符，最大 12 个"
-        customInput.placeholderColor = .systemOrange
-        customInput.backgroundColor = .textBackgroundColor
-        customInput.textColor = .labelColor
-        customInput.isBordered = true
-        customInput.wantsLayer = true
-        customInput.layer?.cornerRadius = 10
-        customInput.focusRingType = .none
-        customInput.setMaxLength(12)
-        customInput.addFocusEffect()
-        customInput.setValidationHandler { text in
-            text.trimmingCharacters(in: .whitespacesAndNewlines).count >= 4
-        }
-        customInput.setTextChangeHandler { [weak self] text in
-            self?.updateInputState(text)
-        }
+        customInput = TFYSwiftTextField().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 280, height: 38))
+            .placeholderString("请输入至少 4 个字符，最大 12 个")
+            .placeholderColor(.systemOrange)
+            .backgroundColor(.textBackgroundColor)
+            .textColor(.labelColor)
+            .bordered(true)
+            .wantsLayer(true)
+            .cornerRadius(10)
+            .focusRingType(.none)
+            .maxLength(12)
+            .focusEffect(true)
+            .validationHandler { text in
+                text.trimmingCharacters(in: .whitespacesAndNewlines).count >= 4
+            }
+            .textChangeHandler { [weak self] text in
+                self?.updateInputState(text)
+            }
+            .build
         contentView.addSubview(customInput)
         
-        customSecureInput = TFYSwiftSecureTextField(frame: NSRect(x: 320, y: currentOffset, width: 220, height: 38))
-        customSecureInput.placeholderString = "TFYSwiftSecureTextField"
-        customSecureInput.textColor = .systemRed
-        customSecureInput.isBordered = true
-        customSecureInput.focusRingType = .none
+        customSecureInput = TFYSwiftSecureTextField().chain
+            .frame(NSRect(x: 320, y: currentOffset, width: 220, height: 38))
+            .placeholderString("TFYSwiftSecureTextField")
+            .textColor(.systemRed)
+            .bordered(true)
+            .focusRingType(.none)
+            .build
         contentView.addSubview(customSecureInput)
         
         let readonlyButton = makeActionButton(title: "切换只读", frame: NSRect(x: 560, y: currentOffset, width: 100, height: 32), action: #selector(toggleReadOnly))
@@ -192,20 +202,23 @@ final class ComponentsDemoViewController: NSViewController {
         ]
         
         for (title, image, frame) in previews {
-            let imageView = NSImageView(frame: frame)
-            imageView.imageScaling = NSImageScaling.scaleProportionallyUpOrDown
-            imageView.image = image
-            imageView.wantsLayer = true
-            imageView.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
-            imageView.layer?.cornerRadius = 16
-            imageView.layer?.borderWidth = 1
-            imageView.layer?.borderColor = NSColor.separatorColor.cgColor
+            let imageView = NSImageView().chain
+                .frame(frame)
+                .imageScaling(.scaleProportionallyUpOrDown)
+                .image(image)
+                .wantsLayer(true)
+                .backgroundColor(.windowBackgroundColor)
+                .cornerRadius(16)
+                .borderWidth(1)
+                .borderColor(.separatorColor)
+                .build
             contentView.addSubview(imageView)
             
-            let caption = NSTextField(labelWithString: title)
-            caption.font = NSFont.systemFont(ofSize: 12, weight: .medium)
-            caption.alignment = NSTextAlignment.center
-            caption.frame = NSRect(x: frame.minX, y: frame.maxY + 4, width: frame.width, height: 18)
+            let caption = NSTextField(labelWithString: title).chain
+                .font(.systemFont(ofSize: 12, weight: .medium))
+                .alignment(.center)
+                .frame(NSRect(x: frame.minX, y: frame.maxY + 4, width: frame.width, height: 18))
+                .build
             contentView.addSubview(caption)
         }
         
@@ -238,12 +251,14 @@ final class ComponentsDemoViewController: NSViewController {
         let clearButton = makeActionButton(title: "清空日志", frame: NSRect(x: 690, y: currentOffset - 4, width: 90, height: 28), action: #selector(clearLog))
         contentView.addSubview(clearButton)
         
-        logTextView = NSTextView(frame: NSRect(x: 20, y: currentOffset, width: 760, height: 150))
-        logTextView.isEditable = false
-        logTextView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        logTextView.backgroundColor = .textBackgroundColor
-        logTextView.textColor = .labelColor
-        logTextView.string = "等待组件交互...\n"
+        logTextView = NSTextView().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 760, height: 150))
+            .editable(false)
+            .font(.monospacedSystemFont(ofSize: 12, weight: .regular))
+            .backgroundColor(.textBackgroundColor)
+            .textColor(.labelColor)
+            .string("等待组件交互...\n")
+            .build
         contentView.addSubview(logTextView)
         
         appendLog("组件页已加载，可直接测试文本输入、图片处理与控件交互")
@@ -263,39 +278,40 @@ final class ComponentsDemoViewController: NSViewController {
     }
     
     private func makeTitleLabel(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = .boldSystemFont(ofSize: 22)
-        label.textColor = .labelColor
-        label.frame = NSRect(x: 0, y: 0, width: 360, height: 28)
-        return label
+        NSTextField(labelWithString: text).chain
+            .font(.boldSystemFont(ofSize: 22))
+            .textColor(.labelColor)
+            .frame(NSRect(x: 0, y: 0, width: 360, height: 28))
+            .build
     }
     
     private func makeSectionLabel(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = .systemFont(ofSize: 16, weight: .semibold)
-        label.textColor = .labelColor
-        label.frame = NSRect(x: 0, y: 0, width: 320, height: 22)
-        return label
+        NSTextField(labelWithString: text).chain
+            .font(.systemFont(ofSize: 16, weight: .semibold))
+            .textColor(.labelColor)
+            .frame(NSRect(x: 0, y: 0, width: 320, height: 22))
+            .build
     }
     
     private func makeBodyLabel(_ text: String, width: CGFloat, height: CGFloat) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = .systemFont(ofSize: 12)
-        label.textColor = .secondaryLabelColor
-        label.lineBreakMode = .byWordWrapping
-        label.maximumNumberOfLines = 0
-        label.frame = NSRect(x: 0, y: 0, width: width, height: height)
-        return label
+        NSTextField(labelWithString: text).chain
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+            .lineBreakMode(.byWordWrapping)
+            .wraps(true)
+            .maximumNumberOfLines(0)
+            .frame(NSRect(x: 0, y: 0, width: width, height: height))
+            .build
     }
     
     private func makeActionButton(title: String, frame: NSRect, action: Selector) -> NSButton {
-        let button = NSButton(frame: frame)
-        button.title = title
-        button.font = .systemFont(ofSize: 12, weight: .medium)
-        button.bezelStyle = .rounded
-        button.target = self
-        button.action = action
-        return button
+        NSButton().chain
+            .frame(frame)
+            .title(title)
+            .font(.systemFont(ofSize: 12, weight: .medium))
+            .bezelStyle(.rounded)
+            .addTarget(self, action: action)
+            .build
     }
     
     @objc private func handlePrimaryComponentAction() {
@@ -304,7 +320,7 @@ final class ComponentsDemoViewController: NSViewController {
     
     @objc private func toggleReadOnly() {
         let nextReadOnly = customInput.isEditable
-        customInput.setReadOnly(nextReadOnly)
+        customInput.chain.readOnly(nextReadOnly)
         appendLog(nextReadOnly ? "自定义文本框已切换为只读" : "自定义文本框已恢复可编辑")
     }
     
@@ -321,7 +337,7 @@ final class ComponentsDemoViewController: NSViewController {
     
     @objc private func moveCursorToEnd() {
         let position = customInput.stringValue.count
-        customInput.setCursorPosition(position)
+        customInput.chain.cursorPosition(position)
         appendLog("光标已移动到文本末尾")
     }
     

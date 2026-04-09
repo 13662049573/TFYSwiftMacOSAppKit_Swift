@@ -20,6 +20,11 @@ class HUDDemoViewController: NSViewController {
     private var autoHideSwitch: NSButton!
     private var delayTextField: NSTextField!
     private var durationTextField: NSTextField!
+    private var embeddedProgressView: TFYProgressView!
+    private var progressSlider: NSSlider!
+    private var progressStylePopUp: NSPopUpButton!
+    private var progressValueLabel: NSTextField!
+    private var progressPercentageSwitch: NSButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,16 +32,18 @@ class HUDDemoViewController: NSViewController {
     }
     
     private func setupHUDDemo() {
-        let scrollView = NSScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
-        scrollView.autohidesScrollers = true
+        let scrollView = NSScrollView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .hasVerticalScroller(true)
+            .hasHorizontalScroller(false)
+            .autohidesScrollers(true)
+            .build
         view.addSubview(scrollView)
         
-        let containerView = NSView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.documentView = containerView
+        let containerView = NSView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
+        scrollView.chain.documentView(containerView)
         
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -48,16 +55,17 @@ class HUDDemoViewController: NSViewController {
         ])
         
         // 创建标题
-        let titleLabel = NSTextField()
-        titleLabel.stringValue = "TFYProgressMacOSHUD 功能演示"
-        titleLabel.font = .boldSystemFont(ofSize: 24)
-        titleLabel.textColor = .labelColor
-        titleLabel.backgroundColor = .clear
-        titleLabel.isBordered = false
-        titleLabel.isEditable = false
-        titleLabel.isSelectable = false
-        titleLabel.alignment = .center
-        titleLabel.frame = NSRect(x: 20, y: 20, width: 600, height: 40)
+        let titleLabel = NSTextField().chain
+            .text("TFYProgressMacOSHUD 功能演示")
+            .font(.boldSystemFont(ofSize: 24))
+            .textColor(.labelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .alignment(.center)
+            .frame(NSRect(x: 20, y: 20, width: 600, height: 40))
+            .build
         
         containerView.addSubview(titleLabel)
         
@@ -70,6 +78,9 @@ class HUDDemoViewController: NSViewController {
         // 创建高级功能区域
         createAdvancedSection(in: containerView)
         
+        // 创建直接进度视图区域
+        createDirectProgressSection(in: containerView)
+        
         // 创建说明区域
         createInstructionSection(in: containerView)
         
@@ -78,19 +89,20 @@ class HUDDemoViewController: NSViewController {
         animationEnhancer = TFYAnimationEnhancer()
         
         // 设置文档视图高度以便滚动
-        containerView.frame.size.height = 680
+        containerView.frame.size.height = 860
     }
     
     private func createHUDTypeSection(in containerView: NSView) {
-        let sectionLabel = NSTextField()
-        sectionLabel.stringValue = "HUD类型演示"
-        sectionLabel.font = .boldSystemFont(ofSize: 18)
-        sectionLabel.textColor = .labelColor
-        sectionLabel.backgroundColor = .clear
-        sectionLabel.isBordered = false
-        sectionLabel.isEditable = false
-        sectionLabel.isSelectable = false
-        sectionLabel.frame = NSRect(x: 20, y: 80, width: 200, height: 25)
+        let sectionLabel = NSTextField().chain
+            .text("HUD类型演示")
+            .font(.boldSystemFont(ofSize: 18))
+            .textColor(.labelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .frame(NSRect(x: 20, y: 80, width: 200, height: 25))
+            .build
         
         containerView.addSubview(sectionLabel)
         
@@ -122,15 +134,16 @@ class HUDDemoViewController: NSViewController {
     }
     
     private func createHUDConfigSection(in containerView: NSView) {
-        let sectionLabel = NSTextField()
-        sectionLabel.stringValue = "HUD配置选项"
-        sectionLabel.font = .boldSystemFont(ofSize: 18)
-        sectionLabel.textColor = .labelColor
-        sectionLabel.backgroundColor = .clear
-        sectionLabel.isBordered = false
-        sectionLabel.isEditable = false
-        sectionLabel.isSelectable = false
-        sectionLabel.frame = NSRect(x: 20, y: 220, width: 200, height: 25)
+        let sectionLabel = NSTextField().chain
+            .text("HUD配置选项")
+            .font(.boldSystemFont(ofSize: 18))
+            .textColor(.labelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .frame(NSRect(x: 20, y: 220, width: 200, height: 25))
+            .build
         
         containerView.addSubview(sectionLabel)
         
@@ -138,94 +151,97 @@ class HUDDemoViewController: NSViewController {
         let themeLabel = createLabel(text: "主题:", frame: NSRect(x: 20, y: 260, width: 60, height: 20))
         containerView.addSubview(themeLabel)
         
-        themePopUp = NSPopUpButton()
-        themePopUp.frame = NSRect(x: 90, y: 260, width: 120, height: 20)
-        themePopUp.addItems(withTitles: ["深色", "浅色", "蓝色", "绿色", "紫色", "橙色", "系统"])
-        themePopUp.selectItem(at: 0)
-        themePopUp.target = self
-        themePopUp.action = #selector(themeChanged)
+        themePopUp = NSPopUpButton().chain
+            .frame(NSRect(x: 90, y: 260, width: 120, height: 20))
+            .addItems(["深色", "浅色", "蓝色", "绿色", "紫色", "橙色", "系统"])
+            .selectItem(0)
+            .addTarget(self, action: #selector(themeChanged))
+            .build
         containerView.addSubview(themePopUp)
         
         // 动画选择
         let animationLabel = createLabel(text: "动画:", frame: NSRect(x: 230, y: 260, width: 60, height: 20))
         containerView.addSubview(animationLabel)
         
-        animationPopUp = NSPopUpButton()
-        animationPopUp.frame = NSRect(x: 300, y: 260, width: 120, height: 20)
-        animationPopUp.addItems(withTitles: ["淡入淡出", "缩放", "滑动", "旋转", "弹跳", "弹性", "自定义"])
-        animationPopUp.selectItem(at: 0)
-        animationPopUp.target = self
-        animationPopUp.action = #selector(animationChanged)
+        animationPopUp = NSPopUpButton().chain
+            .frame(NSRect(x: 300, y: 260, width: 120, height: 20))
+            .addItems(["淡入淡出", "缩放", "滑动", "旋转", "弹跳", "弹性", "自定义"])
+            .selectItem(0)
+            .addTarget(self, action: #selector(animationChanged))
+            .build
         containerView.addSubview(animationPopUp)
         
         // 位置选择
         let positionLabel = createLabel(text: "位置:", frame: NSRect(x: 440, y: 260, width: 60, height: 20))
         containerView.addSubview(positionLabel)
         
-        positionPopUp = NSPopUpButton()
-        positionPopUp.frame = NSRect(x: 510, y: 260, width: 120, height: 20)
-        positionPopUp.addItems(withTitles: ["居中", "顶部", "底部", "左上", "右上", "左下", "右下"])
-        positionPopUp.selectItem(at: 0)
-        positionPopUp.target = self
-        positionPopUp.action = #selector(positionChanged)
+        positionPopUp = NSPopUpButton().chain
+            .frame(NSRect(x: 510, y: 260, width: 120, height: 20))
+            .addItems(["居中", "顶部", "底部", "左上", "右上", "左下", "右下"])
+            .selectItem(0)
+            .addTarget(self, action: #selector(positionChanged))
+            .build
         containerView.addSubview(positionPopUp)
         
         // 自动隐藏开关
         let autoHideLabel = createLabel(text: "自动隐藏:", frame: NSRect(x: 20, y: 300, width: 80, height: 20))
         containerView.addSubview(autoHideLabel)
         
-        autoHideSwitch = NSButton()
-        autoHideSwitch.frame = NSRect(x: 110, y: 300, width: 60, height: 20)
-        autoHideSwitch.setButtonType(.switch)
-        autoHideSwitch.title = ""
-        autoHideSwitch.state = .on
-        autoHideSwitch.target = self
-        autoHideSwitch.action = #selector(autoHideChanged)
+        autoHideSwitch = NSButton().chain
+            .frame(NSRect(x: 110, y: 300, width: 60, height: 20))
+            .setButtonType(.switch)
+            .title("")
+            .state(.on)
+            .addTarget(self, action: #selector(autoHideChanged))
+            .build
         containerView.addSubview(autoHideSwitch)
         
         // 隐藏延迟
         let delayLabel = createLabel(text: "隐藏延迟(秒):", frame: NSRect(x: 200, y: 300, width: 100, height: 20))
         containerView.addSubview(delayLabel)
         
-        delayTextField = NSTextField()
-        delayTextField.frame = NSRect(x: 310, y: 300, width: 60, height: 20)
-        delayTextField.stringValue = "2.0"
-        delayTextField.font = .systemFont(ofSize: 12)
-        delayTextField.textColor = .labelColor
-        delayTextField.backgroundColor = .controlBackgroundColor
-        delayTextField.isBordered = true
-        delayTextField.isBezeled = true
-        delayTextField.isEditable = true
-        delayTextField.isSelectable = true
+        delayTextField = NSTextField().chain
+            .frame(NSRect(x: 310, y: 300, width: 60, height: 20))
+            .stringValue("2.0")
+            .font(.systemFont(ofSize: 12))
+            .textColor(.labelColor)
+            .backgroundColor(.controlBackgroundColor)
+            .bordered(true)
+            .bezeled(true)
+            .editable(true)
+            .selectable(true)
+            .build
         containerView.addSubview(delayTextField)
         
         // 动画持续时间
         let durationLabel = createLabel(text: "动画时长(秒):", frame: NSRect(x: 390, y: 300, width: 100, height: 20))
         containerView.addSubview(durationLabel)
         
-        durationTextField = NSTextField()
-        durationTextField.frame = NSRect(x: 500, y: 300, width: 60, height: 20)
-        durationTextField.stringValue = "0.3"
-        durationTextField.font = .systemFont(ofSize: 12)
-        durationTextField.textColor = .labelColor
-        durationTextField.backgroundColor = .controlBackgroundColor
-        durationTextField.isBordered = true
-        durationTextField.isBezeled = true
-        durationTextField.isEditable = true
-        durationTextField.isSelectable = true
+        durationTextField = NSTextField().chain
+            .frame(NSRect(x: 500, y: 300, width: 60, height: 20))
+            .stringValue("0.3")
+            .font(.systemFont(ofSize: 12))
+            .textColor(.labelColor)
+            .backgroundColor(.controlBackgroundColor)
+            .bordered(true)
+            .bezeled(true)
+            .editable(true)
+            .selectable(true)
+            .build
         containerView.addSubview(durationTextField)
     }
     
     private func createAdvancedSection(in containerView: NSView) {
-        let sectionLabel = NSTextField()
-        sectionLabel.stringValue = "高级功能演示"
-        sectionLabel.font = .boldSystemFont(ofSize: 18)
-        sectionLabel.textColor = .labelColor
-        sectionLabel.backgroundColor = .clear
-        sectionLabel.isBordered = false
-        sectionLabel.isEditable = false
-        sectionLabel.isSelectable = false
-        sectionLabel.frame = NSRect(x: 20, y: 350, width: 200, height: 25)
+        let sectionLabel = NSTextField().chain
+            .text("高级功能演示")
+            .font(.boldSystemFont(ofSize: 18))
+            .textColor(.labelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .frame(NSRect(x: 20, y: 350, width: 200, height: 25))
+            .build
         
         containerView.addSubview(sectionLabel)
         
@@ -270,21 +286,22 @@ class HUDDemoViewController: NSViewController {
     }
     
     private func createInstructionSection(in containerView: NSView) {
-        let sectionLabel = NSTextField()
-        sectionLabel.stringValue = "使用说明"
-        sectionLabel.font = .boldSystemFont(ofSize: 18)
-        sectionLabel.textColor = .labelColor
-        sectionLabel.backgroundColor = .clear
-        sectionLabel.isBordered = false
-        sectionLabel.isEditable = false
-        sectionLabel.isSelectable = false
-        sectionLabel.frame = NSRect(x: 20, y: 530, width: 200, height: 25)
+        let sectionLabel = NSTextField().chain
+            .text("使用说明")
+            .font(.boldSystemFont(ofSize: 18))
+            .textColor(.labelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .frame(NSRect(x: 20, y: 690, width: 200, height: 25))
+            .build
         
         containerView.addSubview(sectionLabel)
         
-        let instructionLabel = NSTextField()
-        instructionLabel.frame = NSRect(x: 20, y: 560, width: 600, height: 110)
-        instructionLabel.stringValue = """
+        let instructionLabel = NSTextField().chain
+            .frame(NSRect(x: 20, y: 720, width: 680, height: 130))
+            .stringValue("""
         使用说明:
         
         1. HUD类型演示: 点击不同类型的HUD按钮查看效果
@@ -313,44 +330,117 @@ class HUDDemoViewController: NSViewController {
            - TFYProgressMacOSHUD.showError("消息")
            - TFYProgressMacOSHUD.showLoading("消息")
            - TFYProgressMacOSHUD.showProgress(0.5, status: "进度")
-        """
-        instructionLabel.font = .systemFont(ofSize: 12)
-        instructionLabel.textColor = .secondaryLabelColor
-        instructionLabel.backgroundColor = .clear
-        instructionLabel.isBordered = false
-        instructionLabel.isEditable = false
-        instructionLabel.isSelectable = false
-        instructionLabel.alignment = .left
-        instructionLabel.cell?.wraps = true
+        """)
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .alignment(.left)
+            .wraps(true)
+            .build
         instructionLabel.cell?.isScrollable = false
         instructionLabel.maximumNumberOfLines = 0
         
         containerView.addSubview(instructionLabel)
     }
+
+    private func createDirectProgressSection(in containerView: NSView) {
+        let sectionLabel = NSTextField().chain
+            .text("直接进度视图演示")
+            .font(.boldSystemFont(ofSize: 18))
+            .textColor(.labelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .frame(NSRect(x: 20, y: 530, width: 220, height: 25))
+            .build
+        containerView.addSubview(sectionLabel)
+
+        embeddedProgressView = TFYProgressView(style: .ring)
+        embeddedProgressView.frame = NSRect(x: 32, y: 570, width: 88, height: 88)
+        embeddedProgressView.progressColor = .systemBlue
+        embeddedProgressView.trackColor = .systemGray.withAlphaComponent(0.25)
+        embeddedProgressView.showPercentage = true
+        embeddedProgressView.progress = 0.42
+        containerView.addSubview(embeddedProgressView)
+
+        let styleLabel = createLabel(text: "样式:", frame: NSRect(x: 160, y: 574, width: 50, height: 20))
+        containerView.addSubview(styleLabel)
+
+        progressStylePopUp = NSPopUpButton().chain
+            .frame(NSRect(x: 212, y: 570, width: 120, height: 26))
+            .addItems(["环形", "水平", "圆形", "饼图"])
+            .selectItem(0)
+            .addTarget(self, action: #selector(progressStyleChanged(_:)))
+            .build
+        containerView.addSubview(progressStylePopUp)
+
+        let sliderLabel = createLabel(text: "进度:", frame: NSRect(x: 160, y: 610, width: 50, height: 20))
+        containerView.addSubview(sliderLabel)
+
+        progressSlider = NSSlider().chain
+            .frame(NSRect(x: 212, y: 606, width: 220, height: 24))
+            .doubleValue(0.42)
+            .minValue(0.0)
+            .maxValue(1.0)
+            .addTarget(self, action: #selector(progressSliderChanged(_:)))
+            .build
+        containerView.addSubview(progressSlider)
+
+        progressPercentageSwitch = NSButton().chain
+            .frame(NSRect(x: 452, y: 604, width: 110, height: 24))
+            .setButtonType(.switch)
+            .state(.on)
+            .title("显示百分比")
+            .addTarget(self, action: #selector(progressPercentageChanged(_:)))
+            .build
+        containerView.addSubview(progressPercentageSwitch)
+
+        let animateButton = createButton(title: "动画到 100%", action: #selector(animateDirectProgress), frame: NSRect(x: 160, y: 642, width: 110, height: 30))
+        containerView.addSubview(animateButton)
+
+        let resetButton = createButton(title: "重置", action: #selector(resetDirectProgress), frame: NSRect(x: 284, y: 642, width: 70, height: 30))
+        containerView.addSubview(resetButton)
+
+        progressValueLabel = createLabel(text: "", frame: NSRect(x: 370, y: 646, width: 320, height: 20))
+        containerView.addSubview(progressValueLabel)
+
+        let helperLabel = createLabel(text: "这一块直接展示 TFYProgressView 本体，而不经过 HUD 容器，便于验证尺寸、样式、动画和百分比显示。", frame: NSRect(x: 160, y: 670, width: 620, height: 20))
+        helperLabel.chain
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+        helperLabel.maximumNumberOfLines = 2
+        helperLabel.lineBreakMode = .byWordWrapping
+        containerView.addSubview(helperLabel)
+
+        updateDirectProgressPreview(animated: false)
+    }
     
     // MARK: - Helper Methods
     private func createButton(title: String, action: Selector, frame: NSRect) -> NSButton {
-        let button = NSButton()
-        button.frame = frame
-        button.title = title
-        button.font = .systemFont(ofSize: 12)
-        button.bezelStyle = .rounded
-        button.target = self
-        button.action = action
-        return button
+        NSButton().chain
+            .frame(frame)
+            .title(title)
+            .font(.systemFont(ofSize: 12))
+            .bezelStyle(.rounded)
+            .addTarget(self, action: action)
+            .build
     }
     
     private func createLabel(text: String, frame: NSRect) -> NSTextField {
-        let label = NSTextField()
-        label.stringValue = text
-        label.font = .systemFont(ofSize: 12)
-        label.textColor = .labelColor
-        label.backgroundColor = .clear
-        label.isBordered = false
-        label.isEditable = false
-        label.isSelectable = false
-        label.frame = frame
-        return label
+        NSTextField().chain
+            .stringValue(text)
+            .font(.systemFont(ofSize: 12))
+            .textColor(.labelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .frame(frame)
+            .build
     }
     
     private func getCurrentPosition() -> TFYHUDPosition {
@@ -390,6 +480,24 @@ class HUDDemoViewController: NSViewController {
         case 6: return "system"
         default: return "dark"
         }
+    }
+
+    private func currentProgressStyle() -> TFYProgressViewStyle {
+        switch progressStylePopUp.indexOfSelectedItem {
+        case 0: return .ring
+        case 1: return .horizontal
+        case 2: return .circular
+        case 3: return .pie
+        default: return .ring
+        }
+    }
+
+    private func updateDirectProgressPreview(animated: Bool) {
+        let progress = CGFloat(progressSlider?.doubleValue ?? 0.42)
+        embeddedProgressView?.style = currentProgressStyle()
+        embeddedProgressView?.showPercentage = progressPercentageSwitch?.state == .on
+        embeddedProgressView?.setProgress(progress, animated: animated)
+        progressValueLabel?.stringValue = "当前样式：\(progressStylePopUp.titleOfSelectedItem ?? "环形") · 数值：\(Int(progress * 100))%"
     }
     
     private func configureCurrentHUD() {
@@ -637,7 +745,7 @@ class HUDDemoViewController: NSViewController {
     // MARK: - Configuration Action Methods
     @objc private func themeChanged(_ sender: NSPopUpButton) {
         print("主题已更改为: \(sender.titleOfSelectedItem ?? "")")
-        if let hud = currentHUD {
+        if currentHUD != nil {
             configureCurrentHUD()
         } else {
             TFYProgressMacOSHUD.configureShared(theme: getCurrentThemeName())
@@ -661,6 +769,28 @@ class HUDDemoViewController: NSViewController {
         } else {
             TFYProgressMacOSHUD.configureShared(position: pos)
         }
+    }
+
+    @objc private func progressSliderChanged(_ sender: NSSlider) {
+        updateDirectProgressPreview(animated: false)
+    }
+
+    @objc private func progressStyleChanged(_ sender: NSPopUpButton) {
+        updateDirectProgressPreview(animated: false)
+    }
+
+    @objc private func progressPercentageChanged(_ sender: NSButton) {
+        updateDirectProgressPreview(animated: false)
+    }
+
+    @objc private func animateDirectProgress() {
+        progressSlider.doubleValue = 1.0
+        updateDirectProgressPreview(animated: true)
+    }
+
+    @objc private func resetDirectProgress() {
+        progressSlider.doubleValue = 0.0
+        updateDirectProgressPreview(animated: false)
     }
 
     @objc private func autoHideChanged(_ sender: NSButton) {

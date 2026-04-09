@@ -142,19 +142,23 @@ public class TFYSwiftOpenPanel: NSObject {
     ///   - completion: 完成回调
     public static func selectFiles(configuration: TFYOpenPanelConfiguration,
                                   completion: @escaping (TFYFileSelectionResult) -> Void) {
-        guard let mainWindow = NSApp.mainWindow else {
-            completion(TFYFileSelectionResult(urls: [], panel: NSOpenPanel(), wasCancelled: true))
+        let panel = createPanel(configuration: configuration)
+
+        if let presentingWindow = availablePresentingWindow() {
+            panel.beginSheetModal(for: presentingWindow) { result in
+                let wasCancelled = result != .OK
+                let urls = wasCancelled ? [] : panel.urls
+                let selectionResult = TFYFileSelectionResult(urls: urls, panel: panel, wasCancelled: wasCancelled)
+                completion(selectionResult)
+            }
             return
         }
-        
-        let panel = createPanel(configuration: configuration)
-        
-        panel.beginSheetModal(for: mainWindow) { result in
-            let wasCancelled = result != .OK
-            let urls = wasCancelled ? [] : panel.urls
-            let selectionResult = TFYFileSelectionResult(urls: urls, panel: panel, wasCancelled: wasCancelled)
-            completion(selectionResult)
-        }
+
+        let result = panel.runModal()
+        let wasCancelled = result != .OK
+        let urls = wasCancelled ? [] : panel.urls
+        let selectionResult = TFYFileSelectionResult(urls: urls, panel: panel, wasCancelled: wasCancelled)
+        completion(selectionResult)
     }
     
     /// 选择单个文件
@@ -248,19 +252,23 @@ public class TFYSwiftOpenPanel: NSObject {
     ///   - completion: 完成回调
     public static func saveFile(configuration: TFYSavePanelConfiguration,
                                completion: @escaping (TFYSaveFileResult) -> Void) {
-        guard let mainWindow = NSApp.mainWindow else {
-            completion(TFYSaveFileResult(url: nil, panel: NSOpenPanel(), wasCancelled: true))
+        let panel = createSavePanel(configuration: configuration)
+
+        if let presentingWindow = availablePresentingWindow() {
+            panel.beginSheetModal(for: presentingWindow) { result in
+                let wasCancelled = result != .OK
+                let url = wasCancelled ? nil : panel.url
+                let saveResult = TFYSaveFileResult(url: url, panel: panel, wasCancelled: wasCancelled)
+                completion(saveResult)
+            }
             return
         }
-        
-        let panel = createSavePanel(configuration: configuration)
-        
-        panel.beginSheetModal(for: mainWindow) { result in
-            let wasCancelled = result != .OK
-            let url = wasCancelled ? nil : panel.url
-            let saveResult = TFYSaveFileResult(url: url, panel: panel, wasCancelled: wasCancelled)
-            completion(saveResult)
-        }
+
+        let result = panel.runModal()
+        let wasCancelled = result != .OK
+        let url = wasCancelled ? nil : panel.url
+        let saveResult = TFYSaveFileResult(url: url, panel: panel, wasCancelled: wasCancelled)
+        completion(saveResult)
     }
     
     // MARK: - 高级功能
@@ -285,18 +293,22 @@ public class TFYSwiftOpenPanel: NSObject {
         
         let panel = createPanel(configuration: config)
         panel.delegate = delegate
-        
-        guard let mainWindow = NSApp.mainWindow else {
-            completion(TFYFileSelectionResult(urls: [], panel: panel, wasCancelled: true))
+
+        if let presentingWindow = availablePresentingWindow() {
+            panel.beginSheetModal(for: presentingWindow) { result in
+                let wasCancelled = result != .OK
+                let urls = wasCancelled ? [] : panel.urls
+                let selectionResult = TFYFileSelectionResult(urls: urls, panel: panel, wasCancelled: wasCancelled)
+                completion(selectionResult)
+            }
             return
         }
-        
-        panel.beginSheetModal(for: mainWindow) { result in
-            let wasCancelled = result != .OK
-            let urls = wasCancelled ? [] : panel.urls
-            let selectionResult = TFYFileSelectionResult(urls: urls, panel: panel, wasCancelled: wasCancelled)
-            completion(selectionResult)
-        }
+
+        let result = panel.runModal()
+        let wasCancelled = result != .OK
+        let urls = wasCancelled ? [] : panel.urls
+        let selectionResult = TFYFileSelectionResult(urls: urls, panel: panel, wasCancelled: wasCancelled)
+        completion(selectionResult)
     }
     
     /// 选择文件并自定义视图
@@ -335,7 +347,7 @@ public class TFYSwiftOpenPanel: NSObject {
             selectMultipleFiles(title: title, message: message, fileTypes: imageTypes, completion: completion)
         } else {
             selectFile(title: title, message: message, fileTypes: imageTypes) { url in
-                completion(url != nil ? [url!] : [])
+                completion(url.map { [$0] } ?? [])
             }
         }
     }
@@ -353,7 +365,7 @@ public class TFYSwiftOpenPanel: NSObject {
             selectMultipleFiles(title: title, message: message, fileTypes: documentTypes, completion: completion)
         } else {
             selectFile(title: title, message: message, fileTypes: documentTypes) { url in
-                completion(url != nil ? [url!] : [])
+                completion(url.map { [$0] } ?? [])
             }
         }
     }
@@ -371,7 +383,7 @@ public class TFYSwiftOpenPanel: NSObject {
             selectMultipleFiles(title: title, message: message, fileTypes: audioTypes, completion: completion)
         } else {
             selectFile(title: title, message: message, fileTypes: audioTypes) { url in
-                completion(url != nil ? [url!] : [])
+                completion(url.map { [$0] } ?? [])
             }
         }
     }
@@ -389,7 +401,7 @@ public class TFYSwiftOpenPanel: NSObject {
             selectMultipleFiles(title: title, message: message, fileTypes: videoTypes, completion: completion)
         } else {
             selectFile(title: title, message: message, fileTypes: videoTypes) { url in
-                completion(url != nil ? [url!] : [])
+                completion(url.map { [$0] } ?? [])
             }
         }
     }
@@ -419,6 +431,10 @@ public class TFYSwiftOpenPanel: NSObject {
         }
         
         return panel
+    }
+
+    private static func availablePresentingWindow() -> NSWindow? {
+        NSApp.mainWindow ?? NSApp.keyWindow ?? NSApp.windows.first { $0.isVisible }
     }
     
     /// 创建文件保存面板

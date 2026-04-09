@@ -13,10 +13,13 @@ final class ExtensionsDemoViewController: NSViewController {
     private var previewInfoLabel: NSTextField!
     private var styledField: NSTextField!
     private var plainTextField: NSTextField!
+    private var richTextView: NSTextView!
+    private var textViewStatsLabel: NSTextField!
     private var notificationStatusLabel: NSTextField!
     private var logTextView: NSTextView!
     private var notificationToken: NSObjectProtocol?
     private var notificationCount = 0
+    private var isTextViewReadOnly = false
     
     deinit {
         if let notificationToken {
@@ -31,15 +34,17 @@ final class ExtensionsDemoViewController: NSViewController {
     }
     
     private func setupDemo() {
-        let scrollView = NSScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.hasVerticalScroller = true
-        scrollView.autohidesScrollers = true
+        let scrollView = NSScrollView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .hasVerticalScroller(true)
+            .autohidesScrollers(true)
+            .build
         view.addSubview(scrollView)
         
-        let contentView = NSView()
-        contentView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.documentView = contentView
+        let contentView = NSView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
+        scrollView.chain.documentView(contentView)
         
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -57,7 +62,7 @@ final class ExtensionsDemoViewController: NSViewController {
         contentView.addSubview(titleLabel)
         yOffset += 38
         
-        let subtitleLabel = makeBodyLabel("这里专门演示 NSView / NSControl / NSTextField / NotificationCenter 相关扩展能力，适合验证交互细节和辅助 API 的成熟度。", width: 780, height: 34)
+        let subtitleLabel = makeBodyLabel("这里专门演示 NSView / NSControl / NSTextField / NSTextView / NotificationCenter 相关扩展能力，适合验证交互细节和辅助 API 的成熟度。", width: 780, height: 34)
         subtitleLabel.frame.origin = NSPoint(x: 20, y: yOffset)
         contentView.addSubview(subtitleLabel)
         yOffset += 56
@@ -65,6 +70,7 @@ final class ExtensionsDemoViewController: NSViewController {
         yOffset = setupViewExtensionSection(in: contentView, yOffset: yOffset)
         yOffset = setupControlExtensionSection(in: contentView, yOffset: yOffset)
         yOffset = setupTextFieldExtensionSection(in: contentView, yOffset: yOffset)
+        yOffset = setupTextViewExtensionSection(in: contentView, yOffset: yOffset)
         yOffset = setupNotificationSection(in: contentView, yOffset: yOffset)
         yOffset = setupLogSection(in: contentView, yOffset: yOffset)
         
@@ -79,10 +85,13 @@ final class ExtensionsDemoViewController: NSViewController {
         contentView.addSubview(sectionLabel)
         currentOffset += 34
         
-        previewBox = NSView(frame: NSRect(x: 20, y: currentOffset, width: 220, height: 120))
-        previewBox.setBackgroundColor(.systemTeal)
-        previewBox.setCornerRadius(18)
-        previewBox.setBorder(color: .white.withAlphaComponent(0.28), width: 1)
+        previewBox = NSView().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 220, height: 120))
+            .backgroundColor(.systemTeal)
+            .cornerRadius(18)
+            .borderWidth(1)
+            .borderColor(.white.withAlphaComponent(0.28))
+            .build
         previewBox.setShadow(color: .black, offset: CGSize(width: 0, height: 8), radius: 16, opacity: 0.2)
         _ = previewBox.addClickGesture { [weak self] _ in
             self?.appendLog("NSView 点击手势已触发")
@@ -92,11 +101,12 @@ final class ExtensionsDemoViewController: NSViewController {
         }, duration: 0.35)
         contentView.addSubview(previewBox)
         
-        let badgeLabel = NSTextField(labelWithString: "拖动、动画、阴影、圆角、点击/长按")
-        badgeLabel.font = .systemFont(ofSize: 11, weight: .medium)
-        badgeLabel.textColor = .white
-        badgeLabel.alignment = .center
-        badgeLabel.frame = NSRect(x: 16, y: 46, width: 188, height: 18)
+        let badgeLabel = NSTextField(labelWithString: "拖动、动画、阴影、圆角、点击/长按").chain
+            .font(.systemFont(ofSize: 11, weight: .medium))
+            .textColor(.white)
+            .alignment(.center)
+            .frame(NSRect(x: 16, y: 46, width: 188, height: 18))
+            .build
         previewBox.addSubview(badgeLabel)
         
         previewInfoLabel = makeBodyLabel("viewController(): \(previewBox.viewController() === self ? "已命中当前控制器" : "未命中")", width: 520, height: 22)
@@ -134,10 +144,11 @@ final class ExtensionsDemoViewController: NSViewController {
         contentView.addSubview(sectionLabel)
         currentOffset += 34
         
-        styledField = NSTextField(labelWithString: "NSControl 富文本增强演示")
-        styledField.frame = NSRect(x: 20, y: currentOffset, width: 320, height: 24)
-        styledField.font = .systemFont(ofSize: 16, weight: .medium)
-        styledField.textColor = .labelColor
+        styledField = NSTextField(labelWithString: "NSControl 富文本增强演示").chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 320, height: 24))
+            .font(.systemFont(ofSize: 16, weight: .medium))
+            .textColor(.labelColor)
+            .build
         contentView.addSubview(styledField)
         
         let styleButton = makeActionButton(title: "应用富文本样式", frame: NSRect(x: 360, y: currentOffset - 4, width: 110, height: 30), action: #selector(applyStyledControlText))
@@ -164,14 +175,16 @@ final class ExtensionsDemoViewController: NSViewController {
         contentView.addSubview(sectionLabel)
         currentOffset += 34
         
-        plainTextField = NSTextField(frame: NSRect(x: 20, y: currentOffset, width: 280, height: 34))
-        plainTextField.placeholderString = "普通 NSTextField 也可直接增强"
-        plainTextField.placeholderStringColor = .systemBlue
-        plainTextField.setMaxLength(10)
-        plainTextField.addFocusEffect()
-        plainTextField.setTextChangeHandler { [weak self] text in
-            self?.appendLog("普通文本框输入变化: \(text)")
-        }
+        plainTextField = NSTextField().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 280, height: 34))
+            .placeholder("普通 NSTextField 也可直接增强")
+            .placeholderStringColor(.systemBlue)
+            .maxLength(10)
+            .focusEffect(true)
+            .textChangeHandler { [weak self] text in
+                self?.appendLog("普通文本框输入变化: \(text)")
+            }
+            .build
         _ = plainTextField.addGestureLongPress({ [weak self] _ in
             self?.appendLog("NSTextField 长按手势已触发")
         }, for: 0.35)
@@ -194,6 +207,73 @@ final class ExtensionsDemoViewController: NSViewController {
         contentView.addSubview(helperLabel)
         
         return currentOffset + 74
+    }
+
+    private func setupTextViewExtensionSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
+        var currentOffset = yOffset
+
+        let sectionLabel = makeSectionLabel("NSTextView + Dejal")
+        sectionLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(sectionLabel)
+        currentOffset += 34
+
+        let scrollView = NSScrollView().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 380, height: 120))
+            .hasVerticalScroller(true)
+            .borderType(.bezelBorder)
+            .autohidesScrollers(true)
+            .build
+        contentView.addSubview(scrollView)
+
+        richTextView = NSTextView().chain
+            .frame(NSRect(x: 0, y: 0, width: 380, height: 120))
+            .font(.systemFont(ofSize: 13))
+            .wraps(true)
+            .lineSpacing(3)
+            .string("点击 HUD 或 缓存 这两个关键词，观察 NSTextView 的点击扩展回调。你也可以直接编辑文本，然后查看统计信息。")
+            .clickableTexts([
+                "HUD": "Progress HUD",
+                "缓存": "CacheKit"
+            ]) { [weak self] key, value, _ in
+                self?.appendLog("NSTextView 点击关键词: \(key) -> \(value as? String ?? "无附加值")")
+            }
+            .textChangeHandler { [weak self] _ in
+                self?.refreshTextViewStats()
+            }
+            .selectionChangeHandler { [weak self] range in
+                self?.refreshTextViewStats(selectionRange: range)
+            }
+            .build
+        scrollView.chain.documentView(richTextView)
+
+        let loadButton = makeActionButton(title: "加载示例文本", frame: NSRect(x: 424, y: currentOffset + 6, width: 110, height: 30), action: #selector(loadTextViewTemplate))
+        contentView.addSubview(loadButton)
+
+        let replaceButton = makeActionButton(title: "替换关键词", frame: NSRect(x: 548, y: currentOffset + 6, width: 90, height: 30), action: #selector(replaceTextViewKeywords))
+        contentView.addSubview(replaceButton)
+
+        let statsButton = makeActionButton(title: "输出统计", frame: NSRect(x: 650, y: currentOffset + 6, width: 90, height: 30), action: #selector(reportTextViewStatistics))
+        contentView.addSubview(statsButton)
+
+        let readOnlyButton = makeActionButton(title: "切换只读", frame: NSRect(x: 424, y: currentOffset + 44, width: 110, height: 30), action: #selector(toggleTextViewReadOnly))
+        contentView.addSubview(readOnlyButton)
+
+        let bottomButton = makeActionButton(title: "滚动到底部", frame: NSRect(x: 548, y: currentOffset + 44, width: 90, height: 30), action: #selector(scrollTextViewToBottom))
+        contentView.addSubview(bottomButton)
+
+        let appendButton = makeActionButton(title: "追加文本", frame: NSRect(x: 650, y: currentOffset + 44, width: 90, height: 30), action: #selector(appendTextViewSnippet))
+        contentView.addSubview(appendButton)
+
+        let helperLabel = makeBodyLabel("这部分演示点击关键词、文本统计、查找替换、滚动定位和只读切换，都是直接作用在原生 NSTextView 上。", width: 340, height: 38)
+        helperLabel.frame.origin = NSPoint(x: 424, y: currentOffset + 82)
+        contentView.addSubview(helperLabel)
+
+        textViewStatsLabel = makeBodyLabel("", width: 760, height: 22)
+        textViewStatsLabel.frame.origin = NSPoint(x: 20, y: currentOffset + 128)
+        contentView.addSubview(textViewStatsLabel)
+        refreshTextViewStats()
+
+        return currentOffset + 160
     }
     
     private func setupNotificationSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
@@ -228,15 +308,17 @@ final class ExtensionsDemoViewController: NSViewController {
         let clearButton = makeActionButton(title: "清空日志", frame: NSRect(x: 690, y: currentOffset - 4, width: 90, height: 28), action: #selector(clearLog))
         contentView.addSubview(clearButton)
         
-        logTextView = NSTextView(frame: NSRect(x: 20, y: currentOffset, width: 760, height: 150))
-        logTextView.isEditable = false
-        logTextView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        logTextView.backgroundColor = .textBackgroundColor
-        logTextView.textColor = .labelColor
-        logTextView.string = "等待扩展操作...\n"
+        logTextView = NSTextView().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 760, height: 150))
+            .editable(false)
+            .font(.monospacedSystemFont(ofSize: 12, weight: .regular))
+            .backgroundColor(.textBackgroundColor)
+            .textColor(.labelColor)
+            .string("等待扩展操作...\n")
+            .build
         contentView.addSubview(logTextView)
         
-        appendLog("扩展页已加载，可以测试动画、富文本、通知桥接与普通文本框增强能力")
+        appendLog("扩展页已加载，可以测试动画、富文本、NSTextView 增强、通知桥接与普通文本框增强能力")
         return currentOffset + 168
     }
     
@@ -261,39 +343,40 @@ final class ExtensionsDemoViewController: NSViewController {
     }
     
     private func makeTitleLabel(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = .boldSystemFont(ofSize: 22)
-        label.textColor = .labelColor
-        label.frame = NSRect(x: 0, y: 0, width: 360, height: 28)
-        return label
+        NSTextField(labelWithString: text).chain
+            .font(.boldSystemFont(ofSize: 22))
+            .textColor(.labelColor)
+            .frame(NSRect(x: 0, y: 0, width: 360, height: 28))
+            .build
     }
     
     private func makeSectionLabel(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = .systemFont(ofSize: 16, weight: .semibold)
-        label.textColor = .labelColor
-        label.frame = NSRect(x: 0, y: 0, width: 320, height: 22)
-        return label
+        NSTextField(labelWithString: text).chain
+            .font(.systemFont(ofSize: 16, weight: .semibold))
+            .textColor(.labelColor)
+            .frame(NSRect(x: 0, y: 0, width: 320, height: 22))
+            .build
     }
     
     private func makeBodyLabel(_ text: String, width: CGFloat, height: CGFloat) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = .systemFont(ofSize: 12)
-        label.textColor = .secondaryLabelColor
-        label.lineBreakMode = .byWordWrapping
-        label.maximumNumberOfLines = 0
-        label.frame = NSRect(x: 0, y: 0, width: width, height: height)
-        return label
+        NSTextField(labelWithString: text).chain
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+            .lineBreakMode(.byWordWrapping)
+            .wraps(true)
+            .maximumNumberOfLines(0)
+            .frame(NSRect(x: 0, y: 0, width: width, height: height))
+            .build
     }
     
     private func makeActionButton(title: String, frame: NSRect, action: Selector) -> NSButton {
-        let button = NSButton(frame: frame)
-        button.title = title
-        button.font = .systemFont(ofSize: 12, weight: .medium)
-        button.bezelStyle = .rounded
-        button.target = self
-        button.action = action
-        return button
+        NSButton().chain
+            .frame(frame)
+            .title(title)
+            .font(.systemFont(ofSize: 12, weight: .medium))
+            .bezelStyle(.rounded)
+            .addTarget(self, action: action)
+            .build
     }
     
     @objc private func fadeOutPreview() {
@@ -371,6 +454,60 @@ final class ExtensionsDemoViewController: NSViewController {
     @objc private func fitPlainText() {
         plainTextField.fitFontSize(maxSize: NSSize(width: 280, height: 80))
         appendLog("已执行文本适配与换行")
+    }
+
+    private func refreshTextViewStats(selectionRange: NSRange? = nil) {
+        let stats = richTextView?.textStatistics ?? (characters: 0, words: 0, lines: 0, paragraphs: 0)
+        let selection = selectionRange ?? richTextView?.selectedRange() ?? NSRange(location: 0, length: 0)
+        let modeText = isTextViewReadOnly ? "只读" : "可编辑"
+        textViewStatsLabel?.stringValue = "NSTextView 统计：字符 \(stats.characters) · 单词 \(stats.words) · 行 \(stats.lines) · 段落 \(stats.paragraphs) · 选区 \(selection.length) · 模式 \(modeText)"
+    }
+
+    @objc private func loadTextViewTemplate() {
+        richTextView.string = """
+        TFYSwiftMacOSAppKit 的扩展层不仅覆盖 NSTextField，也补到了 NSTextView。
+        点击 HUD 或 缓存 关键词，可以验证 click callback。
+
+        当前这一页还演示了查找替换、统计、滚动定位和只读切换。
+        """
+        richTextView.chain.clickableTexts([
+            "HUD": "Progress HUD",
+            "缓存": "CacheKit"
+        ]) { [weak self] key, value, _ in
+            self?.appendLog("NSTextView 点击关键词: \(key) -> \(value as? String ?? "无附加值")")
+        }
+        refreshTextViewStats()
+        appendLog("已载入 NSTextView 示例文本")
+    }
+
+    @objc private func replaceTextViewKeywords() {
+        let replacedCount = richTextView.replaceAllText("HUD", with: "Progress HUD")
+        refreshTextViewStats()
+        appendLog("NSTextView 已替换关键词 \(replacedCount) 处")
+    }
+
+    @objc private func reportTextViewStatistics() {
+        let stats = richTextView.textStatistics
+        appendLog("NSTextView 统计 -> 字符 \(stats.characters)，单词 \(stats.words)，行 \(stats.lines)，段落 \(stats.paragraphs)")
+    }
+
+    @objc private func toggleTextViewReadOnly() {
+        isTextViewReadOnly.toggle()
+        richTextView.chain.readOnly(isTextViewReadOnly)
+        refreshTextViewStats()
+        appendLog(isTextViewReadOnly ? "NSTextView 已切换为只读" : "NSTextView 已恢复可编辑")
+    }
+
+    @objc private func scrollTextViewToBottom() {
+        richTextView.scrollToBottom()
+        appendLog("NSTextView 已滚动到底部")
+    }
+
+    @objc private func appendTextViewSnippet() {
+        richTextView.setSelectedRange(NSRange(location: richTextView.string.count, length: 0))
+        richTextView.insertText("\n追加片段：这里可以继续测试滚动、统计和选择回调。")
+        refreshTextViewStats()
+        appendLog("已向 NSTextView 追加一段文本")
     }
     
     @objc private func postBackgroundNotification() {

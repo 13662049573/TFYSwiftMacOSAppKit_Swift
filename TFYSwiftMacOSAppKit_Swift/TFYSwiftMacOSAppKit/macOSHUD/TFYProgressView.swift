@@ -119,7 +119,8 @@ public class TFYProgressView: NSView {
     }
 
     public required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: coder)
+        commonInit()
     }
 
     public override init(frame frameRect: NSRect) {
@@ -132,7 +133,10 @@ public class TFYProgressView: NSView {
         wantsLayer = true
         setupLayers()
         setupPercentageLabel()
+        updateColors()
+        updateSize()
         updatePaths()
+        updatePercentageLabel()
     }
 
     // Setup layers
@@ -179,6 +183,10 @@ public class TFYProgressView: NSView {
         updatePaths()
         updatePercentageLabel()
     }
+
+    public override var intrinsicContentSize: NSSize {
+        NSSize(width: sizeValue, height: sizeValue)
+    }
     
     private func updateSize() {
         switch size {
@@ -191,24 +199,12 @@ public class TFYProgressView: NSView {
         case .custom(let customSize):
             sizeValue = customSize
         }
-        
-        // 移除现有的宽高约束
-        constraints.forEach { constraint in
-            if (constraint.firstAttribute == .width || constraint.firstAttribute == .height) &&
-               (constraint.firstItem === self || constraint.secondItem === self) {
-                constraint.isActive = false
-            }
+
+        invalidateIntrinsicContentSize()
+        if translatesAutoresizingMaskIntoConstraints {
+            setFrameSize(NSSize(width: sizeValue, height: sizeValue))
         }
-        
-        // 添加新的固定大小约束
-        NSLayoutConstraint.activate([
-            widthAnchor.constraint(equalToConstant: sizeValue),
-            heightAnchor.constraint(equalToConstant: sizeValue)
-        ])
-        
-        // 强制布局更新
         needsLayout = true
-        layout()
     }
 
     private func updatePaths() {
@@ -216,6 +212,9 @@ public class TFYProgressView: NSView {
         guard bounds.width > 0, bounds.height > 0 else { return }
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
         let radius = max(0, min(bounds.width, bounds.height) / 2 - lineWidth)
+        
+        progressLayer.isHidden = style == .pie
+        pieLayer.isHidden = style != .pie
         
         switch style {
         case .ring:
@@ -244,6 +243,8 @@ public class TFYProgressView: NSView {
             progressLayer.path = nil
             updatePiePath()
         }
+
+        progressLayer.strokeEnd = progress
     }
     
     private func updatePiePath() {

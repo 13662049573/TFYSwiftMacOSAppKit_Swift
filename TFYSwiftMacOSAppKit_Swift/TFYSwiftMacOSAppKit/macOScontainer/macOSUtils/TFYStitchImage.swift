@@ -1362,8 +1362,9 @@ public extension TFYStitchImage {
     ) -> NSImage? {
         let blurFilter = CIFilter(name: "CIGaussianBlur")
         blurFilter?.setValue(blurRadius, forKey: kCIInputRadiusKey)
-        
-        return createWithFilter(images: images, size: size, config: config, filter: blurFilter!)
+
+        guard let blurFilter else { return nil }
+        return createWithFilter(images: images, size: size, config: config, filter: blurFilter)
     }
     
     /// 创建带黑白效果的拼接图片
@@ -1374,8 +1375,9 @@ public extension TFYStitchImage {
     ) -> NSImage? {
         let grayscaleFilter = CIFilter(name: "CIColorControls")
         grayscaleFilter?.setValue(0.0, forKey: kCIInputSaturationKey)
-        
-        return createWithFilter(images: images, size: size, config: config, filter: grayscaleFilter!)
+
+        guard let grayscaleFilter else { return nil }
+        return createWithFilter(images: images, size: size, config: config, filter: grayscaleFilter)
     }
     
     /// 批量处理图片拼接
@@ -1388,13 +1390,16 @@ public extension TFYStitchImage {
         let group = DispatchGroup()
         var results: [TFYStitchResult] = []
         let queue = DispatchQueue(label: "com.tfy.stitchimage.batch", qos: .userInitiated, attributes: .concurrent)
+        let resultQueue = DispatchQueue(label: "com.tfy.stitchimage.batch.results")
         
         for (_, images) in imageGroups.enumerated() {
             group.enter()
             queue.async {
                 let result = stitchImagesSync(images: images, size: size, config: config)
-                results.append(result)
-                group.leave()
+                resultQueue.async {
+                    results.append(result)
+                    group.leave()
+                }
             }
         }
         

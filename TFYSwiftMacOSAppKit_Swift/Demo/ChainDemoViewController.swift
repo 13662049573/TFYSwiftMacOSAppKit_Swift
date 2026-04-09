@@ -7,7 +7,7 @@
 
 import Cocoa
 
-class ChainDemoViewController: NSViewController {
+final class ChainDemoViewController: NSViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -16,8 +16,9 @@ class ChainDemoViewController: NSViewController {
     
     private func setupChainDemo() {
         // 创建主容器视图
-        let containerView = NSView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
+        let containerView = NSView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
         view.addSubview(containerView)
         
         // 设置约束
@@ -29,8 +30,7 @@ class ChainDemoViewController: NSViewController {
         ])
         
         // 创建标题
-        let titleLabel = NSTextField()
-        titleLabel.chain
+        let titleLabel = NSTextField().chain
             .text("链式调用高级演示")
             .font(.boldSystemFont(ofSize: 20))
             .textColor(.labelColor)
@@ -39,7 +39,7 @@ class ChainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: 20, width: 300, height: 30))
-        
+            .build
         containerView.addSubview(titleLabel)
         
         // 创建按钮示例
@@ -56,8 +56,7 @@ class ChainDemoViewController: NSViewController {
     }
     
     private func createButtonExamples(in containerView: NSView) {
-        let sectionLabel = NSTextField()
-        sectionLabel.chain
+        let sectionLabel = NSTextField().chain
             .text("按钮链式调用示例")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
@@ -66,12 +65,11 @@ class ChainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: 70, width: 200, height: 20))
-        
+            .build
         containerView.addSubview(sectionLabel)
         
         // 基础按钮
-        let basicButton = NSButton()
-        basicButton.chain
+        let basicButton = NSButton().chain
             .frame(NSRect(x: 20, y: 100, width: 120, height: 30))
             .addTarget(self, action: #selector(basicButtonAction))
             .title("基础按钮")
@@ -80,12 +78,11 @@ class ChainDemoViewController: NSViewController {
             .backgroundColor(.systemBlue)
             .bordered(false)
             .bezelStyle(.rounded)
-        
+            .build
         containerView.addSubview(basicButton)
         
         // 图标按钮
-        let iconButton = NSButton()
-        iconButton.chain
+        let iconButton = NSButton().chain
             .frame(NSRect(x: 160, y: 100, width: 120, height: 30))
             .title("图标按钮")
             .image(NSImage(systemSymbolName: "star.fill", accessibilityDescription: nil)!)
@@ -93,24 +90,22 @@ class ChainDemoViewController: NSViewController {
             .imageScaling(.scaleProportionallyDown)
             .font(.systemFont(ofSize: 14))
             .addTarget(self, action: #selector(iconButtonAction))
-        
+            .build
         containerView.addSubview(iconButton)
         
         // 开关按钮
-        let switchButton = NSButton()
-        switchButton.chain
+        let switchButton = NSButton().chain
             .frame(NSRect(x: 300, y: 100, width: 120, height: 30))
             .setButtonType(.switch)
             .title("开关")
             .state(.on)
             .addTarget(self, action: #selector(switchButtonAction))
-        
+            .build
         containerView.addSubview(switchButton)
     }
     
     private func createTextFieldExamples(in containerView: NSView) {
-        let sectionLabel = NSTextField()
-        sectionLabel.chain
+        let sectionLabel = NSTextField().chain
             .text("文本框链式调用示例")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
@@ -119,12 +114,11 @@ class ChainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: 150, width: 200, height: 20))
-        
+            .build
         containerView.addSubview(sectionLabel)
         
         // 基础文本框
-        let basicTextField = NSTextField()
-        basicTextField.chain
+        let basicTextField = NSTextField().chain
             .frame(NSRect(x: 20, y: 180, width: 200, height: 30))
             .placeholder("请输入文本")
             .font(.systemFont(ofSize: 14))
@@ -135,12 +129,11 @@ class ChainDemoViewController: NSViewController {
             .editable(true)
             .selectable(true)
             .delegate(self)
-        
+            .build
         containerView.addSubview(basicTextField)
         
         // 密码文本框
-        let secureTextField = NSSecureTextField()
-        secureTextField.chain
+        let secureTextField = NSSecureTextField().chain
             .frame(NSRect(x: 240, y: 180, width: 200, height: 30))
             .placeholder("请输入密码")
             .font(.systemFont(ofSize: 14))
@@ -150,23 +143,21 @@ class ChainDemoViewController: NSViewController {
             .bezeled(true)
             .editable(true)
             .selectable(true)
-        
+            .build
         containerView.addSubview(secureTextField)
         
         // 搜索框
-        let searchField = NSSearchField()
-        searchField.chain
+        let searchField = NSSearchField().chain
             .frame(NSRect(x: 460, y: 180, width: 200, height: 30))
             .placeholder("搜索...")
             .font(.systemFont(ofSize: 14))
             .addTarget(self, action: #selector(searchFieldAction))
-
+            .build
         containerView.addSubview(searchField)
     }
     
     private func createLayerExamples(in containerView: NSView) {
-        let sectionLabel = NSTextField()
-        sectionLabel.chain
+        let sectionLabel = NSTextField().chain
             .text("图层链式调用示例")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
@@ -175,16 +166,15 @@ class ChainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: 230, width: 200, height: 20))
-        
+            .build
         containerView.addSubview(sectionLabel)
         
         // 基础图层视图
-        let layerView = NSView()
-        layerView.chain
+        let layerView = NSView().chain
             .frame(NSRect(x: 20, y: 260, width: 150, height: 100))
             .wantsLayer(true)
             .layer(CALayer())
-        
+            .build
         layerView.layer?.chain
             .backgroundColor(NSColor.systemGreen.cgColor)
             .cornerRadius(10)
@@ -198,11 +188,10 @@ class ChainDemoViewController: NSViewController {
         containerView.addSubview(layerView)
         
         // 渐变图层视图
-        let gradientView = NSView()
-        gradientView.chain
+        let gradientView = NSView().chain
             .frame(NSRect(x: 190, y: 260, width: 150, height: 100))
             .wantsLayer(true)
-        
+            .build
         let gradientLayer = CAGradientLayer()
         gradientLayer.chain
             .frame(gradientView.bounds)
@@ -216,11 +205,10 @@ class ChainDemoViewController: NSViewController {
         containerView.addSubview(gradientView)
         
         // 形状图层视图
-        let shapeView = NSView()
-        shapeView.chain
+        let shapeView = NSView().chain
             .frame(NSRect(x: 360, y: 260, width: 150, height: 100))
             .wantsLayer(true)
-        
+            .build
         let shapeLayer = CAShapeLayer()
         let path = NSBezierPath()
         path.move(to: NSPoint(x: 75, y: 10))
@@ -243,8 +231,7 @@ class ChainDemoViewController: NSViewController {
     }
     
     private func createGestureExamples(in containerView: NSView) {
-        let sectionLabel = NSTextField()
-        sectionLabel.chain
+        let sectionLabel = NSTextField().chain
             .text("手势识别链式调用示例")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
@@ -253,17 +240,16 @@ class ChainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .frame(NSRect(x: 20, y: 380, width: 200, height: 20))
-        
+            .build
         containerView.addSubview(sectionLabel)
         
         // 点击手势视图
-        let clickView = NSView()
-        clickView.chain
+        let clickView = NSView().chain
             .frame(NSRect(x: 20, y: 410, width: 120, height: 80))
             .backgroundColor(.systemBlue)
             .wantsLayer(true)
             .layer(CALayer())
-        
+            .build
         clickView.layer?.chain
             .cornerRadius(8)
             .borderWidth(1)
@@ -280,13 +266,12 @@ class ChainDemoViewController: NSViewController {
         containerView.addSubview(clickView)
         
         // 拖拽手势视图
-        let panView = NSView()
-        panView.chain
+        let panView = NSView().chain
             .frame(NSRect(x: 160, y: 410, width: 120, height: 80))
             .backgroundColor(.systemGreen)
             .wantsLayer(true)
             .layer(CALayer())
-        
+            .build
         panView.layer?.chain
             .cornerRadius(8)
             .borderWidth(1)
@@ -301,13 +286,12 @@ class ChainDemoViewController: NSViewController {
         containerView.addSubview(panView)
         
         // 旋转手势视图
-        let rotationView = NSView()
-        rotationView.chain
+        let rotationView = NSView().chain
             .frame(NSRect(x: 300, y: 410, width: 120, height: 80))
             .backgroundColor(.systemOrange)
             .wantsLayer(true)
             .layer(CALayer())
-        
+            .build
         rotationView.layer?.chain
             .cornerRadius(8)
             .borderWidth(1)
@@ -322,8 +306,7 @@ class ChainDemoViewController: NSViewController {
         containerView.addSubview(rotationView)
         
         // 说明标签
-        let instructionLabel = NSTextField()
-        instructionLabel.chain
+        let instructionLabel = NSTextField().chain
             .frame(NSRect(x: 20, y: 500, width: 400, height: 40))
             .text("点击蓝色区域、拖拽绿色区域、旋转橙色区域来测试手势识别")
             .font(.systemFont(ofSize: 12))
@@ -333,7 +316,7 @@ class ChainDemoViewController: NSViewController {
             .editable(false)
             .selectable(false)
             .alignment(.center)
-        
+            .build
         containerView.addSubview(instructionLabel)
     }
     

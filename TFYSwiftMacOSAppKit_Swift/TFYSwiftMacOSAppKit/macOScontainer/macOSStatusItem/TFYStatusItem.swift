@@ -208,12 +208,8 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     
     private func setupPinnedObserver() {
         observerisPinned?.invalidate()
-        observerisPinned = windowConfiguration?.observe(\.isPinned) { [weak self] _, change in
-            if let oldValue = change.oldValue, !oldValue {
-                self?.handlePinnedStateChange(false)
-            } else {
-                self?.handlePinnedStateChange(true)
-            }
+        observerisPinned = windowConfiguration?.observe(\.isPinned, options: [.initial, .new]) { [weak self] _, change in
+            self?.handlePinnedStateChange(change.newValue ?? false)
         }
     }
     

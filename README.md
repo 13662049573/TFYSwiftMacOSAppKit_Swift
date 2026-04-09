@@ -23,10 +23,10 @@
 
 - 链式编程：覆盖 `NSView`、`NSButton`、`NSTextField`、`CALayer`、手势识别器等常见 AppKit 对象。
 - 自定义控件：内置 `TFYSwiftTextField`、`TFYSwiftSecureTextField`、`TFYSwiftButton`、`TFYSwiftLabel`。
-- 分类扩展：为 `NSView`、`NSTextField`、`NSControl`、`NSImage`、`NotificationCenter` 等补充高频 API。
+- 分类扩展：为 `NSView`、`NSTextField`、`NSTextView`、`NSControl`、`NSImage`、`NotificationCenter` 等补充高频 API。
 - 状态栏能力：提供完整的 `NSStatusItem` + 弹窗窗口解决方案。
 - HUD 系统：支持文本、加载、进度、成功、错误、信息、自定义图片与主题动画。
-- 工具组件：缓存、JSON、GCD、计时器、文件选择面板、网络与加密工具。
+- 工具组件：缓存、JSON、GCD、计时器、文件选择面板、网络与加密工具，以及图片拼接能力。
 - 双分发支持：同时支持 CocoaPods 和 Swift Package Manager。
 - 完整 Demo：工程内置演示 App，覆盖主要功能模块。
 
@@ -41,10 +41,12 @@
 - `概览`：模块总览与接入入口说明
 - `组件控件`：`TFYSwiftButton`、`TFYSwiftTextField`、`TFYSwiftSecureTextField`、`TFYSwiftLabel`、图片处理与二维码
 - `链式调用`：控件、图层、手势的链式 API
-- `分类扩展`：`NSView+Dejal`、`NSControl+Dejal`、`NSTextField+Dejal`、`NotificationCenter+Dejal`
-- `工具类`：网络信息、缓存、JSON、定时器、GCD、文件读写、OpenPanel、加密、防抖/节流、倒计时
-- `HUD`：主题、位置、动画、进度、不同 HUD 模式
+- `分类扩展`：`NSView+Dejal`、`NSControl+Dejal`、`NSTextField+Dejal`、`NSTextView+Dejal`、`NotificationCenter+Dejal`
+- `工具类`：网络信息、缓存、JSON、定时器、GCD、文件读写、OpenPanel、加密、防抖/节流、倒计时、图片拼接，以及实时预览区
+- `HUD`：主题、位置、动画、进度、不同 HUD 模式，以及 `TFYProgressView` 直接调节预览
 - `状态栏`：图片模式 / 自定义视图模式、过渡动画、拖拽检测、pinned、弹窗显示
+
+当前 demo 中新增和重构的页面，容器与主要控件创建都统一使用 `TFYSwiftMacOSAppKit` 自身的链式点语法，便于直接对照库能力学习和接入。
 
 主要 demo 源码位于 [Demo](/Users/tianfengyou/Desktop/github/TFYSwiftMacOSAppKit_Swift/TFYSwiftMacOSAppKit_Swift/Demo)。
 
@@ -57,7 +59,7 @@ platform :osx, '12.4'
 use_frameworks!
 
 target 'YourApp' do
-  pod 'TFYSwiftMacOSAppKit', '1.3.0'
+  pod 'TFYSwiftMacOSAppKit', '1.4.0'
 end
 ```
 
@@ -65,7 +67,7 @@ end
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", from: "1.3.0")
+    .package(url: "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", from: "1.4.0")
 ]
 ```
 
@@ -83,7 +85,7 @@ targets: [
 - `macOSBase`：链式编程基础协议与通用能力
 - `macOSfoundation`：`Array`、`NSString`、`Timer`、`NotificationCenter`、`NSColor` 等扩展
 - `macOScategory`：`NSView`、`NSTextField`、`NSControl`、`NSImage`、`NSPopover` 等分类增强
-- `macOScontainer/macOSUtils`：缓存、JSON、GCD、定时器、网络工具、文件面板、自定义控件
+- `macOScontainer/macOSUtils`：缓存、JSON、GCD、定时器、网络工具、文件面板、自定义控件、图片拼接
 - `macOScontainer/macOSStatusItem`：状态栏按钮、窗口、容器视图与配置
 - `macOSchain`：AppKit 控件、图层、手势识别器的链式 API
 - `macOSHUD`：HUD 主体、动画、主题、布局、进度控件
@@ -96,27 +98,54 @@ targets: [
 import Cocoa
 import TFYSwiftMacOSAppKit
 
-let button = NSButton()
-button.chain
+let button = NSButton().chain
     .title("立即执行")
     .font(.systemFont(ofSize: 14, weight: .semibold))
     .textColor(.white)
     .backgroundColor(.systemBlue)
     .bordered(false)
     .frame(NSRect(x: 20, y: 20, width: 120, height: 36))
+    .build
+```
+
+### 容器创建
+
+```swift
+let cardView = NSView().chain
+    .wantsLayer(true)
+    .backgroundColor(.windowBackgroundColor)
+    .cornerRadius(18)
+    .translatesAutoresizingMaskIntoConstraints(false)
+    .build
 ```
 
 ### 自定义文本框
 
 ```swift
-let textField = TFYSwiftTextField(frame: NSRect(x: 20, y: 20, width: 240, height: 36))
-textField.placeholderString = "请输入内容"
-textField.placeholderColor = .systemOrange
-textField.setMaxLength(12)
-textField.addFocusEffect()
-textField.setTextChangeHandler { text in
-    print("输入变化:", text)
-}
+let textField = TFYSwiftTextField().chain
+    .frame(NSRect(x: 20, y: 20, width: 240, height: 36))
+    .placeholderString("请输入内容")
+    .placeholderColor(.systemOrange)
+    .maxLength(12)
+    .focusEffect(true)
+    .textChangeHandler { text in
+        print("输入变化:", text)
+    }
+    .build
+```
+
+### NSTextView 扩展桥接
+
+```swift
+let textView = NSTextView().chain
+    .font(.systemFont(ofSize: 13))
+    .wraps(true)
+    .lineSpacing(3)
+    .string("点击 HUD 关键词")
+    .clickableTexts(["HUD": "Progress HUD"]) { key, value, _ in
+        print(key, value)
+    }
+    .build
 ```
 
 ### HUD
@@ -190,11 +219,13 @@ CI 配置文件位于 [macos-build.yml](/Users/tianfengyou/Desktop/github/TFYSwi
 
 ## 版本说明
 
-`1.3.0` 版本重点包含：
+`1.4.0` 版本重点包含：
 
-- 核心库稳定性增强，修复缓存、定时器、状态栏、文本扩展中的多个隐性问题
+- 核心库稳定性增强，修复缓存、定时器、状态栏、手势、图片处理、文本扩展中的多个隐性问题
+- `TFYSwiftGCD.syncInMainQueue` 改为主线程安全实现，避免主线程误调用时死锁
 - 补齐 SwiftPM、SmokeTests、GitHub Actions
-- 升级内置 Demo，覆盖更多真实使用场景
+- 升级内置 Demo，补充 `NSTextView` 扩展页、`TFYProgressView` 直接演示，以及工具页的图片拼接/缓存清理/实时预览，覆盖更多真实使用场景
+- 统一 demo 和 README 使用风格，容器与主要控件示例全部改为库自己的链式点语法
 - 更新 README 与安装说明，统一 CocoaPods / SwiftPM / Demo 入口
 
 ## 系统要求

@@ -2,7 +2,7 @@ Pod::Spec.new do |spec|
 
   spec.name         = "TFYSwiftMacOSAppKit"
 
-  spec.version      = "1.3.0"
+  spec.version      = "1.4.0"
   
   spec.summary      = "AppKit-focused macOS Swift toolkit with chain APIs, custom controls, HUD, status item, and utilities."
 

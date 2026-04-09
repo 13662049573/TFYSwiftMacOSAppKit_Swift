@@ -167,11 +167,10 @@ public extension NSObject {
             throw NSObjectError.invalidKeyPath(keyPath)
         }
         
-        let result = value(forKeyPath: keyPath)
-        if result == nil {
+        guard let result = value(forKeyPath: keyPath) else {
             throw NSObjectError.keyValueCodingFailed("键路径 '\(keyPath)' 对应的值为空")
         }
-        return result!
+        return result
     }
     
     /// 安全地设置键路径的值
@@ -223,8 +222,8 @@ public extension NSObject {
         guard !key.isEmpty else { return }
         
         var value: Any? = dict[key]
-        if value == nil && altKey != nil {
-            value = dict[altKey!]
+        if value == nil, let altKey {
+            value = dict[altKey]
         }
         if value != nil && value is NSObject {
             setValue(value, forKey: key)
@@ -388,16 +387,12 @@ public extension NSObject {
         }
         var didAddMethod = false
         let swizzledImp = method_getImplementation(swizzledMethod)
-        let swizzledEncoding = method_getTypeEncoding(swizzledMethod)
-        if swizzledEncoding != nil {
-            didAddMethod = class_addMethod(targetClass, originalSelector, swizzledImp, swizzledEncoding!)
-        }
+        guard let swizzledEncoding = method_getTypeEncoding(swizzledMethod) else { return }
+        didAddMethod = class_addMethod(targetClass, originalSelector, swizzledImp, swizzledEncoding)
         if didAddMethod {
             let originalImp = method_getImplementation(originalMethod)
-            let originalEncoding = method_getTypeEncoding(originalMethod)
-            if originalEncoding != nil {
-                class_replaceMethod(targetClass, swizzledSelector, originalImp, originalEncoding!)
-            }
+            guard let originalEncoding = method_getTypeEncoding(originalMethod) else { return }
+            class_replaceMethod(targetClass, swizzledSelector, originalImp, originalEncoding)
         } else {
             method_exchangeImplementations(originalMethod, swizzledMethod)
         }
@@ -415,16 +410,12 @@ public extension NSObject {
         }
         var didAddMethod = false
         let swizzledImp = method_getImplementation(swizzledMethod)
-        let swizzledEncoding = method_getTypeEncoding(swizzledMethod)
-        if swizzledEncoding != nil {
-            didAddMethod = class_addMethod(targetClass, originalSelector, swizzledImp, swizzledEncoding!)
-        }
+        guard let swizzledEncoding = method_getTypeEncoding(swizzledMethod) else { return }
+        didAddMethod = class_addMethod(targetClass, originalSelector, swizzledImp, swizzledEncoding)
         if didAddMethod {
             let originalImp = method_getImplementation(originalMethod)
-            let originalEncoding = method_getTypeEncoding(originalMethod)
-            if originalEncoding != nil {
-                class_replaceMethod(targetClass, swizzledSelector, originalImp, originalEncoding!)
-            }
+            guard let originalEncoding = method_getTypeEncoding(originalMethod) else { return }
+            class_replaceMethod(targetClass, swizzledSelector, originalImp, originalEncoding)
         } else {
             method_exchangeImplementations(originalMethod, swizzledMethod)
         }
@@ -446,16 +437,16 @@ public extension NSObject {
         
         var didAddMethod = false
         let swizzledImp = method_getImplementation(swizzledMethod)
-        let swizzledEncoding = method_getTypeEncoding(swizzledMethod)
-        if swizzledEncoding != nil {
-            didAddMethod = class_addMethod(targetClass, originalSelector, swizzledImp, swizzledEncoding!)
+        guard let swizzledEncoding = method_getTypeEncoding(swizzledMethod) else {
+            throw NSObjectError.swizzlingFailed("交换方法 '\(swizzledSelector)' 的类型编码为空")
         }
+        didAddMethod = class_addMethod(targetClass, originalSelector, swizzledImp, swizzledEncoding)
         if didAddMethod {
             let originalImp = method_getImplementation(originalMethod)
-            let originalEncoding = method_getTypeEncoding(originalMethod)
-            if originalEncoding != nil {
-                class_replaceMethod(targetClass, swizzledSelector, originalImp, originalEncoding!)
+            guard let originalEncoding = method_getTypeEncoding(originalMethod) else {
+                throw NSObjectError.swizzlingFailed("原始方法 '\(originalSelector)' 的类型编码为空")
             }
+            class_replaceMethod(targetClass, swizzledSelector, originalImp, originalEncoding)
         } else {
             method_exchangeImplementations(originalMethod, swizzledMethod)
         }

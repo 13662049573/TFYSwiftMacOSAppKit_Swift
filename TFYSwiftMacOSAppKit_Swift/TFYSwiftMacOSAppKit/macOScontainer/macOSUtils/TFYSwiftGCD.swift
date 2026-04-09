@@ -110,7 +110,11 @@ public class TFYSwiftGCD: NSObject {
     /// 在主队列同步执行任务
     /// - Parameter work: 要执行的任务闭包
     public static func syncInMainQueue(execute work: () -> Void) {
-        DispatchQueue.main.sync(execute: work)
+        if Thread.isMainThread {
+            work()
+        } else {
+            DispatchQueue.main.sync(execute: work)
+        }
     }
     
     /// 在全局队列同步执行任务
@@ -390,11 +394,7 @@ public extension TFYSwiftGCD {
     /// 安全的主队列同步执行（避免死锁）
     /// - Parameter work: 要执行的任务闭包
     static func safeSyncInMainQueue(execute work: () -> Void) {
-        if Thread.isMainThread {
-            work()
-        } else {
-            DispatchQueue.main.sync(execute: work)
-        }
+        syncInMainQueue(execute: work)
     }
     
     /// 带重试的异步执行

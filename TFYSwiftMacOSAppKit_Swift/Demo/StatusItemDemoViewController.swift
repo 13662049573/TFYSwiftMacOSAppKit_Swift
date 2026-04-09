@@ -24,15 +24,17 @@ final class StatusItemDemoViewController: NSViewController {
     }
     
     private func setupStatusItemDemo() {
-        let scrollView = NSScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.hasVerticalScroller = true
-        scrollView.autohidesScrollers = true
+        let scrollView = NSScrollView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .hasVerticalScroller(true)
+            .autohidesScrollers(true)
+            .build
         view.addSubview(scrollView)
         
-        let containerView = NSView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.documentView = containerView
+        let containerView = NSView().chain
+            .translatesAutoresizingMaskIntoConstraints(false)
+            .build
+        scrollView.chain.documentView(containerView)
         
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -75,38 +77,48 @@ final class StatusItemDemoViewController: NSViewController {
         iconLabel.frame.origin = NSPoint(x: 20, y: currentOffset + 8)
         containerView.addSubview(iconLabel)
         
-        iconPopUp = NSPopUpButton(frame: NSRect(x: 92, y: currentOffset + 4, width: 140, height: 26))
-        iconPopUp.addItems(withTitles: ["星形图标", "铃铛图标", "纸飞机图标", "火焰图标", "自定义条"])
+        iconPopUp = NSPopUpButton().chain
+            .frame(NSRect(x: 92, y: currentOffset + 4, width: 140, height: 26))
+            .addItems(["星形图标", "铃铛图标", "纸飞机图标", "火焰图标", "自定义条"])
+            .build
         containerView.addSubview(iconPopUp)
         
         let transitionLabel = makeBodyLabel("过渡动画", width: 70, height: 18)
         transitionLabel.frame.origin = NSPoint(x: 260, y: currentOffset + 8)
         containerView.addSubview(transitionLabel)
         
-        transitionPopUp = NSPopUpButton(frame: NSRect(x: 332, y: currentOffset + 4, width: 130, height: 26))
-        transitionPopUp.addItems(withTitles: ["淡入", "滑动 + 淡入", "无动画"])
+        transitionPopUp = NSPopUpButton().chain
+            .frame(NSRect(x: 332, y: currentOffset + 4, width: 130, height: 26))
+            .addItems(["淡入", "滑动 + 淡入", "无动画"])
+            .build
         containerView.addSubview(transitionPopUp)
         
         let themeLabel = makeBodyLabel("背景主题", width: 70, height: 18)
         themeLabel.frame.origin = NSPoint(x: 490, y: currentOffset + 8)
         containerView.addSubview(themeLabel)
         
-        themePopUp = NSPopUpButton(frame: NSRect(x: 562, y: currentOffset + 4, width: 140, height: 26))
-        themePopUp.addItems(withTitles: ["系统窗口色", "深色面板", "品牌蓝", "琥珀色"])
+        themePopUp = NSPopUpButton().chain
+            .frame(NSRect(x: 562, y: currentOffset + 4, width: 140, height: 26))
+            .addItems(["系统窗口色", "深色面板", "品牌蓝", "琥珀色"])
+            .build
         containerView.addSubview(themePopUp)
         
         currentOffset += 42
         
-        dragSwitch = NSButton(frame: NSRect(x: 20, y: currentOffset + 4, width: 140, height: 20))
-        dragSwitch.setButtonType(.switch)
-        dragSwitch.title = "启用拖拽检测"
-        dragSwitch.state = .on
+        dragSwitch = NSButton().chain
+            .frame(NSRect(x: 20, y: currentOffset + 4, width: 140, height: 20))
+            .setButtonType(.switch)
+            .title("启用拖拽检测")
+            .state(.on)
+            .build
         containerView.addSubview(dragSwitch)
         
-        pinnedSwitch = NSButton(frame: NSRect(x: 180, y: currentOffset + 4, width: 140, height: 20))
-        pinnedSwitch.setButtonType(.switch)
-        pinnedSwitch.title = "窗口保持 pinned"
-        pinnedSwitch.state = .off
+        pinnedSwitch = NSButton().chain
+            .frame(NSRect(x: 180, y: currentOffset + 4, width: 140, height: 20))
+            .setButtonType(.switch)
+            .title("窗口保持 pinned")
+            .state(.off)
+            .build
         containerView.addSubview(pinnedSwitch)
         
         let tipLabel = makeBodyLabel("选择“自定义条”时会改为 customView 模式，其余项走 image 模式。修改配置后可点“创建 / 重建”立即重配。", width: 430, height: 32)
@@ -157,12 +169,14 @@ final class StatusItemDemoViewController: NSViewController {
         let clearButton = makeActionButton(title: "清空日志", frame: NSRect(x: 680, y: currentOffset - 4, width: 90, height: 28), action: #selector(clearStatusLog))
         containerView.addSubview(clearButton)
         
-        statusTextView = NSTextView(frame: NSRect(x: 20, y: currentOffset, width: 750, height: 200))
-        statusTextView.isEditable = false
-        statusTextView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        statusTextView.backgroundColor = .textBackgroundColor
-        statusTextView.textColor = .labelColor
-        statusTextView.string = ""
+        statusTextView = NSTextView().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 750, height: 200))
+            .editable(false)
+            .font(.monospacedSystemFont(ofSize: 12, weight: .regular))
+            .backgroundColor(.textBackgroundColor)
+            .textColor(.labelColor)
+            .string("")
+            .build
         containerView.addSubview(statusTextView)
         
         return currentOffset + 220
@@ -239,16 +253,19 @@ final class StatusItemDemoViewController: NSViewController {
     private func selectedCustomView() -> NSView? {
         guard iconPopUp.indexOfSelectedItem == 4 else { return nil }
         
-        let badgeView = NSView(frame: NSRect(x: 0, y: 0, width: 42, height: 22))
-        badgeView.wantsLayer = true
-        badgeView.layer?.backgroundColor = NSColor.systemOrange.cgColor
-        badgeView.layer?.cornerRadius = 11
+        let badgeView = NSView().chain
+            .frame(NSRect(x: 0, y: 0, width: 42, height: 22))
+            .wantsLayer(true)
+            .backgroundColor(.systemOrange)
+            .cornerRadius(11)
+            .build
         
-        let badgeLabel = NSTextField(labelWithString: "TFY")
-        badgeLabel.font = .systemFont(ofSize: 11, weight: .bold)
-        badgeLabel.textColor = .white
-        badgeLabel.alignment = .center
-        badgeLabel.frame = badgeView.bounds
+        let badgeLabel = NSTextField(labelWithString: "TFY").chain
+            .font(.systemFont(ofSize: 11, weight: .bold))
+            .textColor(.white)
+            .alignment(.center)
+            .frame(badgeView.bounds)
+            .build
         badgeView.addSubview(badgeLabel)
         return badgeView
     }
@@ -256,22 +273,27 @@ final class StatusItemDemoViewController: NSViewController {
     private func makeContentViewController() -> NSViewController {
         let viewController = NSViewController()
         viewController.preferredContentSize = NSSize(width: 260, height: 180)
-        viewController.view = NSView(frame: NSRect(x: 0, y: 0, width: 260, height: 180))
-        viewController.view.wantsLayer = true
-        viewController.view.layer?.backgroundColor = makeWindowConfiguration().backgroundColor.cgColor
+        viewController.view = NSView().chain
+            .frame(NSRect(x: 0, y: 0, width: 260, height: 180))
+            .wantsLayer(true)
+            .backgroundColor(makeWindowConfiguration().backgroundColor)
+            .build
         
-        let titleLabel = NSTextField(labelWithString: "TFYStatusItem Demo")
-        titleLabel.font = .boldSystemFont(ofSize: 17)
-        titleLabel.textColor = themePopUp.indexOfSelectedItem == 1 ? .white : .labelColor
-        titleLabel.frame = NSRect(x: 20, y: 132, width: 220, height: 24)
+        let titleLabel = NSTextField(labelWithString: "TFYStatusItem Demo").chain
+            .font(.boldSystemFont(ofSize: 17))
+            .textColor(themePopUp.indexOfSelectedItem == 1 ? .white : .labelColor)
+            .frame(NSRect(x: 20, y: 132, width: 220, height: 24))
+            .build
         viewController.view.addSubview(titleLabel)
         
-        let description = NSTextField(labelWithString: "模式：\(selectedPresentationModeDescription())\n拖拽检测：\(dragSwitch.state == .on ? "开启" : "关闭")\nPinned：\(pinnedSwitch.state == .on ? "开启" : "关闭")")
-        description.font = .systemFont(ofSize: 12)
-        description.textColor = themePopUp.indexOfSelectedItem == 1 ? .white.withAlphaComponent(0.88) : .secondaryLabelColor
-        description.maximumNumberOfLines = 0
-        description.lineBreakMode = .byWordWrapping
-        description.frame = NSRect(x: 20, y: 74, width: 220, height: 52)
+        let description = NSTextField(labelWithString: "模式：\(selectedPresentationModeDescription())\n拖拽检测：\(dragSwitch.state == .on ? "开启" : "关闭")\nPinned：\(pinnedSwitch.state == .on ? "开启" : "关闭")").chain
+            .font(.systemFont(ofSize: 12))
+            .textColor(themePopUp.indexOfSelectedItem == 1 ? .white.withAlphaComponent(0.88) : .secondaryLabelColor)
+            .maximumNumberOfLines(0)
+            .lineBreakMode(.byWordWrapping)
+            .wraps(true)
+            .frame(NSRect(x: 20, y: 74, width: 220, height: 52))
+            .build
         viewController.view.addSubview(description)
         
         let closeButton = makeActionButton(title: "关闭窗口", frame: NSRect(x: 84, y: 24, width: 90, height: 30), action: #selector(hideStatusItemWindow))
@@ -300,39 +322,40 @@ final class StatusItemDemoViewController: NSViewController {
     }
     
     private func makeTitleLabel(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = .boldSystemFont(ofSize: 22)
-        label.textColor = .labelColor
-        label.frame = NSRect(x: 0, y: 0, width: 360, height: 28)
-        return label
+        NSTextField(labelWithString: text).chain
+            .font(.boldSystemFont(ofSize: 22))
+            .textColor(.labelColor)
+            .frame(NSRect(x: 0, y: 0, width: 360, height: 28))
+            .build
     }
     
     private func makeSectionLabel(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = .systemFont(ofSize: 16, weight: .semibold)
-        label.textColor = .labelColor
-        label.frame = NSRect(x: 0, y: 0, width: 320, height: 22)
-        return label
+        NSTextField(labelWithString: text).chain
+            .font(.systemFont(ofSize: 16, weight: .semibold))
+            .textColor(.labelColor)
+            .frame(NSRect(x: 0, y: 0, width: 320, height: 22))
+            .build
     }
     
     private func makeBodyLabel(_ text: String, width: CGFloat, height: CGFloat) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = .systemFont(ofSize: 12)
-        label.textColor = .secondaryLabelColor
-        label.maximumNumberOfLines = 0
-        label.lineBreakMode = .byWordWrapping
-        label.frame = NSRect(x: 0, y: 0, width: width, height: height)
-        return label
+        NSTextField(labelWithString: text).chain
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+            .maximumNumberOfLines(0)
+            .lineBreakMode(.byWordWrapping)
+            .wraps(true)
+            .frame(NSRect(x: 0, y: 0, width: width, height: height))
+            .build
     }
     
     private func makeActionButton(title: String, frame: NSRect, action: Selector) -> NSButton {
-        let button = NSButton(frame: frame)
-        button.title = title
-        button.font = .systemFont(ofSize: 12, weight: .medium)
-        button.bezelStyle = .rounded
-        button.target = self
-        button.action = action
-        return button
+        NSButton().chain
+            .frame(frame)
+            .title(title)
+            .font(.systemFont(ofSize: 12, weight: .medium))
+            .bezelStyle(.rounded)
+            .addTarget(self, action: action)
+            .build
     }
     
     @objc private func createOrRebuildStatusItem() {

@@ -172,3 +172,31 @@ public extension Chain where Base: NSButton {
         return self
     }
 }
+
+public extension Chain where Base: TFYSwiftButton {
+    
+    @discardableResult
+    func titleTextColor(_ color: NSColor) -> Self {
+        base.titleTextColor = color
+        return self
+    }
+    
+    @discardableResult
+    func backgroundColor(_ color: NSColor) -> Self {
+        base.backgroundColor = color
+        return self
+    }
+    
+    @discardableResult
+    func hoverBackgroundColor(_ color: NSColor) -> Self {
+        base.hoverBackgroundColor = color
+        return self
+    }
+    
+    @discardableResult
+    func imageInsets(vertical: CGFloat, horizontal: CGFloat) -> Self {
+        base.verticalImageInset = vertical
+        base.horizontalImageInset = horizontal
+        return self
+    }
+}

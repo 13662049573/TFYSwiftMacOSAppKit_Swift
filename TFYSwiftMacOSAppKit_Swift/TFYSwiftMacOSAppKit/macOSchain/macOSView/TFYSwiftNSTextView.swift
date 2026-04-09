@@ -15,6 +15,72 @@ public extension Chain where Base: NSTextView {
         base.textContainer = container
         return self
     }
+
+    @discardableResult
+    func wraps(_ wraps: Bool) -> Self {
+        base.setWraps(wraps)
+        return self
+    }
+
+    @discardableResult
+    func lineSpacing(_ lineSpacing: CGFloat) -> Self {
+        base.setLineSpacing(lineSpacing)
+        return self
+    }
+
+    @discardableResult
+    func characterSpacing(_ characterSpacing: CGFloat) -> Self {
+        base.setCharacterSpacing(characterSpacing)
+        return self
+    }
+
+    @discardableResult
+    func clickableTexts(_ texts: [String: Any], handler: @escaping (String, Any, Int) -> Void) -> Self {
+        base.setClickableTexts(texts, handler: handler)
+        return self
+    }
+
+    @discardableResult
+    func textChangeHandler(_ handler: @escaping (String) -> Void) -> Self {
+        base.setTextChangeHandler(handler)
+        return self
+    }
+
+    @discardableResult
+    func selectionChangeHandler(_ handler: @escaping (NSRange) -> Void) -> Self {
+        base.setSelectionChangeHandler(handler)
+        return self
+    }
+
+    @discardableResult
+    func readOnly(_ readOnly: Bool) -> Self {
+        base.setReadOnly(readOnly)
+        return self
+    }
+
+    @discardableResult
+    func placeholder(_ placeholder: String) -> Self {
+        base.setPlaceholder(placeholder)
+        return self
+    }
+
+    @discardableResult
+    func automaticLineWrapping() -> Self {
+        base.setupAutomaticLineWrapping()
+        return self
+    }
+
+    @discardableResult
+    func minHeight(_ minHeight: CGFloat) -> Self {
+        base.setMinHeight(minHeight)
+        return self
+    }
+
+    @discardableResult
+    func maxHeight(_ maxHeight: CGFloat) -> Self {
+        base.setMaxHeight(maxHeight)
+        return self
+    }
     
     @discardableResult
     func attributedStringValue(_ attr: NSAttributedString) -> Self {

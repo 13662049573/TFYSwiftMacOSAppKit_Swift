@@ -11,6 +11,12 @@ import Cocoa
 public extension Chain where Base: NSControl {
     
     @discardableResult
+    func font(_ font: NSFont) -> Self {
+        base.font = font
+        return self
+    }
+    
+    @discardableResult
     func makeTag(_ makeTag: Int) -> Self {
         base.tag = makeTag
         return self

@@ -57,10 +57,22 @@ public extension Chain where Base: NSStackView {
         base.addArrangedSubview(view)
         return self
     }
+
+    @discardableResult
+    func addArrangedSubview(_ view: NSView) -> Self {
+        base.addArrangedSubview(view)
+        return self
+    }
     
     @discardableResult
     func register_Nib(_ view:NSView,at:Int) -> Self {
         base.insertArrangedSubview(view, at: at)
+        return self
+    }
+
+    @discardableResult
+    func insertArrangedSubview(_ view: NSView, at index: Int) -> Self {
+        base.insertArrangedSubview(view, at: index)
         return self
     }
     

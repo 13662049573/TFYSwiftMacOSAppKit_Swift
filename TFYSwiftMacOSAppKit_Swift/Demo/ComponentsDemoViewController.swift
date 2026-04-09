@@ -14,6 +14,8 @@ final class ComponentsDemoViewController: NSViewController {
     private var imageInfoLabel: NSTextField!
     private var customInput: TFYSwiftTextField!
     private var customSecureInput: TFYSwiftSecureTextField!
+    private var passwordFieldView: TFYSwiftTextFieldView!
+    private var passwordStateLabel: NSTextField!
     private var textActionLabel: TFYSwiftLabel!
     
     override func viewDidLoad() {
@@ -57,6 +59,7 @@ final class ComponentsDemoViewController: NSViewController {
         
         yOffset = setupCustomControlsSection(in: contentView, yOffset: yOffset)
         yOffset = setupInputEnhancementSection(in: contentView, yOffset: yOffset)
+        yOffset = setupPasswordContainerSection(in: contentView, yOffset: yOffset)
         yOffset = setupImageSection(in: contentView, yOffset: yOffset)
         yOffset = setupLogSection(in: contentView, yOffset: yOffset)
         
@@ -239,6 +242,55 @@ final class ComponentsDemoViewController: NSViewController {
         
         return currentOffset + 152
     }
+
+    private func setupPasswordContainerSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
+        var currentOffset = yOffset
+
+        let sectionLabel = makeSectionLabel("TFYSwiftTextFieldView 密码容器")
+        sectionLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(sectionLabel)
+        currentOffset += 32
+
+        passwordFieldView = TFYSwiftTextFieldView().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 320, height: 42))
+            .wantsLayer(true)
+            .backgroundColor(.textBackgroundColor)
+            .cornerRadius(10)
+            .borderWidth(1)
+            .borderColor(.separatorColor)
+            .placeholderString("支持密文/明文切换的输入容器")
+            .placeholderColor(.placeholderTextColor)
+            .fieldFont(.systemFont(ofSize: 13, weight: .regular))
+            .fieldTextColor(.labelColor)
+            .stringValue("TFY-2026-Secret")
+            .passwordVisible(false)
+            .textChangeHandler { [weak self] text in
+                self?.refreshPasswordState(text: text)
+                self?.appendLog("密码容器内容变化，当前长度 \(text.count)")
+            }
+            .build
+        contentView.addSubview(passwordFieldView)
+
+        let toggleVisibilityButton = makeActionButton(title: "切换明文", frame: NSRect(x: 360, y: currentOffset + 4, width: 100, height: 32), action: #selector(togglePasswordVisibilityState))
+        contentView.addSubview(toggleVisibilityButton)
+
+        let toggleEditableButton = makeActionButton(title: "切换编辑", frame: NSRect(x: 472, y: currentOffset + 4, width: 100, height: 32), action: #selector(togglePasswordEditableState))
+        contentView.addSubview(toggleEditableButton)
+
+        let presetButton = makeActionButton(title: "填充示例", frame: NSRect(x: 584, y: currentOffset + 4, width: 90, height: 32), action: #selector(fillPasswordTemplate))
+        contentView.addSubview(presetButton)
+
+        let noteLabel = makeBodyLabel("这个容器组合了 TFYSwiftTextField / TFYSwiftSecureTextField 与可见性切换按钮，适合登录、令牌或密钥录入场景。", width: 760, height: 22)
+        noteLabel.frame.origin = NSPoint(x: 20, y: currentOffset + 50)
+        contentView.addSubview(noteLabel)
+
+        passwordStateLabel = makeBodyLabel("", width: 430, height: 22)
+        passwordStateLabel.frame.origin = NSPoint(x: 20, y: currentOffset + 74)
+        contentView.addSubview(passwordStateLabel)
+        refreshPasswordState(text: passwordFieldView.stringValue)
+
+        return currentOffset + 106
+    }
     
     private func setupLogSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
         var currentOffset = yOffset
@@ -269,6 +321,12 @@ final class ComponentsDemoViewController: NSViewController {
         let isValid = customInput.validateText()
         let state = isValid ? "有效" : "需至少 4 个字符"
         inputStateLabel.stringValue = "输入状态：\(state) · 当前长度 \(text.count)/12"
+    }
+
+    private func refreshPasswordState(text: String) {
+        let visibility = passwordFieldView?.isPasswordVisible == true ? "明文" : "密文"
+        let editable = passwordFieldView?.isEditable == true ? "可编辑" : "只读"
+        passwordStateLabel?.stringValue = "密码容器状态：\(visibility) / \(editable) / 长度 \(text.count)"
     }
     
     private func appendLog(_ message: String) {
@@ -359,5 +417,24 @@ final class ComponentsDemoViewController: NSViewController {
     
     @objc private func clearLog() {
         logTextView.string = ""
+    }
+
+    @objc private func togglePasswordVisibilityState() {
+        passwordFieldView.togglePasswordVisibility()
+        refreshPasswordState(text: passwordFieldView.stringValue)
+        appendLog(passwordFieldView.isPasswordVisible ? "密码容器已切换为明文模式" : "密码容器已切换为密文模式")
+    }
+
+    @objc private func togglePasswordEditableState() {
+        passwordFieldView.isEditable.toggle()
+        refreshPasswordState(text: passwordFieldView.stringValue)
+        appendLog(passwordFieldView.isEditable ? "密码容器已恢复可编辑" : "密码容器已切换为只读")
+    }
+
+    @objc private func fillPasswordTemplate() {
+        let template = "TFY-\(Int(Date().timeIntervalSince1970))"
+        passwordFieldView.chain.stringValue(template)
+        refreshPasswordState(text: template)
+        appendLog("密码容器已填充示例内容")
     }
 }

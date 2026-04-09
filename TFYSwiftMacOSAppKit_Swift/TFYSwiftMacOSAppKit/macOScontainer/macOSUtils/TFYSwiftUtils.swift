@@ -29,10 +29,17 @@ public final class TFYSwiftUtils: NSObject {
     
     // MARK: - Types
     public struct NetworkInfo {
-        let name: String?
-        let ip: String?
-        let macAddress: String?
-        let wifiInfo:[String: Any]?
+        public let name: String?
+        public let ip: String?
+        public let macAddress: String?
+        public let wifiInfo:[String: Any]?
+
+        public init(name: String?, ip: String?, macAddress: String?, wifiInfo: [String: Any]?) {
+            self.name = name
+            self.ip = ip
+            self.macAddress = macAddress
+            self.wifiInfo = wifiInfo
+        }
     }
     
     // MARK: - Properties
@@ -54,7 +61,7 @@ public final class TFYSwiftUtils: NSObject {
         completion(info)
     }
     
-    static func getWiFiName() -> String? {
+    public static func getWiFiName() -> String? {
         guard let interface = CWWiFiClient.shared().interface() else {
             print("无法获取 WiFi 接口")
             return nil
@@ -63,7 +70,7 @@ public final class TFYSwiftUtils: NSObject {
     }
     
     // 获取更详细的 WiFi 信息
-    static func getWiFiInfo() -> [String: Any] {
+    public static func getWiFiInfo() -> [String: Any] {
         var wifiInfo: [String: Any] = [:]
         guard let interface = CWWiFiClient.shared().interface() else {
             print("无法获取 WiFi 接口")
@@ -92,14 +99,14 @@ public final class TFYSwiftUtils: NSObject {
     }
     
     // 添加错误处理版本
-    enum WiFiError: Error {
+    public enum WiFiError: Error {
         case interfaceUnavailable
         case notConnected
         case permissionDenied
         case unknown(String)
     }
     
-    static func getWiFiNameWithError() -> Result<String, WiFiError> {
+    public static func getWiFiNameWithError() -> Result<String, WiFiError> {
         guard let interface = CWWiFiClient.shared().interface() else {
             return .failure(.interfaceUnavailable)
         }
@@ -195,7 +202,7 @@ public final class TFYSwiftUtils: NSObject {
     }
     
     // MARK: - Get Device Current Network IP Address
-        static func getIPAddress(preferIPv4: Bool) -> String {
+        public static func getIPAddress(preferIPv4: Bool) -> String {
             let searchArray = preferIPv4 ?
                 [MACOS_VPN + "/" + IP_ADDR_IPv4, MACOS_VPN + "/" + IP_ADDR_IPv6, MACOS_WIFI + "/" + IP_ADDR_IPv4, MACOS_WIFI + "/" + IP_ADDR_IPv6, MACOS_CELLULAR + "/" + IP_ADDR_IPv4, MACOS_CELLULAR + "/" + IP_ADDR_IPv6] :
                 [MACOS_VPN + "/" + IP_ADDR_IPv6, MACOS_VPN + "/" + IP_ADDR_IPv4, MACOS_WIFI + "/" + IP_ADDR_IPv6, MACOS_WIFI + "/" + IP_ADDR_IPv4, MACOS_CELLULAR + "/" + IP_ADDR_IPv6, MACOS_CELLULAR + "/" + IP_ADDR_IPv4]
@@ -209,7 +216,7 @@ public final class TFYSwiftUtils: NSObject {
             return ""
         }
 
-        static func isValidatIP(ipAddress: String) -> Bool {
+        public static func isValidatIP(ipAddress: String) -> Bool {
             let urlRegEx = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$"
             let regex = try? NSRegularExpression(pattern: urlRegEx, options: [])
             if let match = regex?.firstMatch(in: ipAddress, options: [], range: NSRange(location: 0, length: ipAddress.utf16.count)) {
@@ -218,7 +225,7 @@ public final class TFYSwiftUtils: NSObject {
             return false
         }
 
-    static func getAllIPAddresses() -> [String: String] {
+    public static func getAllIPAddresses() -> [String: String] {
         var addresses = [String: String]()
         var ifaddr: UnsafeMutablePointer<ifaddrs>?
         
@@ -431,7 +438,7 @@ public final class TFYSwiftUtils: NSObject {
     ///   - content: 要加密的内容
     ///   - key: 密钥
     /// - Returns: 加密后的 Base64 字符串
-    static func encrypt(content: String, key: String) -> String? {
+    public static func encrypt(content: String, key: String) -> String? {
         guard let contentData = content.data(using: .utf8),
               let keyData = key.data(using: .utf8) else {
             return nil
@@ -478,7 +485,7 @@ public final class TFYSwiftUtils: NSObject {
     ///   - content: 要解密的 Base64 字符串
     ///   - key: 密钥
     /// - Returns: 解密后的原文
-    static func decrypt(content: String, key: String) -> String? {
+    public static func decrypt(content: String, key: String) -> String? {
         guard let contentData = Data(base64Encoded: content),
               let keyData = key.data(using: .utf8) else {
             return nil

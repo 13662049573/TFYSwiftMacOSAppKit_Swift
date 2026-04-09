@@ -10,10 +10,10 @@ import Cocoa
 
 // MARK: - Padding Structure
 public struct Padding {
-    let vertical: CGFloat
-    let horizontal: CGFloat
+    public let vertical: CGFloat
+    public let horizontal: CGFloat
     
-    init(vertical: CGFloat = 0, horizontal: CGFloat = 0) {
+    public init(vertical: CGFloat = 0, horizontal: CGFloat = 0) {
         self.vertical = vertical
         self.horizontal = horizontal
     }

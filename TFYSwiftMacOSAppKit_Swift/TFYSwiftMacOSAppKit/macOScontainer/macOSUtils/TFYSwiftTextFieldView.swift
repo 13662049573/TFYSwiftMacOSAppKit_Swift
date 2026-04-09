@@ -12,39 +12,61 @@ public class TFYSwiftTextFieldView: NSView {
     // MARK: - Properties
     
     private var plainPassword: String = ""
-    private var isPasswordVisible: Bool = true
+    public private(set) var isPasswordVisible: Bool = false
     
-    var placeholderString: String = "" {
+    public var placeholderString: String = "" {
         didSet {
-            let placeholder = msSetPlaceholder(placeholderString, color: NSColor.gray)
-            plainTextField.placeholderAttributedString = placeholder
-            secureTextField.placeholderAttributedString = placeholder
+            updatePlaceholder()
+        }
+    }
+
+    public var placeholderColor: NSColor = .gray {
+        didSet {
+            updatePlaceholder()
         }
     }
     
-    var isEditable: Bool = true {
+    public var isEditable: Bool = true {
         didSet {
             plainTextField.isEditable = isEditable
             secureTextField.isEditable = isEditable
         }
     }
     
-    var isSelectable: Bool = true {
+    public var isSelectable: Bool = true {
         didSet {
             plainTextField.isSelectable = isSelectable
             secureTextField.isSelectable = isSelectable
         }
     }
+
+    public var fieldFont: NSFont = .systemFont(ofSize: 14, weight: .regular) {
+        didSet {
+            plainTextField.font = fieldFont
+            secureTextField.font = fieldFont
+            updatePlaceholder()
+        }
+    }
+
+    public var fieldTextColor: NSColor = .black {
+        didSet {
+            plainTextField.textColor = fieldTextColor
+            secureTextField.textColor = fieldTextColor
+        }
+    }
+
+    public var showsVisibilityToggle: Bool = true {
+        didSet {
+            toggleButton.isHidden = !showsVisibilityToggle
+        }
+    }
     
-    var stringValue: String {
+    public var stringValue: String {
         get {
             return isPasswordVisible ? plainTextField.stringValue : secureTextField.stringValue
         }
         set {
-            let value = newValue
-            plainTextField.stringValue = value
-            secureTextField.stringValue = value
-            plainPassword = value
+            syncTextFields(with: newValue)
         }
     }
    
@@ -55,8 +77,8 @@ public class TFYSwiftTextFieldView: NSView {
         text.Xcursor = 10
         text.isTextAlignmentVerticalCenter = true
         text.lineBreakMode = .byTruncatingTail;
-        text.font = NSFont.systemFont(ofSize: 14, weight: .regular)
-        text.textColor = .black
+        text.font = fieldFont
+        text.textColor = fieldTextColor
         text.isBordered = false
         text.focusRingType = .none
         text.bezelStyle = .roundedBezel
@@ -70,8 +92,8 @@ public class TFYSwiftTextFieldView: NSView {
         text.Xcursor = 10
         text.isTextAlignmentVerticalCenter = true
         text.lineBreakMode = .byTruncatingTail;
-        text.font = NSFont.systemFont(ofSize: 14, weight: .regular)
-        text.textColor = .black
+        text.font = fieldFont
+        text.textColor = fieldTextColor
         text.isBordered = false
         text.focusRingType = .none
         text.bezelStyle = .roundedBezel
@@ -86,13 +108,13 @@ public class TFYSwiftTextFieldView: NSView {
         btn.bezelStyle = .regularSquare
         btn.imagePosition = .imageOnly
         btn.imageScaling = .scaleProportionallyDown
-        btn.image = NSImage(systemSymbolName: "eye.slash.fill", accessibilityDescription: nil)
+        btn.image = NSImage(systemSymbolName: "eye.fill", accessibilityDescription: nil)
         btn.target = self
         btn.action = #selector(togglePasswordVisibility(_:))
         return btn
     }()
     
-    var changeBlock: ((String) -> Void)?
+    public var changeBlock: ((String) -> Void)?
     
     // MARK: - Initialization
     override init(frame: NSRect) {
@@ -117,8 +139,10 @@ public class TFYSwiftTextFieldView: NSView {
         addSubview(toggleButton)
         
         setupConstraints()
+        updatePlaceholder()
+        showsVisibilityToggle = true
+        applyVisibilityState(makeFirstResponder: false)
         
-        isPasswordVisible = true
         isEditable = true
         isSelectable = true
     }
@@ -142,10 +166,9 @@ public class TFYSwiftTextFieldView: NSView {
         ])
     }
     
-    private func msSetPlaceholder(_ placeholder: String, color: NSColor) -> NSAttributedString {
-        let font = NSFont.systemFont(ofSize: 14, weight: .regular)
+    private func makePlaceholder(_ placeholder: String, color: NSColor) -> NSAttributedString {
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: font,
+            .font: fieldFont,
             .foregroundColor: color,
             .paragraphStyle: {
                 let style = NSMutableParagraphStyle()
@@ -155,26 +178,52 @@ public class TFYSwiftTextFieldView: NSView {
         ]
         return NSAttributedString(string: placeholder, attributes: attributes)
     }
+
+    private func updatePlaceholder() {
+        let placeholder = makePlaceholder(placeholderString, color: placeholderColor)
+        plainTextField.placeholderAttributedString = placeholder
+        secureTextField.placeholderAttributedString = placeholder
+    }
+
+    private func syncTextFields(with value: String) {
+        plainPassword = value
+        plainTextField.stringValue = value
+        secureTextField.stringValue = value
+    }
+
+    private func applyVisibilityState(makeFirstResponder: Bool) {
+        toggleButton.image = NSImage(
+            systemSymbolName: isPasswordVisible ? "eye.slash.fill" : "eye.fill",
+            accessibilityDescription: nil
+        )
+
+        secureTextField.isHidden = isPasswordVisible
+        plainTextField.isHidden = !isPasswordVisible
+
+        guard makeFirstResponder else { return }
+        if isPasswordVisible {
+            window?.makeFirstResponder(plainTextField)
+        } else {
+            window?.makeFirstResponder(secureTextField)
+        }
+    }
+
+    public func setPasswordVisible(_ visible: Bool) {
+        isPasswordVisible = visible
+        applyVisibilityState(makeFirstResponder: window != nil)
+    }
+
+    public func togglePasswordVisibility() {
+        setPasswordVisible(!isPasswordVisible)
+    }
+
+    public func setChangeHandler(_ handler: @escaping (String) -> Void) {
+        changeBlock = handler
+    }
     
     // MARK: - Actions
     @objc private func togglePasswordVisibility(_ sender: NSButton) {
-        isPasswordVisible.toggle()
-        
-        let symbolName = isPasswordVisible ? "eye.fill" : "eye.slash.fill"
-        toggleButton.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
-            
-        // Toggle text fields
-        secureTextField.isHidden = isPasswordVisible
-        plainTextField.isHidden = !isPasswordVisible
-        
-        // Sync text content
-        if isPasswordVisible {
-            plainTextField.stringValue = secureTextField.stringValue
-            window?.makeFirstResponder(plainTextField)
-        } else {
-            secureTextField.stringValue = plainTextField.stringValue
-            window?.makeFirstResponder(secureTextField)
-        }
+        togglePasswordVisibility()
     }
 }
 
@@ -182,15 +231,12 @@ public class TFYSwiftTextFieldView: NSView {
 extension TFYSwiftTextFieldView: TFYSwiftSecureTextDelegate,TFYSwiftNotifyingDelegate {
     
     public func securetextFieldDidChange(textField: NSSecureTextField) {
-        plainPassword = textField.stringValue
-        plainTextField.stringValue = textField.stringValue
+        syncTextFields(with: textField.stringValue)
         changeBlock?(textField.stringValue)
     }
     
     public func textFieldDidChange(textField: NSTextField) {
-        plainPassword = textField.stringValue
-        secureTextField.stringValue = textField.stringValue
+        syncTextFields(with: textField.stringValue)
         changeBlock?(textField.stringValue)
     }
 }
-

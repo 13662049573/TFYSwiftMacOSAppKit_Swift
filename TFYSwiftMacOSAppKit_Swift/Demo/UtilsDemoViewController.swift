@@ -15,6 +15,7 @@ final class UtilsDemoViewController: NSViewController {
     private var cacheManager: TFYSwiftCacheKit?
     private var activeTimer: TFYSwiftTimer?
     private var countDownTimer: TFYSwiftCountDownTimer?
+    private var onceExecutionCount = 0
     private lazy var logDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm:ss"
@@ -63,7 +64,7 @@ final class UtilsDemoViewController: NSViewController {
         let subtitleLabel = NSTextField(labelWithString: "这一页集中验证网络、缓存、JSON、定时器、GCD、文件面板、加密与图片拼接能力；右侧会展示最近一次可视化结果。").chain
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
-            .frame(NSRect(x: 20, y: 52, width: 820, height: 18))
+            .frame(NSRect(x: 20, y: 52, width: 900, height: 18))
             .build
         containerView.addSubview(subtitleLabel)
         
@@ -207,13 +208,38 @@ final class UtilsDemoViewController: NSViewController {
             .addTarget(self, action: #selector(cleanExpiredCaches))
             .build
         buttonArea.addSubview(expiredCacheButton)
+
+        let asyncButton = NSButton().chain
+            .frame(NSRect(x: 0, y: 120, width: 120, height: 30))
+            .title("异步任务")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testAsyncUtilities))
+            .build
+        buttonArea.addSubview(asyncButton)
+
+        let onceButton = NSButton().chain
+            .frame(NSRect(x: 130, y: 120, width: 120, height: 30))
+            .title("Once 执行")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testDispatchOnce))
+            .build
+        buttonArea.addSubview(onceButton)
+
+        let helperLabel = NSTextField(labelWithString: "新增演示：TFYSwiftAsync 后台任务/延迟回调/可取消任务，以及 DispatchQueue.once 只执行一次能力。").chain
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+            .wraps(true)
+            .maximumNumberOfLines(0)
+            .frame(NSRect(x: 270, y: 122, width: 560, height: 28))
+            .build
+        buttonArea.addSubview(helperLabel)
         
         // 设置约束
         NSLayoutConstraint.activate([
             buttonArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 86),
             buttonArea.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             buttonArea.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            buttonArea.heightAnchor.constraint(equalToConstant: 120)
+            buttonArea.heightAnchor.constraint(equalToConstant: 160)
         ])
     }
     
@@ -299,7 +325,7 @@ final class UtilsDemoViewController: NSViewController {
         
         // 设置约束
         NSLayoutConstraint.activate([
-            resultArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 230),
+            resultArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 270),
             resultArea.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             resultArea.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             resultArea.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20)
@@ -878,4 +904,51 @@ final class UtilsDemoViewController: NSViewController {
             }
         }
     }
-} 
+
+    @objc private func testAsyncUtilities() {
+        appendResult("=== TFYSwiftAsync 测试 ===")
+        appendResult("提交后台任务、延迟任务以及 3 次可取消任务，预期仅最后 1 次 cancellable 会真正执行。")
+
+        TFYSwiftAsync.async(on: .global()) { [weak self] in
+            self?.appendResult("后台任务开始，模拟执行 0.4 秒")
+            Thread.sleep(forTimeInterval: 0.4)
+        } mainCallback: { [weak self] in
+            self?.appendResult("后台任务完成，已回到主线程")
+            self?.updatePreview(
+                image: NSImage(systemSymbolName: "bolt.circle.fill", accessibilityDescription: nil)?.tintedImage(withColor: .systemYellow),
+                title: "TFYSwiftAsync 已执行",
+                details: "已演示 async / delay / cancellable 三类调用，详细时序请查看左侧日志。"
+            )
+        }
+
+        TFYSwiftAsync.asyncDelay(seconds: 0.6, on: .main) { [weak self] in
+            self?.appendResult("延迟任务完成，来自 asyncDelay(seconds: 0.6)")
+        }
+
+        for index in 1...3 {
+            TFYSwiftAsync.asyncCancellable(identifier: "utils-demo.async.cancellable", on: .global()) { [weak self] in
+                self?.appendResult("可取消任务最终执行：第 \(index) 次提交生效")
+            }
+        }
+    }
+
+    @objc private func testDispatchOnce() {
+        appendResult("=== DispatchQueue.once 测试 ===")
+        let previousCount = onceExecutionCount
+
+        DispatchQueue.once(token: "tfy.utils.demo.once") { [weak self] in
+            guard let self else { return }
+            self.onceExecutionCount += 1
+            self.appendResult("once block 首次执行成功，累计执行 \(self.onceExecutionCount) 次")
+            self.updatePreview(
+                image: NSImage(systemSymbolName: "checkmark.seal.fill", accessibilityDescription: nil)?.tintedImage(withColor: .systemGreen),
+                title: "DispatchQueue.once 已触发",
+                details: "同一个 token 在当前进程内只会执行一次，再次点击按钮不会重复进入 block。"
+            )
+        }
+
+        if previousCount == onceExecutionCount {
+            appendResult("同一个 token 已经执行过，当前点击不会再次运行 once block")
+        }
+    }
+}

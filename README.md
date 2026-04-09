@@ -22,7 +22,7 @@
 ## 特性概览
 
 - 链式编程：覆盖 `NSView`、`NSButton`、`NSTextField`、`CALayer`、手势识别器等常见 AppKit 对象。
-- 自定义控件：内置 `TFYSwiftTextField`、`TFYSwiftSecureTextField`、`TFYSwiftButton`、`TFYSwiftLabel`。
+- 自定义控件：内置 `TFYSwiftTextField`、`TFYSwiftSecureTextField`、`TFYSwiftButton`、`TFYSwiftLabel`、`TFYSwiftTextFieldView`。
 - 分类扩展：为 `NSView`、`NSTextField`、`NSTextView`、`NSControl`、`NSImage`、`NotificationCenter` 等补充高频 API。
 - 状态栏能力：提供完整的 `NSStatusItem` + 弹窗窗口解决方案。
 - HUD 系统：支持文本、加载、进度、成功、错误、信息、自定义图片与主题动画。
@@ -39,10 +39,10 @@
 3. 在 Demo 中依次查看这些页面：
 
 - `概览`：模块总览与接入入口说明
-- `组件控件`：`TFYSwiftButton`、`TFYSwiftTextField`、`TFYSwiftSecureTextField`、`TFYSwiftLabel`、图片处理与二维码
-- `链式调用`：控件、图层、手势的链式 API
+- `组件控件`：`TFYSwiftButton`、`TFYSwiftTextField`、`TFYSwiftSecureTextField`、`TFYSwiftLabel`、`TFYSwiftTextFieldView`、图片处理与二维码
+- `链式调用`：控件、图层、手势、毛玻璃容器与布局容器的链式 API
 - `分类扩展`：`NSView+Dejal`、`NSControl+Dejal`、`NSTextField+Dejal`、`NSTextView+Dejal`、`NotificationCenter+Dejal`
-- `工具类`：网络信息、缓存、JSON、定时器、GCD、文件读写、OpenPanel、加密、防抖/节流、倒计时、图片拼接，以及实时预览区
+- `工具类`：网络信息、缓存、JSON、定时器、GCD、Async、Once、文件读写、OpenPanel、加密、防抖/节流、倒计时、图片拼接，以及实时预览区
 - `HUD`：主题、位置、动画、进度、不同 HUD 模式，以及 `TFYProgressView` 直接调节预览
 - `状态栏`：图片模式 / 自定义视图模式、过渡动画、拖拽检测、pinned、弹窗显示
 
@@ -134,6 +134,20 @@ let textField = TFYSwiftTextField().chain
     .build
 ```
 
+### 密码容器控件
+
+```swift
+let passwordField = TFYSwiftTextFieldView().chain
+    .frame(NSRect(x: 20, y: 20, width: 260, height: 40))
+    .placeholderString("请输入密钥")
+    .fieldTextColor(.labelColor)
+    .passwordVisible(false)
+    .textChangeHandler { text in
+        print("密码长度:", text.count)
+    }
+    .build
+```
+
 ### NSTextView 扩展桥接
 
 ```swift
@@ -166,6 +180,20 @@ TFYSwiftCacheKit.shared.setCache("hello", forKey: "greeting") { result in
 
 TFYSwiftCacheKit.shared.getCache(String.self, forKey: "greeting") { result in
     print(result)
+}
+```
+
+### Async 与 Once
+
+```swift
+TFYSwiftAsync.async(on: .global()) {
+    print("后台任务")
+} mainCallback: {
+    print("回到主线程")
+}
+
+DispatchQueue.once(token: "com.tfy.demo.once") {
+    print("这个 block 只执行一次")
 }
 ```
 
@@ -223,8 +251,10 @@ CI 配置文件位于 [macos-build.yml](/Users/tianfengyou/Desktop/github/TFYSwi
 
 - 核心库稳定性增强，修复缓存、定时器、状态栏、手势、图片处理、文本扩展中的多个隐性问题
 - `TFYSwiftGCD.syncInMainQueue` 改为主线程安全实现，避免主线程误调用时死锁
+- `TFYSwiftTextFieldView` 补齐对外可见 API，修正密文/明文切换状态不一致问题，并新增链式桥接
+- `TFYSwiftUtils` 对外开放 demo 中实际使用的网络与加密方法，修复“同模块可用、库外不可用”的 API 暴露问题
 - 补齐 SwiftPM、SmokeTests、GitHub Actions
-- 升级内置 Demo，补充 `NSTextView` 扩展页、`TFYProgressView` 直接演示，以及工具页的图片拼接/缓存清理/实时预览，覆盖更多真实使用场景
+- 升级内置 Demo，补充 `NSTextView` 扩展页、`TFYProgressView` 直接演示、`TFYSwiftTextFieldView` 密码容器、`TFYSwiftAsync`/`DispatchQueue.once` 工具展示，以及链式页中的 `NSVisualEffectView`/`NSStackView` 场景演示
 - 统一 demo 和 README 使用风格，容器与主要控件示例全部改为库自己的链式点语法
 - 更新 README 与安装说明，统一 CocoaPods / SwiftPM / Demo 入口
 

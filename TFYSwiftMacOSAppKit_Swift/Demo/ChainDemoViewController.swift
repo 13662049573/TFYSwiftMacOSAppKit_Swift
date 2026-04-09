@@ -9,6 +9,9 @@ import Cocoa
 
 final class ChainDemoViewController: NSViewController {
     
+    private var materialPreviewView: NSVisualEffectView!
+    private var containerStatusLabel: NSTextField!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupChainDemo()
@@ -53,6 +56,9 @@ final class ChainDemoViewController: NSViewController {
         
         // 创建手势示例
         createGestureExamples(in: containerView)
+        
+        // 创建容器与视觉效果示例
+        createContainerExamples(in: containerView)
     }
     
     private func createButtonExamples(in containerView: NSView) {
@@ -319,6 +325,100 @@ final class ChainDemoViewController: NSViewController {
             .build
         containerView.addSubview(instructionLabel)
     }
+
+    private func createContainerExamples(in containerView: NSView) {
+        let sectionLabel = NSTextField().chain
+            .text("容器与视觉效果链式调用")
+            .font(.systemFont(ofSize: 16))
+            .textColor(.labelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .frame(NSRect(x: 20, y: 560, width: 240, height: 20))
+            .build
+        containerView.addSubview(sectionLabel)
+
+        materialPreviewView = NSVisualEffectView().chain
+            .frame(NSRect(x: 20, y: 590, width: 260, height: 120))
+            .material(.sidebar)
+            .blendingMode(.withinWindow)
+            .state(.active)
+            .wantsLayer(true)
+            .cornerRadius(16)
+            .build
+        containerView.addSubview(materialPreviewView)
+
+        let previewTitleLabel = NSTextField(labelWithString: "NSVisualEffectView").chain
+            .font(.systemFont(ofSize: 15, weight: .semibold))
+            .textColor(.labelColor)
+            .frame(NSRect(x: 18, y: 18, width: 180, height: 20))
+            .build
+        materialPreviewView.addSubview(previewTitleLabel)
+
+        let previewSubtitleLabel = NSTextField(labelWithString: "通过链式配置快速切换 material / state / blendingMode").chain
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+            .wraps(true)
+            .maximumNumberOfLines(0)
+            .frame(NSRect(x: 18, y: 46, width: 220, height: 38))
+            .build
+        materialPreviewView.addSubview(previewSubtitleLabel)
+
+        let materialPopup = NSPopUpButton().chain
+            .frame(NSRect(x: 300, y: 598, width: 150, height: 28))
+            .addItems(["Sidebar", "Popover", "Header"])
+            .selectItem(0)
+            .addTarget(self, action: #selector(handleMaterialSelectionChange))
+            .build
+        containerView.addSubview(materialPopup)
+
+        let stackView = NSStackView().chain
+            .frame(NSRect(x: 300, y: 646, width: 360, height: 56))
+            .orientation(.horizontal)
+            .distribution(.fillEqually)
+            .alignment(.centerY)
+            .spacing(10)
+            .edgeInsets(NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0))
+            .build
+        stackView.chain
+            .addArrangedSubview(makeBadgeView(title: "StackView", color: .systemBlue))
+            .addArrangedSubview(makeBadgeView(title: "VisualEffect", color: .systemPurple))
+            .addArrangedSubview(makeBadgeView(title: "PopUpButton", color: .systemGreen))
+        containerView.addSubview(stackView)
+
+        containerStatusLabel = NSTextField().chain
+            .frame(NSRect(x: 300, y: 598 + 38, width: 360, height: 18))
+            .text("当前材质：Sidebar")
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .build
+        containerView.addSubview(containerStatusLabel)
+    }
+
+    private func makeBadgeView(title: String, color: NSColor) -> NSView {
+        let badgeView = NSView().chain
+            .frame(NSRect(x: 0, y: 0, width: 108, height: 36))
+            .wantsLayer(true)
+            .backgroundColor(color.withAlphaComponent(0.14))
+            .cornerRadius(12)
+            .borderWidth(1)
+            .borderColor(color.withAlphaComponent(0.25))
+            .build
+
+        let badgeLabel = NSTextField(labelWithString: title).chain
+            .font(.systemFont(ofSize: 12, weight: .medium))
+            .textColor(color)
+            .alignment(.center)
+            .frame(NSRect(x: 8, y: 8, width: 92, height: 18))
+            .build
+        badgeView.addSubview(badgeLabel)
+        return badgeView
+    }
     
     // MARK: - Action Methods
     @objc private func basicButtonAction() {
@@ -344,6 +444,26 @@ final class ChainDemoViewController: NSViewController {
     
     @objc private func searchFieldAction(_ sender: NSSearchField) {
         print("搜索内容: \(sender.stringValue)")
+    }
+
+    @objc private func handleMaterialSelectionChange(_ sender: NSPopUpButton) {
+        let material: NSVisualEffectView.Material
+        let title: String
+
+        switch sender.indexOfSelectedItem {
+        case 1:
+            material = .popover
+            title = "Popover"
+        case 2:
+            material = .headerView
+            title = "Header"
+        default:
+            material = .sidebar
+            title = "Sidebar"
+        }
+
+        materialPreviewView.material = material
+        containerStatusLabel.stringValue = "当前材质：\(title) · 由 NSPopUpButton 链式配置切换"
     }
     
     @objc private func handleClickGesture(_ sender: NSClickGestureRecognizer) {

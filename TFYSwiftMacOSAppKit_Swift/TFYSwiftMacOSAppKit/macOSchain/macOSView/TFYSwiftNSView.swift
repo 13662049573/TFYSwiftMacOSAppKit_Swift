@@ -531,3 +531,66 @@ public extension Chain where Base: NSView {
         return self
     }
 }
+
+public extension Chain where Base: TFYSwiftTextFieldView {
+    
+    @discardableResult
+    func placeholderString(_ placeholder: String) -> Self {
+        base.placeholderString = placeholder
+        return self
+    }
+    
+    @discardableResult
+    func placeholderColor(_ color: NSColor) -> Self {
+        base.placeholderColor = color
+        return self
+    }
+    
+    @discardableResult
+    func stringValue(_ value: String) -> Self {
+        base.stringValue = value
+        return self
+    }
+    
+    @discardableResult
+    func editable(_ editable: Bool) -> Self {
+        base.isEditable = editable
+        return self
+    }
+    
+    @discardableResult
+    func selectable(_ selectable: Bool) -> Self {
+        base.isSelectable = selectable
+        return self
+    }
+    
+    @discardableResult
+    func passwordVisible(_ visible: Bool) -> Self {
+        base.setPasswordVisible(visible)
+        return self
+    }
+    
+    @discardableResult
+    func textChangeHandler(_ handler: @escaping (String) -> Void) -> Self {
+        base.setChangeHandler(handler)
+        return self
+    }
+    
+    @discardableResult
+    func fieldFont(_ font: NSFont) -> Self {
+        base.fieldFont = font
+        return self
+    }
+    
+    @discardableResult
+    func fieldTextColor(_ color: NSColor) -> Self {
+        base.fieldTextColor = color
+        return self
+    }
+    
+    @discardableResult
+    func showsVisibilityToggle(_ shows: Bool) -> Self {
+        base.showsVisibilityToggle = shows
+        return self
+    }
+}

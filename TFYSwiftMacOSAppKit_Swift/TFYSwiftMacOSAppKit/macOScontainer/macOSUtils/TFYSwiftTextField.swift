@@ -60,7 +60,8 @@ public class TFYSwiftTextField: NSTextField {
         cell?.usesSingleLineMode = false
         cell?.isBezeled = false
         cell?.isBordered = false
-        preferredMaxLayoutWidth = 100
+        // 默认不限制首选宽度，避免 Auto Layout 将纯文本 Label 提前压缩成省略号。
+        preferredMaxLayoutWidth = 0
     }
     
     public override func textDidChange(_ notification: Notification) {

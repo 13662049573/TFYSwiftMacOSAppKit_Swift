@@ -55,11 +55,11 @@
 ### CocoaPods
 
 ```ruby
-platform :osx, '12.4'
+platform :osx, '13.5'
 use_frameworks!
 
 target 'YourApp' do
-  pod 'TFYSwiftMacOSAppKit', '1.4.0'
+  pod 'TFYSwiftMacOSAppKit', '1.4.1'
 end
 ```
 
@@ -67,7 +67,7 @@ end
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", from: "1.4.0")
+    .package(url: "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", from: "1.4.1")
 ]
 ```
 

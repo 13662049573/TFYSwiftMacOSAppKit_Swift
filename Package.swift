@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "TFYSwiftMacOSAppKit",
     platforms: [
-        .macOS("12.4")
+        .macOS("13.5")
     ],
     products: [
         .library(

@@ -2,7 +2,7 @@ Pod::Spec.new do |spec|
 
   spec.name         = "TFYSwiftMacOSAppKit"
 
-  spec.version      = "1.4.0"
+  spec.version      = "1.4.1"
   
   spec.summary      = "AppKit-focused macOS Swift toolkit with chain APIs, custom controls, HUD, status item, and utilities."
 
@@ -20,7 +20,7 @@ Pod::Spec.new do |spec|
   spec.author       = { "田风有" => "420144542@qq.com" }
 
   spec.platform     = :osx
-  spec.osx.deployment_target = "12.4"
+  spec.osx.deployment_target = "13.5"
   spec.swift_version = '5.0'
   spec.default_subspecs = 'macOSBase', 'macOSfoundation', 'macOScategory', 'macOScontainer', 'macOSchain', 'macOSHUD'
 

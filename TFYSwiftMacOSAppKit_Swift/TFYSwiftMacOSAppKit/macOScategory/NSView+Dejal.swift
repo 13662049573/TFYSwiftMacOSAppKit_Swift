@@ -79,22 +79,54 @@ public extension NSView {
     var macos_top:CGFloat {
         set {
             var frame = self.frame
-            frame.origin.y = newValue
+            frame.origin.y = newValue - frame.size.height
             self.frame = frame
         }
         get {
             return self.frame.origin.y + self.frame.size.height
         }
     }
-    
+
     var macos_bottom:CGFloat {
         set {
             var frame = self.frame
-            frame.origin.y = newValue - self.frame.size.height
+            frame.origin.y = newValue
             self.frame = frame
         }
         get {
-            return self.frame.origin.y + self.frame.size.height
+            return self.frame.origin.y
+        }
+    }
+
+    var macos_centerX:CGFloat {
+        set {
+            var frame = self.frame
+            frame.origin.x = newValue - frame.size.width / 2
+            self.frame = frame
+        }
+        get {
+            return self.frame.origin.x + self.frame.size.width / 2
+        }
+    }
+
+    var macos_centerY:CGFloat {
+        set {
+            var frame = self.frame
+            frame.origin.y = newValue - frame.size.height / 2
+            self.frame = frame
+        }
+        get {
+            return self.frame.origin.y + self.frame.size.height / 2
+        }
+    }
+
+    var macos_center:CGPoint {
+        set {
+            macos_centerX = newValue.x
+            macos_centerY = newValue.y
+        }
+        get {
+            return CGPoint(x: macos_centerX, y: macos_centerY)
         }
     }
     
@@ -164,9 +196,7 @@ public extension NSView {
     }
 
     func removeAllSubviews() {
-        while subviews.count > 0 {
-            subviews.first?.removeFromSuperview()
-        }
+        subviews.forEach { $0.removeFromSuperview() }
     }
 
     /// removeAllSubviews 的统一命名别名
@@ -248,8 +278,8 @@ public extension NSView {
             let format = titleFormat ?? buttonTitleFormat
             titleFormat = format
 
-            let globalQueue = DispatchQueue.global(qos: .default)
-            timer = DispatchSource.makeTimerSource(queue: globalQueue)
+            let mainQueue = DispatchQueue.main
+            timer = DispatchSource.makeTimerSource(queue: mainQueue)
             timer?.schedule(deadline: .now(), repeating: 1.0)
             timer?.setEventHandler { [weak self] in
                 guard let self = self else { return }
@@ -585,14 +615,8 @@ public extension NSView {
     /// 获取视图的屏幕坐标
     var screenFrame: NSRect {
         guard let window = window else { return .zero }
-        let windowFrame = window.frame
-        let viewFrameInWindow = convert(frame, to: nil)
-        return NSRect(
-            x: windowFrame.origin.x + viewFrameInWindow.origin.x,
-            y: windowFrame.origin.y + viewFrameInWindow.origin.y,
-            width: viewFrameInWindow.size.width,
-            height: viewFrameInWindow.size.height
-        )
+        let viewFrameInWindow = convert(bounds, to: nil)
+        return window.convertToScreen(viewFrameInWindow)
     }
     
     /// 将视图转换为屏幕坐标

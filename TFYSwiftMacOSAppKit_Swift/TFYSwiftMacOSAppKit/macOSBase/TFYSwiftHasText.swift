@@ -139,6 +139,7 @@ public extension Chain where Base: TFYSwiftHasText {
             textField.attributedStringValue = attributedString
         case let text as NSText:
             text.string = attributedString.string
+            guard attributedString.length > 0 else { break }
             if let color = attributedString.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor {
                 text.textColor = color
             }

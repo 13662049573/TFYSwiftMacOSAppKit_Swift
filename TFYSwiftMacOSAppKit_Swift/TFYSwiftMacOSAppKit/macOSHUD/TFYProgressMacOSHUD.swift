@@ -655,64 +655,51 @@ public class TFYProgressMacOSHUD: NSView {
 extension TFYProgressMacOSHUD {
     
     static func createSuccessImage() -> NSImage {
-        let image = NSImage(size: NSSize(width: 32, height: 32))
-        image.lockFocus()
-        
-        NSGraphicsContext.current?.imageInterpolation = .high
-        NSGraphicsContext.current?.shouldAntialias = true
-        
-        let path = NSBezierPath()
-        path.move(to: NSPoint(x: 8, y: 16))
-        path.line(to: NSPoint(x: 14, y: 12))
-        path.line(to: NSPoint(x: 24, y: 22))
-        
-        path.lineWidth = 2.5
-        path.lineCapStyle = .round
-        path.lineJoinStyle = .round
-        
-        NSColor.systemGreen.setStroke()
-        path.stroke()
-        
-        image.unlockFocus()
+        let image = NSImage(size: NSSize(width: 32, height: 32), flipped: false) { _ in
+            NSGraphicsContext.current?.imageInterpolation = .high
+            NSGraphicsContext.current?.shouldAntialias = true
+            
+            let path = NSBezierPath()
+            path.move(to: NSPoint(x: 8, y: 16))
+            path.line(to: NSPoint(x: 14, y: 12))
+            path.line(to: NSPoint(x: 24, y: 22))
+            path.lineWidth = 2.5
+            path.lineCapStyle = .round
+            path.lineJoinStyle = .round
+            NSColor.systemGreen.setStroke()
+            path.stroke()
+            return true
+        }
         image.isTemplate = false
         image.cacheMode = .never
-        
         return image
     }
     
     static func createErrorImage() -> NSImage {
-        let image = NSImage(size: NSSize(width: 32, height: 32))
-        image.lockFocus()
-        
-        let path = NSBezierPath()
-        path.move(to: NSPoint(x: 8, y: 8))
-        path.line(to: NSPoint(x: 24, y: 24))
-        path.move(to: NSPoint(x: 24, y: 8))
-        path.line(to: NSPoint(x: 8, y: 24))
-        
-        NSColor.systemRed.set()
-        path.lineWidth = 2
-        path.stroke()
-        
-        image.unlockFocus()
-        return image
+        return NSImage(size: NSSize(width: 32, height: 32), flipped: false) { _ in
+            let path = NSBezierPath()
+            path.move(to: NSPoint(x: 8, y: 8))
+            path.line(to: NSPoint(x: 24, y: 24))
+            path.move(to: NSPoint(x: 24, y: 8))
+            path.line(to: NSPoint(x: 8, y: 24))
+            NSColor.systemRed.set()
+            path.lineWidth = 2
+            path.stroke()
+            return true
+        }
     }
     
     static func createInfoImage() -> NSImage {
-        let image = NSImage(size: NSSize(width: 32, height: 32))
-        image.lockFocus()
-        
-        let circlePath = NSBezierPath(ovalIn: NSRect(x: 14, y: 20, width: 4, height: 4))
-        let linePath = NSBezierPath()
-        linePath.move(to: NSPoint(x: 16, y: 8))
-        linePath.line(to: NSPoint(x: 16, y: 16))
-        
-        NSColor.systemBlue.set()
-        circlePath.fill()
-        linePath.lineWidth = 2
-        linePath.stroke()
-        
-        image.unlockFocus()
-        return image
+        return NSImage(size: NSSize(width: 32, height: 32), flipped: false) { _ in
+            let circlePath = NSBezierPath(ovalIn: NSRect(x: 14, y: 20, width: 4, height: 4))
+            let linePath = NSBezierPath()
+            linePath.move(to: NSPoint(x: 16, y: 8))
+            linePath.line(to: NSPoint(x: 16, y: 16))
+            NSColor.systemBlue.set()
+            circlePath.fill()
+            linePath.lineWidth = 2
+            linePath.stroke()
+            return true
+        }
     }
 }

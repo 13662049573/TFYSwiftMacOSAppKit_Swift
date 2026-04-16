@@ -11,19 +11,14 @@ import CommonCrypto
 import CryptoKit
 
 public extension String {
-    /// 日期格式化器，使用静态属性避免重复创建
-    private static let dateFormatter: DateFormatter = {
+    /// 获取当前时间的字符串表示
+    /// - Parameter format: 日期格式，默认为 "yyyy-MM-dd HH:mm:ss"
+    /// - Returns: 格式化后的时间字符串
+    static func getCurrentTime(format: String = "yyyy-MM-dd HH:mm:ss") -> String {
         let formatter = DateFormatter()
         formatter.timeZone = TimeZone(identifier: "Asia/Shanghai")
-        return formatter
-    }()
-    
-    /// 获取当前时间的字符串表示
-    /// - Parameter format: 日期格式，默认为 "YYYY-MM-dd HH:mm:ss"
-    /// - Returns: 格式化后的时间字符串
-    static func getCurrentTime(format: String = "YYYY-MM-dd HH:mm:ss") -> String {
-        dateFormatter.dateFormat = format
-        return dateFormatter.string(from: Date())
+        formatter.dateFormat = format
+        return formatter.string(from: Date())
     }
 
     /// 获取当前时间的时间戳
@@ -139,8 +134,10 @@ public extension String {
     /// - Parameter format: 日期格式
     /// - Returns: 转换后的日期，如果转换失败则返回nil
     func toDate(format: String = "yyyy-MM-dd HH:mm:ss") -> Date? {
-        String.dateFormatter.dateFormat = format
-        return String.dateFormatter.date(from: self)
+        let formatter = DateFormatter()
+        formatter.timeZone = TimeZone(identifier: "Asia/Shanghai")
+        formatter.dateFormat = format
+        return formatter.date(from: self)
     }
     
     /// 获取字符串的哈希值
@@ -350,6 +347,7 @@ extension String {
     /// - Returns: 截取后的字符串
     func truncated(to length: Int) -> String {
         guard self.count > length else { return self }
+        guard length > 3 else { return String(self.prefix(length)) }
         let index = self.index(self.startIndex, offsetBy: length - 3)
         return String(self[..<index]) + "..."
     }
@@ -488,29 +486,29 @@ extension String {
     /// - Parameter other: 要比较的字符串
     /// - Returns: 编辑距离
     func levenshteinDistance(to other: String) -> Int {
-        let selfArray = Array(self)
-        let otherArray = Array(other)
-        
-        var matrix = Array(repeating: Array(repeating: 0, count: otherArray.count + 1), count: selfArray.count + 1)
-        
-        for i in 0...selfArray.count {
-            matrix[i][0] = i
-        }
-        
-        for j in 0...otherArray.count {
-            matrix[0][j] = j
-        }
-        
-        for i in 1...selfArray.count {
-            for j in 1...otherArray.count {
-                if selfArray[i - 1] == otherArray[j - 1] {
-                    matrix[i][j] = matrix[i - 1][j - 1]
+        let s = Array(self)
+        let t = Array(other)
+        let m = s.count
+        let n = t.count
+
+        if m == 0 { return n }
+        if n == 0 { return m }
+
+        var prevRow = Array(0...n)
+        var currRow = [Int](repeating: 0, count: n + 1)
+
+        for i in 1...m {
+            currRow[0] = i
+            for j in 1...n {
+                if s[i - 1] == t[j - 1] {
+                    currRow[j] = prevRow[j - 1]
                 } else {
-                    matrix[i][j] = Swift.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + 1)
+                    currRow[j] = Swift.min(prevRow[j] + 1, currRow[j - 1] + 1, prevRow[j - 1] + 1)
                 }
             }
+            prevRow = currRow
         }
-        
-        return matrix[selfArray.count][otherArray.count]
+
+        return prevRow[n]
     }
 }

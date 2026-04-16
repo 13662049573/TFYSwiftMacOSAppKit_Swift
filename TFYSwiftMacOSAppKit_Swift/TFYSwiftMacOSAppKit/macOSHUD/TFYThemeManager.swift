@@ -25,13 +25,13 @@ public class TFYThemeManager: NSObject {
     private var isObservingSystemTheme: Bool = false
     
     // MARK: - Initialization
-    override init() {
+    public override init() {
         super.init()
         setupDefaultTheme()
     }
     
     // MARK: - Theme Setup
-    func setupDefaultTheme() {
+    public func setupDefaultTheme() {
         // Register default light theme
         registerTheme(defaultLightTheme, for: "light")
         
@@ -157,15 +157,15 @@ public class TFYThemeManager: NSObject {
     }
     
     // MARK: - Theme Management
-    func registerTheme(_ theme: [String: Any], for name: String) {
+    public func registerTheme(_ theme: [String: Any], for name: String) {
         themes[name] = theme
     }
     
-    func theme(for name: String) -> [String: Any]? {
+    public func theme(for name: String) -> [String: Any]? {
         return themes[name]
     }
     
-    func applyTheme(_ themeName: String) {
+    public func applyTheme(_ themeName: String) {
         guard let theme = theme(for: themeName) else { return }
         currentTheme = theme
         if let hud = currentHUD {
@@ -173,7 +173,7 @@ public class TFYThemeManager: NSObject {
         }
     }
     
-    func applyThemeType(_ themeType: TFYThemeType) {
+    public func applyThemeType(_ themeType: TFYThemeType) {
         currentThemeType = themeType
         switch themeType {
         case .light:
@@ -183,13 +183,13 @@ public class TFYThemeManager: NSObject {
         case .custom:
             applyTheme("customBlue")
         case .system:
-            let isDark = NSApp.effectiveAppearance.name.rawValue.contains("Dark")
+            let isDark = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
             applyTheme(isDark ? "dark" : "light")
             observeSystemThemeChanges()
         }
     }
     
-    func applyTheme(to hud: TFYProgressMacOSHUD) {
+    public func applyTheme(to hud: TFYProgressMacOSHUD) {
         guard let theme = currentTheme else { return }
         
         currentHUD = hud
@@ -253,7 +253,7 @@ public class TFYThemeManager: NSObject {
     }
     
     // MARK: - Custom Theme Creation
-    func createCustomTheme(
+    public func createCustomTheme(
         backgroundColor: NSColor,
         containerBackgroundColor: NSColor,
         textColor: NSColor,
@@ -281,7 +281,7 @@ public class TFYThemeManager: NSObject {
     }
     
     // MARK: - System Theme Observation
-    func observeSystemThemeChanges() {
+    public func observeSystemThemeChanges() {
         guard !isObservingSystemTheme else { return }
         isObservingSystemTheme = true
         DistributedNotificationCenter.default().addObserver(
@@ -294,17 +294,17 @@ public class TFYThemeManager: NSObject {
     
     @objc private func handleSystemThemeChange(_ notification: Notification) {
         if currentThemeType == .system {
-            let themeName = NSApp.effectiveAppearance.name.rawValue.contains("Dark") ? "dark" : "light"
+            let themeName = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? "dark" : "light"
             applyTheme(themeName)
         }
     }
     
     // MARK: - Theme Information
-    func getAvailableThemes() -> [String] {
+    public func getAvailableThemes() -> [String] {
         return Array(themes.keys)
     }
     
-    func getCurrentThemeName() -> String? {
+    public func getCurrentThemeName() -> String? {
         guard let currentTheme = currentTheme else { return nil }
         
         // 比较主题的关键属性而不是整个字典
@@ -342,7 +342,7 @@ public class TFYThemeManager: NSObject {
     }
     
     // MARK: - Cleanup
-    func cleanup() {
+    public func cleanup() {
         if isObservingSystemTheme {
             DistributedNotificationCenter.default().removeObserver(self)
             isObservingSystemTheme = false

@@ -49,10 +49,10 @@ public struct TFYFileSelectionResult {
 /// 文件保存结果
 public struct TFYSaveFileResult {
     public let url: URL?
-    public let panel: NSOpenPanel
+    public let panel: NSSavePanel
     public let wasCancelled: Bool
     
-    public init(url: URL?, panel: NSOpenPanel, wasCancelled: Bool) {
+    public init(url: URL?, panel: NSSavePanel, wasCancelled: Bool) {
         self.url = url
         self.panel = panel
         self.wasCancelled = wasCancelled
@@ -258,8 +258,7 @@ public class TFYSwiftOpenPanel: NSObject {
             panel.beginSheetModal(for: presentingWindow) { result in
                 let wasCancelled = result != .OK
                 let url = wasCancelled ? nil : panel.url
-                let saveResult = TFYSaveFileResult(url: url, panel: panel, wasCancelled: wasCancelled)
-                completion(saveResult)
+                completion(TFYSaveFileResult(url: url, panel: panel, wasCancelled: wasCancelled))
             }
             return
         }
@@ -267,8 +266,7 @@ public class TFYSwiftOpenPanel: NSObject {
         let result = panel.runModal()
         let wasCancelled = result != .OK
         let url = wasCancelled ? nil : panel.url
-        let saveResult = TFYSaveFileResult(url: url, panel: panel, wasCancelled: wasCancelled)
-        completion(saveResult)
+        completion(TFYSaveFileResult(url: url, panel: panel, wasCancelled: wasCancelled))
     }
     
     // MARK: - 高级功能
@@ -440,22 +438,20 @@ public class TFYSwiftOpenPanel: NSObject {
     /// 创建文件保存面板
     /// - Parameter configuration: 配置
     /// - Returns: 文件保存面板
-    private static func createSavePanel(configuration: TFYSavePanelConfiguration) -> NSOpenPanel {
-        let panel = NSOpenPanel()
+    private static func createSavePanel(configuration: TFYSavePanelConfiguration) -> NSSavePanel {
+        let panel = NSSavePanel()
         panel.title = configuration.title
         panel.prompt = configuration.prompt
         panel.message = configuration.message
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = false
         panel.canCreateDirectories = configuration.canCreateDirectories
+        panel.allowsOtherFileTypes = false
+        panel.isExtensionHidden = false
         panel.directoryURL = configuration.directoryURL
         panel.allowedContentTypes = configuration.allowedContentTypes
         panel.nameFieldStringValue = configuration.nameFieldStringValue
         
         if let accessoryView = configuration.accessoryView {
             panel.accessoryView = accessoryView
-            panel.isAccessoryViewDisclosed = configuration.accessoryViewDisclosed
         }
         
         return panel
@@ -563,7 +559,7 @@ public extension TFYSwiftOpenPanel {
                                                      allowsSelectingHiddenExtensionFlag: Bool,
                                                      dirURL: URL,
                                                      fileTypes: [UTType],
-                                                     completionHandler: @escaping (_ openpanel: NSOpenPanel, _ url: URL?) -> Void) {
+                                                     completionHandler: @escaping (_ panel: NSSavePanel, _ url: URL?) -> Void) {
         var config = TFYSavePanelConfiguration()
         config.title = title
         config.prompt = prompt
@@ -592,7 +588,7 @@ public extension TFYSwiftOpenPanel {
                                                          titleMessage: String,
                                                          prompt: String,
                                                          accessoryImage: NSImage,
-                                                         completionHandler: @escaping (_ openpanel: NSOpenPanel, _ url: URL?) -> Void) {
+                                                         completionHandler: @escaping (_ panel: NSSavePanel, _ url: URL?) -> Void) {
         var config = TFYSavePanelConfiguration()
         config.title = titleMessage
         config.prompt = prompt

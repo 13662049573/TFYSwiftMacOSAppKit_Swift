@@ -8,31 +8,55 @@
 import Cocoa
 
 final class ChainDemoViewController: NSViewController {
-    
+
     private var materialPreviewView: NSVisualEffectView!
     private var containerStatusLabel: NSTextField!
-    
+    private var asyncStatusLabel: NSTextField!
+    private var observableValueLabel: NSTextField!
+
+    // Library's Observable<Value> property wrapper used as a plain stored variable
+    private var observableDemo = Observable<Int>(wrappedValue: 0)
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupChainDemo()
+        setupObservableCallback()
     }
-    
+
+    // Register onChange callback after the label is created
+    private func setupObservableCallback() {
+        observableDemo.setOnChange { [weak self] newValue in
+            DispatchQueue.main.async {
+                self?.observableValueLabel?.stringValue = "当前值: \(newValue)  ✅ onChange 已触发"
+            }
+        }
+    }
+
+    // MARK: - Root Setup
+
     private func setupChainDemo() {
-        // 创建主容器视图
-        let containerView = NSView().chain
+        // Wrap everything in a scroll view so all demo sections are reachable
+        let scrollView = NSScrollView().chain
+            .hasVerticalScroller(true)
+            .hasHorizontalScroller(false)
+            .autohidesScrollers(true)
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
-        view.addSubview(containerView)
-        
-        // 设置约束
+        view.addSubview(scrollView)
+
         NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: view.topAnchor),
-            containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            containerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        
-        // 创建标题
+
+        // FlippedScrollContent uses isFlipped=true so y:0 is the TOP — the same y values
+        // the original frame-based code used are now read top-down, which is natural for scrolling.
+        let contentView = FlippedScrollContent(frame: NSRect(x: 0, y: 0, width: 780, height: 1220))
+        scrollView.documentView = contentView
+
+        // Title
         let titleLabel = NSTextField().chain
             .text("链式调用高级演示")
             .font(.boldSystemFont(ofSize: 20))
@@ -43,24 +67,19 @@ final class ChainDemoViewController: NSViewController {
             .selectable(false)
             .frame(NSRect(x: 20, y: 20, width: 300, height: 30))
             .build
-        containerView.addSubview(titleLabel)
-        
-        // 创建按钮示例
-        createButtonExamples(in: containerView)
-        
-        // 创建文本框示例
-        createTextFieldExamples(in: containerView)
-        
-        // 创建图层示例
-        createLayerExamples(in: containerView)
-        
-        // 创建手势示例
-        createGestureExamples(in: containerView)
-        
-        // 创建容器与视觉效果示例
-        createContainerExamples(in: containerView)
+        contentView.addSubview(titleLabel)
+
+        createButtonExamples(in: contentView)
+        createTextFieldExamples(in: contentView)
+        createLayerExamples(in: contentView)
+        createGestureExamples(in: contentView)
+        createContainerExamples(in: contentView)
+        createConcurrencyExamples(in: contentView)
+        createObservableExamples(in: contentView)
     }
-    
+
+    // MARK: - Existing Sections (unchanged)
+
     private func createButtonExamples(in containerView: NSView) {
         let sectionLabel = NSTextField().chain
             .text("按钮链式调用示例")
@@ -73,8 +92,7 @@ final class ChainDemoViewController: NSViewController {
             .frame(NSRect(x: 20, y: 70, width: 200, height: 20))
             .build
         containerView.addSubview(sectionLabel)
-        
-        // 基础按钮
+
         let basicButton = NSButton().chain
             .frame(NSRect(x: 20, y: 100, width: 120, height: 30))
             .addTarget(self, action: #selector(basicButtonAction))
@@ -86,8 +104,7 @@ final class ChainDemoViewController: NSViewController {
             .bezelStyle(.rounded)
             .build
         containerView.addSubview(basicButton)
-        
-        // 图标按钮
+
         let iconButton = NSButton().chain
             .frame(NSRect(x: 160, y: 100, width: 120, height: 30))
             .title("图标按钮")
@@ -98,8 +115,7 @@ final class ChainDemoViewController: NSViewController {
             .addTarget(self, action: #selector(iconButtonAction))
             .build
         containerView.addSubview(iconButton)
-        
-        // 开关按钮
+
         let switchButton = NSButton().chain
             .frame(NSRect(x: 300, y: 100, width: 120, height: 30))
             .setButtonType(.switch)
@@ -109,7 +125,7 @@ final class ChainDemoViewController: NSViewController {
             .build
         containerView.addSubview(switchButton)
     }
-    
+
     private func createTextFieldExamples(in containerView: NSView) {
         let sectionLabel = NSTextField().chain
             .text("文本框链式调用示例")
@@ -122,8 +138,7 @@ final class ChainDemoViewController: NSViewController {
             .frame(NSRect(x: 20, y: 150, width: 200, height: 20))
             .build
         containerView.addSubview(sectionLabel)
-        
-        // 基础文本框
+
         let basicTextField = NSTextField().chain
             .frame(NSRect(x: 20, y: 180, width: 200, height: 30))
             .placeholder("请输入文本")
@@ -137,8 +152,7 @@ final class ChainDemoViewController: NSViewController {
             .delegate(self)
             .build
         containerView.addSubview(basicTextField)
-        
-        // 密码文本框
+
         let secureTextField = NSSecureTextField().chain
             .frame(NSRect(x: 240, y: 180, width: 200, height: 30))
             .placeholder("请输入密码")
@@ -151,8 +165,7 @@ final class ChainDemoViewController: NSViewController {
             .selectable(true)
             .build
         containerView.addSubview(secureTextField)
-        
-        // 搜索框
+
         let searchField = NSSearchField().chain
             .frame(NSRect(x: 460, y: 180, width: 200, height: 30))
             .placeholder("搜索...")
@@ -161,7 +174,7 @@ final class ChainDemoViewController: NSViewController {
             .build
         containerView.addSubview(searchField)
     }
-    
+
     private func createLayerExamples(in containerView: NSView) {
         let sectionLabel = NSTextField().chain
             .text("图层链式调用示例")
@@ -174,8 +187,7 @@ final class ChainDemoViewController: NSViewController {
             .frame(NSRect(x: 20, y: 230, width: 200, height: 20))
             .build
         containerView.addSubview(sectionLabel)
-        
-        // 基础图层视图
+
         let layerView = NSView().chain
             .frame(NSRect(x: 20, y: 260, width: 150, height: 100))
             .wantsLayer(true)
@@ -190,10 +202,8 @@ final class ChainDemoViewController: NSViewController {
             .shadowOffset(CGSize(width: 2, height: 2))
             .shadowOpacity(0.5)
             .shadowRadius(4)
-        
         containerView.addSubview(layerView)
-        
-        // 渐变图层视图
+
         let gradientView = NSView().chain
             .frame(NSRect(x: 190, y: 260, width: 150, height: 100))
             .wantsLayer(true)
@@ -206,11 +216,9 @@ final class ChainDemoViewController: NSViewController {
             .startPoint(CGPoint(x: 0, y: 0))
             .endPoint(CGPoint(x: 1, y: 1))
             .cornerRadius(10)
-        
         gradientView.layer = gradientLayer
         containerView.addSubview(gradientView)
-        
-        // 形状图层视图
+
         let shapeView = NSView().chain
             .frame(NSRect(x: 360, y: 260, width: 150, height: 100))
             .wantsLayer(true)
@@ -221,21 +229,17 @@ final class ChainDemoViewController: NSViewController {
         path.line(to: NSPoint(x: 140, y: 90))
         path.line(to: NSPoint(x: 10, y: 90))
         path.close()
-        
         if #available(macOS 14.0, *) {
             shapeLayer.chain
                 .path(path.cgPath)
                 .fillColor(NSColor.systemOrange.cgColor)
                 .strokeColor(NSColor.systemBlue.cgColor)
                 .lineWidth(3)
-        } else {
-            // Fallback on earlier versions
         }
-        
         shapeView.layer = shapeLayer
         containerView.addSubview(shapeView)
     }
-    
+
     private func createGestureExamples(in containerView: NSView) {
         let sectionLabel = NSTextField().chain
             .text("手势识别链式调用示例")
@@ -248,8 +252,7 @@ final class ChainDemoViewController: NSViewController {
             .frame(NSRect(x: 20, y: 380, width: 200, height: 20))
             .build
         containerView.addSubview(sectionLabel)
-        
-        // 点击手势视图
+
         let clickView = NSView().chain
             .frame(NSRect(x: 20, y: 410, width: 120, height: 80))
             .backgroundColor(.systemBlue)
@@ -260,18 +263,16 @@ final class ChainDemoViewController: NSViewController {
             .cornerRadius(8)
             .borderWidth(1)
             .borderColor(NSColor.systemGray.cgColor)
-        
+
         let clickGesture = NSClickGestureRecognizer()
         clickGesture.chain
             .target(self)
             .action(#selector(handleClickGesture))
             .numberOfClicksRequired(1)
             .numberOfTouchesRequired(1)
-        
         clickView.addGestureRecognizer(clickGesture)
         containerView.addSubview(clickView)
-        
-        // 拖拽手势视图
+
         let panView = NSView().chain
             .frame(NSRect(x: 160, y: 410, width: 120, height: 80))
             .backgroundColor(.systemGreen)
@@ -282,16 +283,14 @@ final class ChainDemoViewController: NSViewController {
             .cornerRadius(8)
             .borderWidth(1)
             .borderColor(NSColor.systemGray.cgColor)
-        
+
         let panGesture = NSPanGestureRecognizer()
         panGesture.chain
             .target(self)
             .action(#selector(handlePanGesture))
-        
         panView.addGestureRecognizer(panGesture)
         containerView.addSubview(panView)
-        
-        // 旋转手势视图
+
         let rotationView = NSView().chain
             .frame(NSRect(x: 300, y: 410, width: 120, height: 80))
             .backgroundColor(.systemOrange)
@@ -302,16 +301,14 @@ final class ChainDemoViewController: NSViewController {
             .cornerRadius(8)
             .borderWidth(1)
             .borderColor(NSColor.systemGray.cgColor)
-        
+
         let rotationGesture = NSRotationGestureRecognizer()
         rotationGesture.chain
             .target(self)
             .action(#selector(handleRotationGesture))
-        
         rotationView.addGestureRecognizer(rotationGesture)
         containerView.addSubview(rotationView)
-        
-        // 说明标签
+
         let instructionLabel = NSTextField().chain
             .frame(NSRect(x: 20, y: 500, width: 400, height: 40))
             .text("点击蓝色区域、拖拽绿色区域、旋转橙色区域来测试手势识别")
@@ -388,7 +385,7 @@ final class ChainDemoViewController: NSViewController {
         containerView.addSubview(stackView)
 
         containerStatusLabel = NSTextField().chain
-            .frame(NSRect(x: 300, y: 598 + 38, width: 360, height: 18))
+            .frame(NSRect(x: 300, y: 636, width: 360, height: 18))
             .text("当前材质：Sidebar")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
@@ -419,8 +416,142 @@ final class ChainDemoViewController: NSViewController {
         badgeView.addSubview(badgeLabel)
         return badgeView
     }
-    
-    // MARK: - Action Methods
+
+    // MARK: - New: Swift Concurrency Section
+
+    private func createConcurrencyExamples(in containerView: NSView) {
+        let sectionLabel = NSTextField().chain
+            .text("Swift Concurrency 链式调用")
+            .font(.systemFont(ofSize: 16))
+            .textColor(.labelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .frame(NSRect(x: 20, y: 760, width: 280, height: 20))
+            .build
+        containerView.addSubview(sectionLabel)
+
+        asyncStatusLabel = NSTextField().chain
+            .text("点击下方按钮查看 asyncAwait / onMainActor 链式调用结果")
+            .font(.systemFont(ofSize: 12))
+            .textColor(.secondaryLabelColor)
+            .backgroundColor(.controlBackgroundColor)
+            .bordered(true)
+            .bezeled(true)
+            .editable(false)
+            .selectable(false)
+            .wraps(true)
+            .maximumNumberOfLines(3)
+            .frame(NSRect(x: 20, y: 790, width: 640, height: 48))
+            .build
+        containerView.addSubview(asyncStatusLabel)
+
+        let asyncAwaitButton = NSButton().chain
+            .frame(NSRect(x: 20, y: 848, width: 190, height: 30))
+            .title("asyncAwait { } 演示")
+            .font(.systemFont(ofSize: 13))
+            .bezelStyle(.rounded)
+            .addTarget(self, action: #selector(triggerAsyncAwait))
+            .build
+        containerView.addSubview(asyncAwaitButton)
+
+        let mainActorButton = NSButton().chain
+            .frame(NSRect(x: 228, y: 848, width: 190, height: 30))
+            .title("onMainActor { } 演示")
+            .font(.systemFont(ofSize: 13))
+            .bezelStyle(.rounded)
+            .addTarget(self, action: #selector(triggerMainActor))
+            .build
+        containerView.addSubview(mainActorButton)
+
+        let descLabel = NSTextField().chain
+            .frame(NSRect(x: 20, y: 890, width: 640, height: 48))
+            .text("asyncAwait(_:) 通过 Task { await op(base) } 封装 async 闭包，返回 Chain<Base> 可继续链式；onMainActor(_:) 通过 Task { @MainActor in op(base) } 保证在主线程执行 UI 更新，两者均为 @available(macOS 10.15, *)。")
+            .font(.systemFont(ofSize: 11))
+            .textColor(.tertiaryLabelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .wraps(true)
+            .maximumNumberOfLines(0)
+            .build
+        containerView.addSubview(descLabel)
+    }
+
+    // MARK: - New: Observable Section
+
+    private func createObservableExamples(in containerView: NSView) {
+        let sectionLabel = NSTextField().chain
+            .text("Observable 属性包装器")
+            .font(.systemFont(ofSize: 16))
+            .textColor(.labelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .frame(NSRect(x: 20, y: 960, width: 260, height: 20))
+            .build
+        containerView.addSubview(sectionLabel)
+
+        observableValueLabel = NSTextField().chain
+            .text("当前值: 0  (等待操作…)")
+            .font(.monospacedSystemFont(ofSize: 13, weight: .regular))
+            .textColor(.labelColor)
+            .backgroundColor(.controlBackgroundColor)
+            .bordered(true)
+            .bezeled(true)
+            .editable(false)
+            .selectable(false)
+            .frame(NSRect(x: 20, y: 990, width: 400, height: 30))
+            .build
+        containerView.addSubview(observableValueLabel)
+
+        let incrementButton = NSButton().chain
+            .frame(NSRect(x: 20, y: 1030, width: 160, height: 30))
+            .title("值 +1 (触发 onChange)")
+            .font(.systemFont(ofSize: 12))
+            .bezelStyle(.rounded)
+            .addTarget(self, action: #selector(incrementObservable))
+            .build
+        containerView.addSubview(incrementButton)
+
+        let setIfChangedButton = NSButton().chain
+            .frame(NSRect(x: 196, y: 1030, width: 180, height: 30))
+            .title("setIfChanged(相同值) — 不触发")
+            .font(.systemFont(ofSize: 12))
+            .bezelStyle(.rounded)
+            .addTarget(self, action: #selector(setIfChangedSameValue))
+            .build
+        containerView.addSubview(setIfChangedButton)
+
+        let resetButton = NSButton().chain
+            .frame(NSRect(x: 392, y: 1030, width: 80, height: 30))
+            .title("重置为 0")
+            .font(.systemFont(ofSize: 12))
+            .bezelStyle(.rounded)
+            .addTarget(self, action: #selector(resetObservable))
+            .build
+        containerView.addSubview(resetButton)
+
+        let descLabel = NSTextField().chain
+            .frame(NSRect(x: 20, y: 1072, width: 640, height: 64))
+            .text("Observable<Value> 是库内置属性包装器：setOnChange(_:) 注册变化回调；setIfChanged(_:) 仅当新值与当前值不同时才赋值并触发回调（防抖）；projectedValue 返回 Observable<Value> 自身，可继续链式调用。\n通过 _observableDemo 或直接变量名访问包装器实例，调用 mutating 方法需要 var 存储属性。")
+            .font(.systemFont(ofSize: 11))
+            .textColor(.tertiaryLabelColor)
+            .backgroundColor(.clear)
+            .bordered(false)
+            .editable(false)
+            .selectable(false)
+            .wraps(true)
+            .maximumNumberOfLines(0)
+            .build
+        containerView.addSubview(descLabel)
+    }
+
+    // MARK: - Action Methods (existing)
+
     @objc private func basicButtonAction() {
         let alert = NSAlert()
         alert.messageText = "基础按钮"
@@ -428,7 +559,7 @@ final class ChainDemoViewController: NSViewController {
         alert.addButton(withTitle: "确定")
         alert.runModal()
     }
-    
+
     @objc private func iconButtonAction() {
         let alert = NSAlert()
         alert.messageText = "图标按钮"
@@ -436,12 +567,12 @@ final class ChainDemoViewController: NSViewController {
         alert.addButton(withTitle: "确定")
         alert.runModal()
     }
-    
+
     @objc private func switchButtonAction(_ sender: NSButton) {
         let state = sender.state == .on ? "开启" : "关闭"
         print("开关状态: \(state)")
     }
-    
+
     @objc private func searchFieldAction(_ sender: NSSearchField) {
         print("搜索内容: \(sender.stringValue)")
     }
@@ -449,23 +580,15 @@ final class ChainDemoViewController: NSViewController {
     @objc private func handleMaterialSelectionChange(_ sender: NSPopUpButton) {
         let material: NSVisualEffectView.Material
         let title: String
-
         switch sender.indexOfSelectedItem {
-        case 1:
-            material = .popover
-            title = "Popover"
-        case 2:
-            material = .headerView
-            title = "Header"
-        default:
-            material = .sidebar
-            title = "Sidebar"
+        case 1:  material = .popover;    title = "Popover"
+        case 2:  material = .headerView; title = "Header"
+        default: material = .sidebar;    title = "Sidebar"
         }
-
         materialPreviewView.material = material
         containerStatusLabel.stringValue = "当前材质：\(title) · 由 NSPopUpButton 链式配置切换"
     }
-    
+
     @objc private func handleClickGesture(_ sender: NSClickGestureRecognizer) {
         let alert = NSAlert()
         alert.messageText = "点击手势"
@@ -473,15 +596,49 @@ final class ChainDemoViewController: NSViewController {
         alert.addButton(withTitle: "确定")
         alert.runModal()
     }
-    
+
     @objc private func handlePanGesture(_ sender: NSPanGestureRecognizer) {
         let translation = sender.translation(in: sender.view)
         print("拖拽手势 - 位移: \(translation)")
     }
-    
+
     @objc private func handleRotationGesture(_ sender: NSRotationGestureRecognizer) {
-        let rotation = sender.rotation
-        print("旋转手势 - 角度: \(rotation)")
+        print("旋转手势 - 角度: \(sender.rotation)")
+    }
+
+    // MARK: - Action Methods (concurrency)
+
+    @objc private func triggerAsyncAwait() {
+        asyncStatusLabel.stringValue = "⏳ asyncAwait 已触发，模拟 0.8s 异步操作中…"
+        asyncStatusLabel.chain.asyncAwait { label in
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            await MainActor.run {
+                label.stringValue = "✅ asyncAwait 完成：async 闭包在 Task 内执行，await MainActor.run 回到主线程更新 UI"
+            }
+        }
+    }
+
+    @objc private func triggerMainActor() {
+        asyncStatusLabel.chain.onMainActor { label in
+            label.stringValue = "✅ onMainActor 已执行：Task @MainActor 确保在主线程运行 (\(Date().formatted(.dateTime.hour().minute().second())))"
+        }
+    }
+
+    // MARK: - Action Methods (Observable)
+
+    @objc private func incrementObservable() {
+        observableDemo.wrappedValue += 1
+    }
+
+    @objc private func setIfChangedSameValue() {
+        let current = observableDemo.wrappedValue
+        // setIfChanged with the SAME value — onChange must NOT fire
+        observableDemo.setIfChanged(current)
+        observableValueLabel.stringValue = "当前值: \(current)  ⚠️ setIfChanged(\(current)) → 值相同，onChange 未触发"
+    }
+
+    @objc private func resetObservable() {
+        observableDemo.wrappedValue = 0
     }
 }
 
@@ -492,4 +649,12 @@ extension ChainDemoViewController: NSTextFieldDelegate {
             print("文本框内容变化: \(textField.stringValue)")
         }
     }
-} 
+}
+
+// MARK: - Private Helpers
+
+/// A flipped NSView used as the scroll view's document view.
+/// With isFlipped = true, y:0 is at the TOP, making top-down frame layout natural.
+private final class FlippedScrollContent: NSView {
+    override var isFlipped: Bool { true }
+}

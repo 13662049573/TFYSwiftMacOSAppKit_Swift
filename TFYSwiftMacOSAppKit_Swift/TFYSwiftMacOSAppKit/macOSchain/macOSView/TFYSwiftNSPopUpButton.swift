@@ -45,9 +45,14 @@ public extension Chain where Base: NSPopUpButton {
         base.insertItem(withTitle: title, at: at)
         return self
     }
+    @available(*, deprecated, renamed: "removeItem(at:)")
     @discardableResult
     func removeItemWithTitle(_ at: Int) -> Self {
-        base.removeItem(at: at)
+        return removeItem(at: at)
+    }
+    @discardableResult
+    func removeItem(at index: Int) -> Self {
+        base.removeItem(at: index)
         return self
     }
     @discardableResult

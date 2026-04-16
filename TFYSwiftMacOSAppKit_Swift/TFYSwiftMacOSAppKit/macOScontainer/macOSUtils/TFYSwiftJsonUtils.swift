@@ -145,16 +145,15 @@ extension JSONEncoder {
 // MARK: - JSON 工具类实现
 public final class TFYSwiftJsonUtils: NSObject {
     
-    // MARK: - 共享实例
-    private static let jsonEncoder: JSONEncoder = {
+    private static func makeEncoder(config: JsonConfig = .default) -> JSONEncoder {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = .prettyPrinted
+        encoder.outputFormatting = config.prettyPrinted ? .prettyPrinted : []
         encoder.dateEncodingStrategy = .iso8601
         encoder.keyEncodingStrategy = .useDefaultKeys
         return encoder
-    }()
+    }
     
-    private static let jsonDecoder: JSONDecoder = {
+    private static func makeDecoder() -> JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         decoder.keyDecodingStrategy = .useDefaultKeys
@@ -164,19 +163,23 @@ public final class TFYSwiftJsonUtils: NSObject {
             nan: "NaN"
         )
         return decoder
-    }()
+    }
     
     private override init() {
         super.init()
     }
     
     // MARK: - 配置管理
+    @available(*, deprecated, message: "Use JsonConfig parameter on individual methods instead")
     public static func configureEncoder(_ config: (JSONEncoder) -> Void) {
-        config(jsonEncoder)
+        let encoder = makeEncoder()
+        config(encoder)
     }
     
+    @available(*, deprecated, message: "Use JsonConfig parameter on individual methods instead")
     public static func configureDecoder(_ config: (JSONDecoder) -> Void) {
-        config(jsonDecoder)
+        let decoder = makeDecoder()
+        config(decoder)
     }
     
     // MARK: - 字典/数组转换为 JSON 字符串
@@ -249,10 +252,10 @@ public final class TFYSwiftJsonUtils: NSObject {
     
     // MARK: - 模型转换
     public static func toJson<T: Encodable>(_ model: T, config: JsonConfig = .default) throws -> String {
-        jsonEncoder.outputFormatting = config.prettyPrinted ? .prettyPrinted : []
+        let encoder = makeEncoder(config: config)
         
         do {
-            let data = try jsonEncoder.encode(model)
+            let data = try encoder.encode(model)
             guard let result = String(data: data, encoding: .utf8) else {
                 throw JsonUtilsError.invalidData
             }
@@ -265,7 +268,7 @@ public final class TFYSwiftJsonUtils: NSObject {
     public static func toModel<T: Decodable>(_ type: T.Type, from value: Any) throws -> T {
         do {
             let data = try JSONSerialization.data(withJSONObject: value)
-            return try jsonDecoder.decode(type, from: data)
+            return try makeDecoder().decode(type, from: data)
         } catch let error {
             throw JsonUtilsError.decodingError(error)
         }
@@ -277,17 +280,17 @@ public final class TFYSwiftJsonUtils: NSObject {
         }
         
         do {
-            return try jsonDecoder.decode(type, from: data)
+            return try makeDecoder().decode(type, from: data)
         } catch let error {
             throw JsonUtilsError.decodingError(error)
         }
     }
     
     public static func toModels<T: Encodable>(_ models: [T], config: JsonConfig = .default) throws -> String {
-        jsonEncoder.outputFormatting = config.prettyPrinted ? .prettyPrinted : []
+        let encoder = makeEncoder(config: config)
         
         do {
-            let data = try jsonEncoder.encode(models)
+            let data = try encoder.encode(models)
             guard let result = String(data: data, encoding: .utf8) else {
                 throw JsonUtilsError.invalidData
             }
@@ -349,7 +352,7 @@ public final class TFYSwiftJsonUtils: NSObject {
         }
         
         do {
-            return try jsonDecoder.decode(type, from: responseData)
+            return try makeDecoder().decode(type, from: responseData)
         } catch let decodeError {
             throw JsonUtilsError.decodingError(decodeError)
         }
@@ -430,26 +433,21 @@ public final class TFYSwiftJsonUtils: NSObject {
     
     public static func setValue(_ value: Any, in json: inout [String: Any], path: String) -> Bool {
         let keys = path.components(separatedBy: ".")
-        var current: [String: Any] = json
+        guard !keys.isEmpty else { return false }
         
-        for (index, key) in keys.enumerated() {
-            if index == keys.count - 1 {
-                current[key] = value
-                return true
-            } else {
-                if current[key] == nil {
-                    current[key] = [String: Any]()
-                }
-                
-                if let nextDict = current[key] as? [String: Any] {
-                    current = nextDict
-                } else {
-                    return false
-                }
-            }
+        if keys.count == 1 {
+            json[keys[0]] = value
+            return true
         }
         
-        return false
+        let firstKey = keys[0]
+        var nested = json[firstKey] as? [String: Any] ?? [String: Any]()
+        let remainingPath = keys.dropFirst().joined(separator: ".")
+        let success = setValue(value, in: &nested, path: remainingPath)
+        if success {
+            json[firstKey] = nested
+        }
+        return success
     }
     
     // MARK: - 类型转换辅助

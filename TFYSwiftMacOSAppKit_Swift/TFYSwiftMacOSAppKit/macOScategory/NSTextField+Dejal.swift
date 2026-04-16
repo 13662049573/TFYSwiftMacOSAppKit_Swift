@@ -49,11 +49,11 @@ public extension NSTextField {
            .foregroundColor: color
         ]
         let titleStr = placeholder ?? ""
-        if titleStr.count > 0 {
+        if !titleStr.isEmpty {
             let attributedString = NSMutableAttributedString(string: titleStr, attributes: attrs)
             let style = NSMutableParagraphStyle()
             style.alignment = self.alignment
-            attributedString.addAttribute(.paragraphStyle, value: style, range: NSRange(location: 0, length: titleStr.count))
+            attributedString.addAttribute(.paragraphStyle, value: style, range: NSRange(location: 0, length: (titleStr as NSString).length))
             self.placeholderAttributedString = attributedString
         }
     }
@@ -65,41 +65,25 @@ public extension NSTextField {
     }
     
     func fitFontSize(maxSize: NSSize = NSSize.zero) {
-        var text = self.stringValue
-        var newSize = NSSize.zero
-        self.sizeToFit()
-        newSize = self.frame.size
-        var width = newSize.width
-        var height = newSize.height
-        let characterSize = width/CGFloat(text.count)
-        if maxSize.width > 0 {
-            if width > maxSize.width {
-                width = maxSize.width
-                let array = text.components(separatedBy: " ")
-                var newString = ""
-                var heightCount = 1
-                if array.count > 1 {
-                    var currentCount = 0
-                    for i in 0..<array.count {
-                        if currentCount + array[i].count > Int(maxSize.width / characterSize) {
-                            newString += "\n"
-                            heightCount += 1
-                            currentCount = 0
-                        }
-                        newString += array[i] + " "
-                        currentCount += array[i].count + 1
-                    }
-                    text = newString
-                } else {
-                    // 使用新的初始化方法替换旧的
-                    let newIndex = String.Index(utf16Offset: text.utf16.count/2, in: text)
-                    text.insert("\n", at: newIndex)
-                }
-                height = height * CGFloat(heightCount)
-            }
-        }
-        self.stringValue = text
-        self.frame.size = NSSize(width: width, height: height)
+        let text = self.stringValue
+        guard !text.isEmpty else { return }
+
+        self.lineBreakMode = .byWordWrapping
+        self.maximumNumberOfLines = 0
+        self.cell?.wraps = true
+        self.cell?.isScrollable = false
+
+        let targetWidth = maxSize.width > 0 ? maxSize.width : self.frame.size.width
+        let usedFont = self.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        let attrs: [NSAttributedString.Key: Any] = [.font: usedFont]
+        let boundingRect = (text as NSString).boundingRect(
+            with: NSSize(width: targetWidth, height: CGFloat.greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            attributes: attrs
+        )
+
+        let fittedHeight = maxSize.height > 0 ? min(ceil(boundingRect.height), maxSize.height) : ceil(boundingRect.height)
+        self.frame.size = NSSize(width: targetWidth, height: fittedHeight)
     }
     
     // MARK: - 新增实用方法
@@ -219,7 +203,7 @@ public extension NSTextField {
     /// - Parameter readOnly: 是否只读
     func setReadOnly(_ readOnly: Bool) {
         self.isEditable = !readOnly
-        self.isSelectable = !readOnly
+        self.isSelectable = true
         if readOnly {
             self.backgroundColor = NSColor.controlBackgroundColor
         }
@@ -363,19 +347,24 @@ public extension NSTextField {
         return obj
     }
     
-    // 启动定时器
+    private static var timerSourceKey: UInt8 = 0
+    
     func timerStart(interval: Int = 60) {
+        if let existing = objc_getAssociatedObject(self, &NSTextField.timerSourceKey) as? DispatchSourceTimer {
+            existing.cancel()
+        }
         var time = interval
-        let codeTimer = DispatchSource.makeTimerSource()
+        let codeTimer = DispatchSource.makeTimerSource(queue: .main)
         codeTimer.schedule(deadline: .now(), repeating: .seconds(1))
-        codeTimer.setEventHandler {
-            DispatchQueue.main.async {
-                time -= 1
-                self.isEnabled = time <= 0
-                self.stringValue = time > 0 ? "剩余\(time)s" : "发送验证码"
-                if time <= 0 {
-                    codeTimer.cancel()
-                }
+        objc_setAssociatedObject(self, &NSTextField.timerSourceKey, codeTimer, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        codeTimer.setEventHandler { [weak self] in
+            guard let self = self else { return }
+            time -= 1
+            self.isEnabled = time <= 0
+            self.stringValue = time > 0 ? "剩余\(time)s" : "发送验证码"
+            if time <= 0 {
+                codeTimer.cancel()
+                objc_setAssociatedObject(self, &NSTextField.timerSourceKey, nil, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
             }
         }
         codeTimer.resume()
@@ -420,6 +409,10 @@ public extension NSTextField {
     }
     
     private func enforceMaxLength() {
+        if let fieldEditor = currentEditor() as? NSTextView,
+           fieldEditor.markedRange().length > 0 {
+            return
+        }
         if let maxLength = objc_getAssociatedObject(self, &AssociatedKeys.maxLength) as? Int,
            stringValue.count > maxLength {
             stringValue = String(stringValue.prefix(maxLength))

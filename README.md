@@ -59,7 +59,7 @@ platform :osx, '13.5'
 use_frameworks!
 
 target 'YourApp' do
-  pod 'TFYSwiftMacOSAppKit', '1.4.1'
+  pod 'TFYSwiftMacOSAppKit', '1.4.2'
 end
 ```
 
@@ -67,7 +67,7 @@ end
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", from: "1.4.1")
+    .package(url: "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", from: "1.4.2")
 ]
 ```
 
@@ -247,7 +247,7 @@ CI 配置文件位于 [macos-build.yml](/Users/tianfengyou/Desktop/github/TFYSwi
 
 ## 版本说明
 
-`1.4.1` 版本重点包含：
+`1.4.2` 版本重点包含：
 
 - 核心库稳定性增强，修复缓存、定时器、状态栏、手势、图片处理、文本扩展中的多个隐性问题
 - `TFYSwiftGCD.syncInMainQueue` 改为主线程安全实现，避免主线程误调用时死锁

@@ -68,7 +68,7 @@ public struct UnarchiverConfiguration {
     public let requiresSecureCoding: Bool
     public let timeout: TimeInterval
     
-    public init(allowedClasses: [AnyClass] = [NSObject.self],
+    public init(allowedClasses: [AnyClass] = [NSString.self, NSNumber.self, NSArray.self, NSDictionary.self, NSData.self, NSDate.self, NSSet.self],
                 requiresSecureCoding: Bool = true,
                 timeout: TimeInterval = 30.0) {
         self.allowedClasses = allowedClasses
@@ -91,15 +91,23 @@ public extension NSKeyedUnarchiver {
     ///   - error: 解档过程中的错误信息，如果成功则为 nil
     @available(macOS 12.0, *)
     static func unarchiveObject(withData data: Data, configuration: UnarchiverConfiguration? = nil) async -> (object: Any?, error: Error?) {
+        let config = configuration ?? UnarchiverConfiguration()
         do {
-            let object = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Any?, Error>) in
-                do {
-                    let config = configuration ?? UnarchiverConfiguration()
-                    let object = try NSKeyedUnarchiver.unarchivedObject(ofClasses: config.allowedClasses, from: data)
-                        continuation.resume(returning: object)
-                } catch {
-                    continuation.resume(throwing: error)
+            let object = try await withThrowingTaskGroup(of: Any?.self) { group in
+                group.addTask {
+                    let unarchiver = try NSKeyedUnarchiver(forReadingFrom: data)
+                    unarchiver.requiresSecureCoding = config.requiresSecureCoding
+                    let result = unarchiver.decodeObject(of: config.allowedClasses, forKey: NSKeyedArchiveRootObjectKey)
+                    unarchiver.finishDecoding()
+                    return result
                 }
+                group.addTask {
+                    try await Task.sleep(nanoseconds: UInt64(config.timeout * 1_000_000_000))
+                    throw UnarchiverError.timeoutError(config.timeout)
+                }
+                let result = try await group.next()
+                group.cancelAll()
+                return result ?? nil
             }
             return (object, nil)
         } catch {
@@ -346,10 +354,14 @@ public extension NSKeyedUnarchiver {
     
     // MARK: - 配置预设
     
-    /// 创建允许所有类的配置
+    /// 创建允许常见 Foundation 类的配置（不启用 secure coding）
     /// - Returns: 解档配置
     static func permissiveConfiguration() -> UnarchiverConfiguration {
-        return UnarchiverConfiguration(allowedClasses: [NSObject.self], requiresSecureCoding: false)
+        return UnarchiverConfiguration(
+            allowedClasses: [NSString.self, NSNumber.self, NSArray.self, NSDictionary.self,
+                             NSData.self, NSDate.self, NSSet.self, NSURL.self, NSNull.self],
+            requiresSecureCoding: false
+        )
     }
     
     /// 创建严格的安全配置
@@ -364,7 +376,7 @@ public extension NSKeyedUnarchiver {
     ///   - timeout: 超时时间
     ///   - allowedClasses: 允许的类数组
     /// - Returns: 解档配置
-    static func timeoutConfiguration(timeout: TimeInterval, allowedClasses: [AnyClass] = [NSObject.self]) -> UnarchiverConfiguration {
+    static func timeoutConfiguration(timeout: TimeInterval, allowedClasses: [AnyClass] = [NSString.self, NSNumber.self, NSArray.self, NSDictionary.self, NSData.self, NSDate.self, NSSet.self]) -> UnarchiverConfiguration {
         return UnarchiverConfiguration(allowedClasses: allowedClasses, requiresSecureCoding: true, timeout: timeout)
     }
     
@@ -432,9 +444,10 @@ public extension NSKeyedUnarchiver {
             return (false, UnarchiverError.memoryError("数据过大: \(data.count) bytes"))
         }
         
-        // 尝试解析数据头部
         do {
-            let _ = try NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSObject.self], from: data)
+            let unarchiver = try NSKeyedUnarchiver(forReadingFrom: data)
+            unarchiver.requiresSecureCoding = false
+            unarchiver.finishDecoding()
             return (true, nil)
         } catch {
             return (false, UnarchiverError.corruptedData("数据格式验证失败: \(error.localizedDescription)"))
@@ -450,10 +463,17 @@ public extension NSKeyedUnarchiver {
         metadata["size"] = data.count
         metadata["sizeInMB"] = Double(data.count) / (1024 * 1024)
         
-        if let object = try? NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSObject.self], from: data) {
-            metadata["rootClass"] = String(describing: Swift.type(of: object))
-            metadata["isValid"] = true
-        } else {
+        do {
+            let unarchiver = try NSKeyedUnarchiver(forReadingFrom: data)
+            unarchiver.requiresSecureCoding = false
+            if let object = unarchiver.decodeObject(forKey: NSKeyedArchiveRootObjectKey) {
+                metadata["rootClass"] = String(describing: Swift.type(of: object))
+                metadata["isValid"] = true
+            } else {
+                metadata["isValid"] = false
+            }
+            unarchiver.finishDecoding()
+        } catch {
             metadata["isValid"] = false
         }
         
@@ -486,204 +506,3 @@ public extension NSKeyedUnarchiver {
         return results
     }
 }
-
-// MARK: - 使用示例和最佳实践
-
-/*
- 
- // MARK: - 基础使用示例
- 
- // 1. 从数据解档
- let data = // 获取归档数据
- let result = await NSKeyedUnarchiver.unarchiveObject(withData: data)
- if let object = result.object {
-     print("解档成功: \(object)")
- } else if let error = result.error {
-     print("解档失败: \(error)")
- }
- 
- // 2. 从文件解档
- let filePath = "/path/to/archived/file"
- let fileResult = await NSKeyedUnarchiver.unarchiveObject(withFile: filePath)
- 
- // 3. 类型安全解档
- let userResult = await NSKeyedUnarchiver.unarchiveObject(
-     ofClass: User.self,
-     from: data
- )
- if let user = userResult.object {
-     print("用户: \(user.name)")
- }
- 
- // MARK: - 配置使用
- 
- // 4. 使用自定义配置
- let config = UnarchiverConfiguration(
-     allowedClasses: [User.self, NSArray.self, NSDictionary.self],
-     requiresSecureCoding: true,
-     timeout: 60.0
- )
- let configuredResult = await NSKeyedUnarchiver.unarchiveObject(
-     withData: data,
-     configuration: config
- )
- 
- // 5. 使用预设配置
- let permissiveConfig = NSKeyedUnarchiver.permissiveConfiguration()
- let secureConfig = NSKeyedUnarchiver.secureConfiguration(allowedClasses: [User.self])
- let timeoutConfig = NSKeyedUnarchiver.timeoutConfiguration(timeout: 30.0)
- 
- // MARK: - 批量解档
- 
- // 6. 批量解档多个文件
- let filePaths = ["/path1", "/path2", "/path3"]
- let batchResults = await NSKeyedUnarchiver.unarchiveObjects(fromFiles: filePaths)
- 
- for result in batchResults {
-     if let object = result.object {
-         print("文件 \(result.path) 解档成功")
-     } else if let error = result.error {
-         print("文件 \(result.path) 解档失败: \(error)")
-     }
- }
- 
- // 7. 批量解档指定类型
- let userResults = await NSKeyedUnarchiver.unarchiveObjects(
-     ofClass: User.self,
-     fromFiles: filePaths
- )
- 
- // MARK: - 便利方法使用
- 
- // 8. 安全解档（忽略错误）
- let safeObject = await NSKeyedUnarchiver.safeUnarchiveObject(withData: data)
- let safeUser = await NSKeyedUnarchiver.safeUnarchiveObject(ofClass: User.self, from: data)
- 
- // 9. 抛出错误版本
- do {
-     let object = try await NSKeyedUnarchiver.unarchiveObjectThrowing(withData: data)
-     let user = try await NSKeyedUnarchiver.unarchiveObjectThrowing(ofClass: User.self, from: data)
- } catch UnarchiverError.fileNotFound {
-     print("文件未找到")
- } catch UnarchiverError.corruptedData {
-     print("数据已损坏")
- } catch {
-     print("其他错误: \(error)")
- }
- 
- // MARK: - 高级用法
- 
- // 10. 自定义错误处理
- func unarchiveUserSafely(from data: Data) async -> User? {
-     let result = await NSKeyedUnarchiver.unarchiveObject(ofClass: User.self, from: data)
-     
-     switch result {
-     case (let user?, nil):
-         return user
-     case (nil, let error?):
-         print("解档失败: \(error)")
-         return nil
-     default:
-         return nil
-     }
- }
- 
- // 11. 带重试的解档
- func unarchiveWithRetry<T: NSObject & NSSecureCoding>(
-     ofClass type: T.Type,
-     from data: Data,
-     maxRetries: Int = 3
- ) async -> T? {
-     for attempt in 1...maxRetries {
-         let result = await NSKeyedUnarchiver.unarchiveObject(ofClass: type, from: data)
-         if let object = result.object {
-             return object
-         }
-         
-         if attempt < maxRetries {
-             try? await Task.sleep(nanoseconds: UInt64(attempt * 1_000_000_000)) // 1秒延迟
-         }
-     }
-     return nil
- }
- 
- // 12. 性能优化 - 缓存解档结果
- class UnarchiverCache {
-     private static var cache: [String: Any] = [:]
-     
-     static func cachedUnarchive<T: NSObject & NSSecureCoding>(
-         ofClass type: T.Type,
-         from data: Data,
-         key: String
-     ) async -> T? {
-         if let cached = cache[key] as? T {
-             return cached
-         }
-         
-         let result = await NSKeyedUnarchiver.unarchiveObject(ofClass: type, from: data)
-         if let object = result.object {
-             cache[key] = object
-             return object
-         }
-         
-         return nil
-     }
-     
-     static func clearCache() {
-         cache.removeAll()
-     }
- }
- 
- // 13. 监控解档性能
- func unarchiveWithPerformanceMonitoring<T: NSObject & NSSecureCoding>(
-     ofClass type: T.Type,
-     from data: Data
- ) async -> (object: T?, duration: TimeInterval) {
-     let startTime = CFAbsoluteTimeGetCurrent()
-     let result = await NSKeyedUnarchiver.unarchiveObject(ofClass: type, from: data)
-     let duration = CFAbsoluteTimeGetCurrent() - startTime
-     
-     return (result.object, duration)
- }
- 
- // MARK: - 最佳实践
- 
- // 14. 错误处理最佳实践
- func handleUnarchiveError(_ error: Error) {
-     if let unarchiverError = error as? UnarchiverError {
-         switch unarchiverError {
-         case .fileNotFound:
-             // 处理文件未找到
-             break
-         case .corruptedData:
-             // 处理数据损坏
-             break
-         case .securityError:
-             // 处理安全错误
-             break
-         default:
-             // 处理其他错误
-             break
-         }
-     } else {
-         // 处理其他类型的错误
-         print("未知错误: \(error)")
-     }
- }
- 
- // 15. 配置最佳实践
- extension UnarchiverConfiguration {
-     static let userData = UnarchiverConfiguration(
-         allowedClasses: [User.self, NSArray.self, NSDictionary.self, NSString.self, NSNumber.self],
-         requiresSecureCoding: true,
-         timeout: 30.0
-     )
-     
-     static let settingsData = UnarchiverConfiguration(
-         allowedClasses: [NSDictionary.self, NSString.self, NSNumber.self, NSArray.self],
-         requiresSecureCoding: true,
-         timeout: 10.0
-     )
- }
- 
- */

@@ -20,7 +20,11 @@ final class ExtensionsDemoViewController: NSViewController {
     private var notificationToken: NSObjectProtocol?
     private var notificationCount = 0
     private var isTextViewReadOnly = false
-    
+    private var placeholderTextView: NSTextView!
+    private var gradientLayerView: NSView!
+    private var gradientLayer: CAGradientLayer?
+    private var gradientDirectionIndex: Int = 0
+
     deinit {
         if let notificationToken {
             NotificationCenter.default.removeObserver(notificationToken)
@@ -72,10 +76,16 @@ final class ExtensionsDemoViewController: NSViewController {
         yOffset = setupTextFieldExtensionSection(in: contentView, yOffset: yOffset)
         yOffset = setupTextViewExtensionSection(in: contentView, yOffset: yOffset)
         yOffset = setupNotificationSection(in: contentView, yOffset: yOffset)
+        yOffset = setupTextViewPlaceholderSection(in: contentView, yOffset: yOffset)
+        yOffset = setupColorExtensionSection(in: contentView, yOffset: yOffset)
+        yOffset = setupGradientLayerSection(in: contentView, yOffset: yOffset)
+        yOffset = setupImageExtensionSection(in: contentView, yOffset: yOffset)
         yOffset = setupLogSection(in: contentView, yOffset: yOffset)
         
         contentView.frame.size.height = yOffset + 24
     }
+    
+    // MARK: - Existing Sections
     
     private func setupViewExtensionSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
         var currentOffset = yOffset
@@ -179,7 +189,7 @@ final class ExtensionsDemoViewController: NSViewController {
             .frame(NSRect(x: 20, y: currentOffset, width: 280, height: 34))
             .placeholder("普通 NSTextField 也可直接增强")
             .placeholderStringColor(.systemBlue)
-            .maxLength(10)
+            //.maxLength(10)
             .focusEffect(true)
             .textChangeHandler { [weak self] text in
                 self?.appendLog("普通文本框输入变化: \(text)")
@@ -297,6 +307,263 @@ final class ExtensionsDemoViewController: NSViewController {
         return currentOffset + 52
     }
     
+    // MARK: - New Sections
+    
+    private func setupTextViewPlaceholderSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
+        var currentOffset = yOffset
+
+        let sectionLabel = makeSectionLabel("NSTextView Placeholder (CATextLayer)")
+        sectionLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(sectionLabel)
+        currentOffset += 30
+
+        let descLabel = makeBodyLabel("setPlaceholder 通过 CATextLayer 在视图 layer 上绘制占位文本，清空内容后占位符自动显现。", width: 760, height: 22)
+        descLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(descLabel)
+        currentOffset += 28
+
+        let placeholderScrollView = NSScrollView().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 380, height: 100))
+            .hasVerticalScroller(true)
+            .borderType(.bezelBorder)
+            .autohidesScrollers(true)
+            .build
+        contentView.addSubview(placeholderScrollView)
+
+        placeholderTextView = NSTextView().chain
+            .frame(NSRect(x: 0, y: 0, width: 380, height: 100))
+            .font(.systemFont(ofSize: 13))
+            .wraps(true)
+            .string("在此输入文字后点击「清空」可见占位符效果")
+            .build
+        placeholderTextView.setPlaceholder("这里输入文本...（由 CATextLayer 渲染）")
+        placeholderScrollView.chain.documentView(placeholderTextView)
+
+        let clearPlaceholderButton = makeActionButton(
+            title: "清空文本",
+            frame: NSRect(x: 420, y: currentOffset + 10, width: 90, height: 32),
+            action: #selector(clearPlaceholderText)
+        )
+        contentView.addSubview(clearPlaceholderButton)
+
+        let fillPlaceholderButton = makeActionButton(
+            title: "填充文本",
+            frame: NSRect(x: 420, y: currentOffset + 52, width: 90, height: 32),
+            action: #selector(fillPlaceholderText)
+        )
+        contentView.addSubview(fillPlaceholderButton)
+
+        let hintLabel = makeBodyLabel("清空后可看到 CATextLayer 绘制的占位文本；填充后占位文本自动隐藏。", width: 310, height: 38)
+        hintLabel.frame.origin = NSPoint(x: 524, y: currentOffset + 26)
+        contentView.addSubview(hintLabel)
+
+        return currentOffset + 120
+    }
+
+    private func setupColorExtensionSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
+        var currentOffset = yOffset
+
+        let sectionLabel = makeSectionLabel("NSColor + Dejal")
+        sectionLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(sectionLabel)
+        currentOffset += 30
+
+        let descLabel = makeBodyLabel("展示 Hex 初始化、CMYK 初始化、互补色、反色、WCAG 对比度、颜色温度与情感等扩展能力。", width: 760, height: 22)
+        descLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(descLabel)
+        currentOffset += 28
+
+        let hexColor = NSColor(safeHexString: "#FF5733") ?? .systemOrange
+        let cmykColor = (try? NSColor(c: 0, m: 80, y: 100, k: 0)) ?? .systemRed
+        let baseColor = NSColor(hex: 0x4A90E2)
+        let complementaryColor = baseColor.complementary
+        let invertedColor = baseColor.inverted
+        let blendedColor = hexColor.blended(with: baseColor, ratio: 0.5)
+
+        let colorBoxItems: [(String, NSColor)] = [
+            ("Hex #FF5733", hexColor),
+            ("CMYK(0,80,100,0)", cmykColor),
+            ("Base #4A90E2", baseColor),
+            ("互补色", complementaryColor),
+            ("反色", invertedColor),
+            ("混合50%", blendedColor)
+        ]
+
+        let boxSize: CGFloat = 112
+        let boxHeight: CGFloat = 52
+        for (index, (label, color)) in colorBoxItems.enumerated() {
+            let x = CGFloat(20 + index * Int(boxSize + 8))
+            let colorBox = NSView().chain
+                .frame(NSRect(x: x, y: currentOffset, width: boxSize, height: boxHeight))
+                .backgroundColor(color)
+                .cornerRadius(10)
+                .borderWidth(1)
+                .borderColor(.separatorColor)
+                .build
+            contentView.addSubview(colorBox)
+
+            let hexStr = color.usingColorSpace(.sRGB)?.hexString ?? "n/a"
+            let boxLabel = NSTextField(labelWithString: "\(label)\n\(hexStr)").chain
+                .font(.systemFont(ofSize: 10))
+                .textColor(color.bestContrastColor())
+                .alignment(.center)
+                .lineBreakMode(.byWordWrapping)
+                .wraps(true)
+                .maximumNumberOfLines(0)
+                .frame(NSRect(x: 4, y: 6, width: boxSize - 8, height: boxHeight - 12))
+                .build
+            colorBox.addSubview(boxLabel)
+        }
+        currentOffset += boxHeight + 10
+
+        let contrastRatio = hexColor.contrastRatio(with: .white)
+        let wcagAA = hexColor.meetsWCAGContrast(with: .white, level: .AA)
+        let temp = baseColor.temperature
+        let emotion = baseColor.emotion
+        let tempStr: String
+        switch temp {
+        case .warm: tempStr = "暖色"
+        case .cool: tempStr = "冷色"
+        case .neutral: tempStr = "中性色"
+        }
+        let emotionStr: String
+        switch emotion {
+        case .warm: emotionStr = "温暖"
+        case .cool: emotionStr = "冷静"
+        case .fresh: emotionStr = "清新"
+        case .passionate: emotionStr = "热情"
+        case .calm: emotionStr = "平和"
+        case .energetic: emotionStr = "活力"
+        case .mysterious: emotionStr = "神秘"
+        }
+
+        let infoLabel = makeBodyLabel(
+            "#FF5733 vs 白色对比度: \(String(format: "%.2f", contrastRatio)) · WCAG AA: \(wcagAA ? "✓通过" : "✗不达标") · #4A90E2 温度: \(tempStr) · 情感: \(emotionStr)",
+            width: 760, height: 22
+        )
+        infoLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(infoLabel)
+        currentOffset += 30
+
+        return currentOffset
+    }
+
+    private func setupGradientLayerSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
+        var currentOffset = yOffset
+
+        let sectionLabel = makeSectionLabel("CAGradientLayer Chain API")
+        sectionLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(sectionLabel)
+        currentOffset += 30
+
+        let descLabel = makeBodyLabel("通过 CAGradientLayer Chain API 配置渐变方向、颜色与动画过渡；点击按钮切换预设渐变样式。", width: 760, height: 22)
+        descLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(descLabel)
+        currentOffset += 28
+
+        gradientLayerView = NSView().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 300, height: 100))
+            .wantsLayer(true)
+            .cornerRadius(12)
+            .borderWidth(1)
+            .borderColor(.separatorColor)
+            .build
+        contentView.addSubview(gradientLayerView)
+
+        let initialLayer = CAGradientLayer()
+        initialLayer.chain
+            .frame(CGRect(x: 0, y: 0, width: 300, height: 100))
+            .colors([NSColor.systemBlue.cgColor, NSColor.systemTeal.cgColor])
+            .startPoint(CGPoint(x: 0, y: 0.5))
+            .endPoint(CGPoint(x: 1, y: 0.5))
+            .cornerRadius(12)
+        gradientLayerView.layer?.addSublayer(initialLayer)
+        gradientLayer = initialLayer
+
+        let gradientButtons: [(String, Selector, CGFloat)] = [
+            ("水平渐变", #selector(applyHorizontalGradient), 340),
+            ("垂直渐变", #selector(applyVerticalGradient), 442),
+            ("彩虹渐变", #selector(applyRainbowGradient), 544),
+            ("日落渐变", #selector(applySunsetGradient), 646)
+        ]
+        for (title, action, x) in gradientButtons {
+            let btn = makeActionButton(title: title, frame: NSRect(x: x, y: currentOffset + 10, width: 90, height: 30), action: action)
+            contentView.addSubview(btn)
+        }
+
+        let animateButton = makeActionButton(title: "动画切换", frame: NSRect(x: 340, y: currentOffset + 56, width: 90, height: 30), action: #selector(animateGradientTransition))
+        contentView.addSubview(animateButton)
+
+        return currentOffset + 120
+    }
+
+    private func setupImageExtensionSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
+        var currentOffset = yOffset
+
+        let sectionLabel = makeSectionLabel("NSImage + Dejal")
+        sectionLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(sectionLabel)
+        currentOffset += 30
+
+        let descLabel = makeBodyLabel("展示 resized、roundedImage、circularImage、addBorder、rotated、tintedImage 等 NSImage 扩展处理。", width: 760, height: 22)
+        descLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(descLabel)
+        currentOffset += 28
+
+        let baseImg = (NSImage(systemSymbolName: "swift", accessibilityDescription: nil) ??
+                       NSImage.image(withColor: .systemBlue))
+            .resized(to: NSSize(width: 72, height: 72))
+
+        let imageItems: [(String, NSImage)] = [
+            ("原图", baseImg),
+            ("圆角", baseImg.roundedImage(cornerRadius: 18)),
+            ("圆形", baseImg.circularImage()),
+            ("加边框", baseImg.addBorder(width: 4, color: .systemPurple)),
+            ("旋转45°", baseImg.rotated(by: .pi / 4)),
+            ("染色", baseImg.tintedImage(withColor: .systemPink))
+        ]
+
+        let itemWidth: CGFloat = 110
+        for (index, (caption, image)) in imageItems.enumerated() {
+            let x = CGFloat(20 + index * Int(itemWidth + 8))
+            let imageView = NSImageView().chain
+                .frame(NSRect(x: x, y: currentOffset, width: itemWidth, height: itemWidth))
+                .image(image)
+                .imageScaling(.scaleProportionallyUpOrDown)
+                .wantsLayer(true)
+                .backgroundColor(.windowBackgroundColor)
+                .cornerRadius(12)
+                .borderWidth(1)
+                .borderColor(.separatorColor)
+                .build
+            contentView.addSubview(imageView)
+
+            let captionLabel = NSTextField(labelWithString: caption).chain
+                .font(.systemFont(ofSize: 11, weight: .medium))
+                .alignment(.center)
+                .frame(NSRect(x: x, y: currentOffset + itemWidth + 4, width: itemWidth, height: 18))
+                .build
+            contentView.addSubview(captionLabel)
+        }
+        currentOffset += itemWidth + 28
+
+        let avgColor = baseImg.roundedImage(cornerRadius: 18).averageColor()?.usingColorSpace(.deviceRGB)
+        let r = Int((avgColor?.redComponent ?? 0) * 255)
+        let g = Int((avgColor?.greenComponent ?? 0) * 255)
+        let b = Int((avgColor?.blueComponent ?? 0) * 255)
+        let fileSize = baseImg.fileSize(format: .png) ?? 0
+
+        let imageInfoLabel = makeBodyLabel(
+            "圆角图平均色: RGB(\(r), \(g), \(b)) · PNG 大小: \(fileSize) bytes",
+            width: 760, height: 22
+        )
+        imageInfoLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(imageInfoLabel)
+        currentOffset += 28
+
+        return currentOffset
+    }
+
     private func setupLogSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
         var currentOffset = yOffset
         
@@ -322,6 +589,8 @@ final class ExtensionsDemoViewController: NSViewController {
         return currentOffset + 168
     }
     
+    // MARK: - Notification Observer
+    
     private func setupNotificationObserver() {
         notificationToken = NotificationCenter.default.addObserver(
             forName: .exampleNotification,
@@ -335,6 +604,8 @@ final class ExtensionsDemoViewController: NSViewController {
             self.appendLog("收到通知 exampleNotification，payload: \(payload)")
         }
     }
+    
+    // MARK: - Helpers
     
     private func appendLog(_ message: String) {
         let current = logTextView?.string ?? ""
@@ -354,7 +625,7 @@ final class ExtensionsDemoViewController: NSViewController {
         NSTextField(labelWithString: text).chain
             .font(.systemFont(ofSize: 16, weight: .semibold))
             .textColor(.labelColor)
-            .frame(NSRect(x: 0, y: 0, width: 320, height: 22))
+            .frame(NSRect(x: 0, y: 0, width: 400, height: 22))
             .build
     }
     
@@ -378,6 +649,8 @@ final class ExtensionsDemoViewController: NSViewController {
             .addTarget(self, action: action)
             .build
     }
+    
+    // MARK: - NSView Actions
     
     @objc private func fadeOutPreview() {
         previewBox.fadeOut()
@@ -412,6 +685,8 @@ final class ExtensionsDemoViewController: NSViewController {
         appendLog("已重设 NSView 边框、背景和圆角")
     }
     
+    // MARK: - NSControl Actions
+    
     @objc private func applyStyledControlText() {
         styledField.setAttributedText("NSControl 富文本增强演示", font: .systemFont(ofSize: 16, weight: .semibold), color: .systemBlue, alignment: .left)
         styledField.changeSpace(with: 4)
@@ -437,6 +712,8 @@ final class ExtensionsDemoViewController: NSViewController {
         appendLog("已对 NSControl 应用圆角边框和阴影")
     }
     
+    // MARK: - NSTextField Actions
+    
     @objc private func copyPlainText() {
         plainTextField.copyText()
         appendLog("已复制普通文本框内容")
@@ -455,6 +732,8 @@ final class ExtensionsDemoViewController: NSViewController {
         plainTextField.fitFontSize(maxSize: NSSize(width: 280, height: 80))
         appendLog("已执行文本适配与换行")
     }
+
+    // MARK: - NSTextView Actions
 
     private func refreshTextViewStats(selectionRange: NSRange? = nil) {
         let stats = richTextView?.textStatistics ?? (characters: 0, words: 0, lines: 0, paragraphs: 0)
@@ -510,6 +789,8 @@ final class ExtensionsDemoViewController: NSViewController {
         appendLog("已向 NSTextView 追加一段文本")
     }
     
+    // MARK: - Notification Actions
+    
     @objc private func postBackgroundNotification() {
         NotificationCenter.default.postNotificationOnBackgroundThread(
             name: .exampleNotification,
@@ -527,6 +808,65 @@ final class ExtensionsDemoViewController: NSViewController {
         )
         appendLog("已请求在主线程发送通知")
     }
+
+    // MARK: - Placeholder TextVIew Actions
+
+    @objc private func clearPlaceholderText() {
+        placeholderTextView.string = ""
+        appendLog("NSTextView 文本已清空，CATextLayer 占位符应显示")
+    }
+
+    @objc private func fillPlaceholderText() {
+        placeholderTextView.string = "已填充示例文字，占位符自动隐藏。"
+        appendLog("NSTextView 已填充文本，占位符自动隐藏")
+    }
+
+    // MARK: - Gradient Layer Actions
+
+    @objc private func applyHorizontalGradient() {
+        applyGradientPreset(colors: [.systemBlue, .systemTeal], start: CGPoint(x: 0, y: 0.5), end: CGPoint(x: 1, y: 0.5))
+        appendLog("CAGradientLayer 已切换为水平渐变")
+    }
+
+    @objc private func applyVerticalGradient() {
+        applyGradientPreset(colors: [.systemIndigo, .systemPurple], start: CGPoint(x: 0.5, y: 0), end: CGPoint(x: 0.5, y: 1))
+        appendLog("CAGradientLayer 已切换为垂直渐变")
+    }
+
+    @objc private func applyRainbowGradient() {
+        let rainbowColors: [NSColor] = [.systemRed, .systemOrange, .systemYellow, .systemGreen, .systemBlue, .systemPurple]
+        applyGradientPreset(colors: rainbowColors, start: CGPoint(x: 0, y: 0.5), end: CGPoint(x: 1, y: 0.5))
+        appendLog("CAGradientLayer 已切换为彩虹渐变")
+    }
+
+    @objc private func applySunsetGradient() {
+        applyGradientPreset(colors: [.systemOrange, .systemPink, .systemPurple], start: CGPoint(x: 0, y: 0), end: CGPoint(x: 1, y: 1))
+        appendLog("CAGradientLayer 已切换为日落渐变")
+    }
+
+    @objc private func animateGradientTransition() {
+        gradientDirectionIndex = (gradientDirectionIndex + 1) % 4
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(0.6)
+        switch gradientDirectionIndex {
+        case 0: applyGradientPreset(colors: [.systemBlue, .systemTeal], start: CGPoint(x: 0, y: 0.5), end: CGPoint(x: 1, y: 0.5))
+        case 1: applyGradientPreset(colors: [.systemIndigo, .systemPurple], start: CGPoint(x: 0.5, y: 0), end: CGPoint(x: 0.5, y: 1))
+        case 2: applyGradientPreset(colors: [.systemRed, .systemOrange, .systemYellow, .systemGreen, .systemBlue, .systemPurple], start: CGPoint(x: 0, y: 0.5), end: CGPoint(x: 1, y: 0.5))
+        default: applyGradientPreset(colors: [.systemOrange, .systemPink, .systemPurple], start: CGPoint(x: 0, y: 0), end: CGPoint(x: 1, y: 1))
+        }
+        CATransaction.commit()
+        appendLog("CAGradientLayer 动画过渡到下一个预设")
+    }
+
+    private func applyGradientPreset(colors: [NSColor], start: CGPoint, end: CGPoint) {
+        guard let layer = gradientLayer else { return }
+        layer.chain
+            .colors(colors.map { $0.cgColor })
+            .startPoint(start)
+            .endPoint(end)
+    }
+
+    // MARK: - Log Action
     
     @objc private func clearLog() {
         logTextView.string = ""

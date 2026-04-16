@@ -89,10 +89,12 @@ public extension Timer {
                             interval: TimeInterval = 1.0,
                             onTick: @escaping (TimeInterval) -> Void,
                             onComplete: @escaping () -> Void) -> Timer {
-        var remainingTime = duration
+        let effectiveInterval = interval > 0 ? interval : 1.0
+        let effectiveDuration = duration > 0 ? duration : effectiveInterval
+        var remainingTime = effectiveDuration
         
-        return scheduledTimer(withTimeInterval: interval, block: { timer in
-            remainingTime -= interval
+        return scheduledTimer(withTimeInterval: effectiveInterval, block: { timer in
+            remainingTime -= effectiveInterval
             onTick(remainingTime)
             
             if remainingTime <= 0 {
@@ -114,13 +116,15 @@ public extension Timer {
                          count: Int,
                          block: @escaping (Int) -> Void,
                          onComplete: @escaping () -> Void) -> Timer {
+        let effectiveInterval = interval > 0 ? interval : 1.0
+        let effectiveCount = count > 0 ? count : 1
         var currentCount = 0
         
-        return scheduledTimer(withTimeInterval: interval, block: { timer in
+        return scheduledTimer(withTimeInterval: effectiveInterval, block: { timer in
             currentCount += 1
             block(currentCount)
             
-            if currentCount >= count {
+            if currentCount >= effectiveCount {
                 timer.invalidate()
                 onComplete()
             }
@@ -174,14 +178,9 @@ public extension Timer {
         fireDate = Date()
     }
     
-    /// 检查定时器是否有效
-    var isValid: Bool {
-        return fireDate != Date.distantFuture
-    }
-    
     /// 获取定时器的剩余时间
     var remainingTime: TimeInterval {
-        guard isValid else { return 0 }
+        guard isValid, fireDate != Date.distantFuture else { return 0 }
         return fireDate.timeIntervalSinceNow
     }
 }
@@ -189,7 +188,8 @@ public extension Timer {
 // MARK: - 定时器管理器
 public class TimerManager {
     private var timers: [String: Timer] = [:]
-    private let queue = DispatchQueue(label: "TimerManager", attributes: .concurrent)
+    // All timer operations must run on main thread because Timer is RunLoop-bound.
+    // The `timers` dictionary is only ever accessed from the main thread.
     
     /// 创建并管理定时器
     /// - Parameters:
@@ -198,74 +198,98 @@ public class TimerManager {
     ///   - block: 执行块
     ///   - repeats: 是否重复
     /// - Returns: 是否创建成功
+    public init() {}
+    
     @discardableResult
-    func createTimer(key: String,
+    public func createTimer(key: String,
                     interval: TimeInterval,
                     block: @escaping (Timer) -> Void,
                     repeats: Bool = true) -> Bool {
-        queue.async(flags: .barrier) {
-            // 如果已存在，先移除
-            self.removeTimer(key: key)
-            
+        let schedule: () -> Void = {
+            self.timers[key]?.invalidate()
             let timer = Timer.scheduledTimer(withTimeInterval: interval, block: block, repeats: repeats)
             self.timers[key] = timer
+        }
+        if Thread.isMainThread {
+            schedule()
+        } else {
+            DispatchQueue.main.async(execute: schedule)
         }
         return true
     }
     
     /// 移除定时器
     /// - Parameter key: 定时器标识
-    func removeTimer(key: String) {
-        queue.async(flags: .barrier) {
-            if let timer = self.timers[key] {
-                timer.invalidate()
-                self.timers.removeValue(forKey: key)
-            }
+    public func removeTimer(key: String) {
+        let remove: () -> Void = {
+            self.timers[key]?.invalidate()
+            self.timers.removeValue(forKey: key)
+        }
+        if Thread.isMainThread {
+            remove()
+        } else {
+            DispatchQueue.main.async(execute: remove)
         }
     }
     
     /// 移除所有定时器
-    func removeAllTimers() {
-        queue.async(flags: .barrier) {
+    public func removeAllTimers() {
+        let removeAll: () -> Void = {
             self.timers.values.forEach { $0.invalidate() }
             self.timers.removeAll()
+        }
+        if Thread.isMainThread {
+            removeAll()
+        } else {
+            DispatchQueue.main.async(execute: removeAll)
         }
     }
     
     /// 暂停定时器
     /// - Parameter key: 定时器标识
-    func pauseTimer(key: String) {
-        queue.async {
-            self.timers[key]?.pause()
-        }
+    public func pauseTimer(key: String) {
+        let pauseOp: () -> Void = { self.timers[key]?.pause() }
+        if Thread.isMainThread { pauseOp() } else { DispatchQueue.main.async(execute: pauseOp) }
     }
     
     /// 恢复定时器
     /// - Parameter key: 定时器标识
-    func resumeTimer(key: String) {
-        queue.async {
-            self.timers[key]?.resume()
-        }
+    public func resumeTimer(key: String) {
+        let resumeOp: () -> Void = { self.timers[key]?.resume() }
+        if Thread.isMainThread { resumeOp() } else { DispatchQueue.main.async(execute: resumeOp) }
     }
     
     /// 检查定时器是否存在
     /// - Parameter key: 定时器标识
     /// - Returns: 是否存在
-    func hasTimer(key: String) -> Bool {
-        return queue.sync {
+    public func hasTimer(key: String) -> Bool {
+        if Thread.isMainThread {
             return timers[key] != nil
+        } else {
+            return DispatchQueue.main.sync { self.timers[key] != nil }
         }
     }
     
     /// 获取定时器数量
-    var timerCount: Int {
-        return queue.sync {
+    public var timerCount: Int {
+        if Thread.isMainThread {
             return timers.count
+        } else {
+            return DispatchQueue.main.sync { self.timers.count }
         }
     }
     
     deinit {
-        removeAllTimers()
+        // Capture timers so we don't retain self inside the async block.
+        let captured = Array(timers.values)
+        timers.removeAll()
+        if Thread.isMainThread {
+            captured.forEach { $0.invalidate() }
+        } else {
+            DispatchQueue.main.async {
+                captured.forEach { $0.invalidate() }
+            }
+        }
     }
 }
 

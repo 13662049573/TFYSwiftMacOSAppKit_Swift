@@ -167,7 +167,7 @@ public extension Chain where Base: NSButton {
     }
     
     @discardableResult
-    func allowsMixedState(_ delay: UnsafeMutablePointer<Float>,interval:UnsafeMutablePointer<Float>) -> Self {
+    func getPeriodicDelay(_ delay: UnsafeMutablePointer<Float>, interval: UnsafeMutablePointer<Float>) -> Self {
         base.getPeriodicDelay(delay, interval: interval)
         return self
     }

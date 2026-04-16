@@ -127,6 +127,30 @@ public struct Chain<Base> {
         return self
     }
     
+    /// async/await 异步执行
+    /// - Parameter operation: 异步操作闭包
+    /// - Returns: 链式调用对象
+    @available(macOS 10.15, *)
+    @discardableResult
+    public func asyncAwait(_ operation: @escaping (Base) async -> Void) -> Self {
+        Task {
+            await operation(self.base)
+        }
+        return self
+    }
+    
+    /// 在 @MainActor 上执行操作
+    /// - Parameter operation: 主Actor操作闭包
+    /// - Returns: 链式调用对象
+    @available(macOS 10.15, *)
+    @discardableResult
+    public func onMainActor(_ operation: @escaping @MainActor (Base) -> Void) -> Self {
+        Task { @MainActor in
+            operation(self.base)
+        }
+        return self
+    }
+    
     /// 打印调试信息
     /// - Parameter message: 调试信息
     /// - Returns: 链式调用对象
@@ -164,13 +188,13 @@ public extension ChainCompatible {
 // MARK: - 错误处理
 
 /// 链式调用错误类型
-public enum ChainError: Error {
+public enum ChainError: Error, LocalizedError {
     case invalidValue(String)
     case invalidOperation(String)
     case typeConversionFailed(String)
     case customError(String)
     
-    public var localizedDescription: String {
+    public var errorDescription: String? {
         switch self {
         case .invalidValue(let message):
             return "无效的值: \(message)"
@@ -207,6 +231,19 @@ public struct Observable<Value> {
     /// 设置属性变化回调
     public mutating func setOnChange(_ callback: @escaping (Value) -> Void) {
         onChange = callback
+    }
+    
+    public var projectedValue: Observable<Value> {
+        get { self }
+        set { self = newValue }
+    }
+}
+
+public extension Observable where Value: Equatable {
+    /// 仅在值发生变化时触发回调的设置方法
+    mutating func setIfChanged(_ newValue: Value) {
+        guard wrappedValue != newValue else { return }
+        wrappedValue = newValue
     }
 }
 

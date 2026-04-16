@@ -770,7 +770,16 @@ public class TFYSwiftCacheKit: NSObject {
             try ensureDiskCacheDirectoryExists()
             cleanDiskIfNeeded()
             let filePath = diskCachePath(forKey: key)
-            try data.write(to: URL(fileURLWithPath: filePath), options: .atomic)
+            var dataToWrite = data
+            if config.enableCompression {
+                if let compressed = try? (dataToWrite as NSData).compressed(using: .lzfse) as Data {
+                    dataToWrite = compressed
+                }
+            }
+            if config.enableEncryption {
+                dataToWrite = xorObfuscate(dataToWrite)
+            }
+            try dataToWrite.write(to: URL(fileURLWithPath: filePath), options: .atomic)
             return .success(())
         } catch let cacheError as TFYCacheError {
             return .failure(cacheError)
@@ -788,11 +797,28 @@ public class TFYSwiftCacheKit: NSObject {
         }
         
         do {
-            let data = try Data(contentsOf: URL(fileURLWithPath: filePath))
+            var data = try Data(contentsOf: URL(fileURLWithPath: filePath))
+            if config.enableEncryption {
+                data = xorObfuscate(data)
+            }
+            if config.enableCompression {
+                if let decompressed = try? (data as NSData).decompressed(using: .lzfse) as Data {
+                    data = decompressed
+                }
+            }
             return .success(data)
         } catch {
             return .failure(.loadFailed(error))
         }
+    }
+    
+    private func xorObfuscate(_ data: Data) -> Data {
+        let key: [UInt8] = [0x54, 0x46, 0x59, 0x43, 0x61, 0x63, 0x68, 0x65] // "TFYCache"
+        var result = [UInt8](data)
+        for i in result.indices {
+            result[i] ^= key[i % key.count]
+        }
+        return Data(result)
     }
     
     private func dispatchToMain(_ block: @escaping () -> Void) {
@@ -882,7 +908,7 @@ extension TFYSwiftCacheKit: NSCacheDelegate {
 public extension TFYSwiftCacheKit {
     /// 获取缓存统计信息
     var statistics: TFYCacheStats {
-        var stats: TFYCacheStats!
+        var stats = TFYCacheStats()
         statsQueue.sync {
             stats = cacheStats
         }
@@ -898,7 +924,7 @@ public extension TFYSwiftCacheKit {
     
     /// 获取缓存统计报告
     func getCacheReport() -> String {
-        var stats: TFYCacheStats!
+        var stats = TFYCacheStats()
         statsQueue.sync {
             stats = cacheStats
         }

@@ -11,8 +11,8 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        // Repair main menu hierarchy to avoid "Internal inconsistency in menus" (root menu sometimes has no items after load)
         repairMainMenuIfNeeded()
+        disableWindowRestoration()
         showMainWindowIfNeeded()
     }
 
@@ -31,7 +31,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
-    /// Re-sets main menu so AppKit re-syncs the menu bar; helps avoid "Internal inconsistency in menus" when storyboard loads.
+    private func disableWindowRestoration() {
+        NSWindow.allowsAutomaticWindowTabbing = false
+        for window in NSApp.windows {
+            window.isRestorable = false
+        }
+    }
+    
     private func repairMainMenuIfNeeded() {
         guard let menu = NSApplication.shared.mainMenu else { return }
         NSApplication.shared.mainMenu = menu

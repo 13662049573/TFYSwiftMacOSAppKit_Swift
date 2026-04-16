@@ -82,14 +82,13 @@ public extension NSSplitView {
         var collapsingFrame = collapsingSubview.frame
 
         if isVertical {
-            remainingSubview.frame.size.height = remainingFrame.height - collapsingFrame.height - thickness
-            collapsingFrame.origin.y = remainingFrame.height + thickness
-        } else {
             remainingSubview.frame.size.width = remainingFrame.width - collapsingFrame.width - thickness
-            collapsingFrame.origin.x = remainingFrame.width + thickness
+            collapsingFrame.origin.x = remainingSubview.frame.maxX + thickness
+        } else {
+            remainingSubview.frame.size.height = remainingFrame.height - collapsingFrame.height - thickness
+            collapsingFrame.origin.y = remainingSubview.frame.maxY + thickness
         }
 
-        remainingSubview.frame.size = remainingFrame.size
         collapsingSubview.frame = collapsingFrame
 
         display()
@@ -184,15 +183,24 @@ public extension NSSplitView {
     ///   - index1: 第一个子视图索引
     ///   - index2: 第二个子视图索引
     func swapSubviews(at index1: Int, and index2: Int) {
-        guard index1 < subviews.count && index2 < subviews.count else { return }
+        guard index1 < subviews.count && index2 < subviews.count, index1 != index2 else { return }
         let subview1 = subviews[index1]
         let subview2 = subviews[index2]
         
         let frame1 = subview1.frame
         let frame2 = subview2.frame
         
+        // Swap frames so each view occupies the other's position
         subview1.frame = frame2
         subview2.frame = frame1
+        
+        // Swap actual subview order in the view hierarchy
+        var orderedSubviews = subviews
+        orderedSubviews.swapAt(index1, index2)
+        subviews.forEach { $0.removeFromSuperview() }
+        orderedSubviews.forEach { addSubview($0) }
+        
+        display()
     }
     
     /// 获取分割视图的总尺寸
@@ -256,8 +264,6 @@ public extension NSSplitView {
         return subviews.compactMap { subview in
             if let textField = subview as? NSTextField {
                 return textField.stringValue
-            } else if let label = subview as? NSTextField {
-                return label.stringValue
             } else {
                 return subview.accessibilityLabel()
             }

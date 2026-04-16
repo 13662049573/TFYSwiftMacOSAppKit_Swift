@@ -124,9 +124,15 @@ public extension Chain where Base: CALayer {
     
     /// 替换子图层
     @discardableResult
-    func relpaceSublayer(_ value: CALayer, with: CALayer) -> Self {
+    func replaceSublayer(_ value: CALayer, with: CALayer) -> Self {
         base.replaceSublayer(value, with: with)
         return self
+    }
+    
+    @available(*, deprecated, renamed: "replaceSublayer(_:with:)")
+    @discardableResult
+    func relpaceSublayer(_ value: CALayer, with: CALayer) -> Self {
+        return replaceSublayer(value, with: with)
     }
     
     /// 设置图层的遮罩

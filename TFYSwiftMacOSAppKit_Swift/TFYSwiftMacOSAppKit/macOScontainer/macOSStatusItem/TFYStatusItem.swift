@@ -7,6 +7,7 @@
 //
 
 import Cocoa
+import Combine
 
 // MARK: - 枚举定义
 
@@ -273,7 +274,7 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     }
     
     private func handleDragEvent(_ event: NSEvent) {
-        let location = event.locationInWindow
+        let location = NSEvent.mouseLocation
         guard let collisionArea = proximityDragCollisionArea else { return }
         
         if collisionArea.contains(location) {

@@ -9,7 +9,7 @@
 import Cocoa
 
 // MARK: - Type Aliases
-typealias TFYLayoutBlock = (TFYProgressMacOSHUD) -> Void
+public typealias TFYLayoutBlock = (TFYProgressMacOSHUD) -> Void
 
 public class TFYLayoutManager: NSObject {
     // MARK: - Properties
@@ -20,22 +20,26 @@ public class TFYLayoutManager: NSObject {
     private var isUpdatingLayout: Bool = false
     private var isSettingConstraints: Bool = false
     
+    public override init() {
+        super.init()
+    }
+    
     // MARK: - Layout Registration
-    func registerLayout(_ layout: @escaping TFYLayoutBlock, for mode: Int) {
+    public func registerLayout(_ layout: @escaping TFYLayoutBlock, for mode: Int) {
         layouts[mode] = layout
     }
     
-    func applyLayout(for mode: Int, to hud: TFYProgressMacOSHUD) {
+    public func applyLayout(for mode: Int, to hud: TFYProgressMacOSHUD) {
         guard let layout = layouts[mode] else { return }
         layout(hud)
     }
     
-    func removeLayout(for mode: Int) {
+    public func removeLayout(for mode: Int) {
         layouts.removeValue(forKey: mode)
     }
     
     // MARK: - Constraint Setup
-    func setupHUDConstraints(_ hud: TFYProgressMacOSHUD) {
+    public func setupHUDConstraints(_ hud: TFYProgressMacOSHUD) {
         invalidateLayout()
         
         hud.translatesAutoresizingMaskIntoConstraints = false
@@ -91,8 +95,16 @@ public class TFYLayoutManager: NSObject {
         // Status label constraints - 根据是否有文字调整
         hud.statusLabel.isHidden = !hasText
         if hasText {
+            let primaryBottomAnchor: NSLayoutYAxisAnchor
+            if !hud.customImageView.isHidden {
+                primaryBottomAnchor = hud.customImageView.bottomAnchor
+            } else if !hud.progressView.isHidden {
+                primaryBottomAnchor = hud.progressView.bottomAnchor
+            } else {
+                primaryBottomAnchor = hud.activityIndicator.bottomAnchor
+            }
             allConstraints.append(contentsOf: [
-                hud.statusLabel.topAnchor.constraint(equalTo: hud.activityIndicator.bottomAnchor, constant: 12),
+                hud.statusLabel.topAnchor.constraint(equalTo: primaryBottomAnchor, constant: 12),
                 hud.statusLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
                 hud.statusLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
                 hud.statusLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
@@ -105,7 +117,7 @@ public class TFYLayoutManager: NSObject {
     }
     
     // 添加新方法（会先清除已有约束，避免与 setupHUDConstraints 重复）
-    func setupSubviewsConstraints(_ hud: TFYProgressMacOSHUD) {
+    public func setupSubviewsConstraints(_ hud: TFYProgressMacOSHUD) {
         invalidateLayout()
         hud.containerView.translatesAutoresizingMaskIntoConstraints = false
         hud.statusLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -157,8 +169,16 @@ public class TFYLayoutManager: NSObject {
         
         // 状态标签约束 - 根据是否有文字调整
         if hasText {
+            let primaryBottomAnchor: NSLayoutYAxisAnchor
+            if !hud.customImageView.isHidden {
+                primaryBottomAnchor = hud.customImageView.bottomAnchor
+            } else if !hud.progressView.isHidden {
+                primaryBottomAnchor = hud.progressView.bottomAnchor
+            } else {
+                primaryBottomAnchor = hud.activityIndicator.bottomAnchor
+            }
             constraints.append(contentsOf: [
-                hud.statusLabel.topAnchor.constraint(equalTo: hud.activityIndicator.bottomAnchor, constant: 12),
+                hud.statusLabel.topAnchor.constraint(equalTo: primaryBottomAnchor, constant: 12),
                 hud.statusLabel.leadingAnchor.constraint(equalTo: hud.containerView.leadingAnchor, constant: 16),
                 hud.statusLabel.trailingAnchor.constraint(equalTo: hud.containerView.trailingAnchor, constant: -16),
                 hud.statusLabel.bottomAnchor.constraint(equalTo: hud.containerView.bottomAnchor, constant: -16),
@@ -195,7 +215,7 @@ public class TFYLayoutManager: NSObject {
         activeConstraints.append(contentsOf: constraints)
     }
     
-    func setupConstraints(for hud: TFYProgressMacOSHUD) {
+    public func setupConstraints(for hud: TFYProgressMacOSHUD) {
         guard let superview = hud.superview else { return }
         
         hud.translatesAutoresizingMaskIntoConstraints = false
@@ -212,7 +232,7 @@ public class TFYLayoutManager: NSObject {
         activeConstraints.append(contentsOf: constraints)
     }
     
-    func setupAdaptiveLayout(for hud: TFYProgressMacOSHUD) {
+    public func setupAdaptiveLayout(for hud: TFYProgressMacOSHUD) {
         hud.translatesAutoresizingMaskIntoConstraints = false
         hud.containerView.translatesAutoresizingMaskIntoConstraints = false
         
@@ -230,7 +250,7 @@ public class TFYLayoutManager: NSObject {
     }
     
     // MARK: - Helper Methods
-    func invalidateLayout() {
+    public func invalidateLayout() {
         NSLayoutConstraint.deactivate(activeConstraints)
         activeConstraints.removeAll()
     }
@@ -239,7 +259,7 @@ public class TFYLayoutManager: NSObject {
         view.constraints.forEach { $0.isActive = false }
     }
     
-    func setupDefaultConstraints(_ hud: TFYProgressMacOSHUD, constraints: inout [NSLayoutConstraint]) {
+    public func setupDefaultConstraints(_ hud: TFYProgressMacOSHUD, constraints: inout [NSLayoutConstraint]) {
         let container = hud.containerView
         
         // 检查是否有文字内容

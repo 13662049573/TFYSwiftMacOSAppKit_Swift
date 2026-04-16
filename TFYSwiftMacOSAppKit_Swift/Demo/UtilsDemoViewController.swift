@@ -13,6 +13,8 @@ final class UtilsDemoViewController: NSViewController {
     private var previewImageView: NSImageView!
     private var previewInfoLabel: NSTextField!
     private var cacheManager: TFYSwiftCacheKit?
+    private var compressionSwitch: NSButton!
+    private var encryptionSwitch: NSButton!
     private var activeTimer: TFYSwiftTimer?
     private var countDownTimer: TFYSwiftCountDownTimer?
     private var onceExecutionCount = 0
@@ -233,13 +235,72 @@ final class UtilsDemoViewController: NSViewController {
             .frame(NSRect(x: 270, y: 122, width: 560, height: 28))
             .build
         buttonArea.addSubview(helperLabel)
-        
+
+        // 第四行按钮
+        let aesGCMButton = NSButton().chain
+            .frame(NSRect(x: 0, y: 160, width: 120, height: 30))
+            .title("AES-GCM加密")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testAESGCM))
+            .build
+        buttonArea.addSubview(aesGCMButton)
+
+        let versionButton = NSButton().chain
+            .frame(NSRect(x: 130, y: 160, width: 120, height: 30))
+            .title("版本比较")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testVersionCompare))
+            .build
+        buttonArea.addSubview(versionButton)
+
+        let ipButton = NSButton().chain
+            .frame(NSRect(x: 260, y: 160, width: 120, height: 30))
+            .title("IP验证")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testIPValidation))
+            .build
+        buttonArea.addSubview(ipButton)
+
+        let arrayButton = NSButton().chain
+            .frame(NSRect(x: 390, y: 160, width: 120, height: 30))
+            .title("数组扩展")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testArrayExtensions))
+            .build
+        buttonArea.addSubview(arrayButton)
+
+        let stringExtButton = NSButton().chain
+            .frame(NSRect(x: 520, y: 160, width: 120, height: 30))
+            .title("字符串扩展")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testStringExtensions))
+            .build
+        buttonArea.addSubview(stringExtButton)
+
+        compressionSwitch = NSButton().chain
+            .frame(NSRect(x: 660, y: 163, width: 130, height: 24))
+            .setButtonType(.switch)
+            .title("压缩缓存")
+            .state(.on)
+            .font(.systemFont(ofSize: 12))
+            .build
+        buttonArea.addSubview(compressionSwitch)
+
+        encryptionSwitch = NSButton().chain
+            .frame(NSRect(x: 800, y: 163, width: 130, height: 24))
+            .setButtonType(.switch)
+            .title("加密缓存")
+            .state(.off)
+            .font(.systemFont(ofSize: 12))
+            .build
+        buttonArea.addSubview(encryptionSwitch)
+
         // 设置约束
         NSLayoutConstraint.activate([
             buttonArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 86),
             buttonArea.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             buttonArea.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            buttonArea.heightAnchor.constraint(equalToConstant: 160)
+            buttonArea.heightAnchor.constraint(equalToConstant: 200)
         ])
     }
     
@@ -325,7 +386,7 @@ final class UtilsDemoViewController: NSViewController {
         
         // 设置约束
         NSLayoutConstraint.activate([
-            resultArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 270),
+            resultArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 310),
             resultArea.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             resultArea.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             resultArea.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20)
@@ -404,6 +465,14 @@ final class UtilsDemoViewController: NSViewController {
             appendResult("缓存管理器未初始化")
             return
         }
+
+        let compressionOn = compressionSwitch?.state == .on
+        let encryptionOn = encryptionSwitch?.state == .on
+        var newConfig = cacheManager.getCurrentConfig()
+        newConfig.enableCompression = compressionOn
+        newConfig.enableEncryption = encryptionOn
+        cacheManager.updateConfig(newConfig)
+        appendResult("缓存配置：压缩=\(compressionOn ? "开" : "关")，加密=\(encryptionOn ? "开" : "关")")
         
         // 测试字符串缓存
         let testString = "测试字符串数据"
@@ -725,17 +794,17 @@ final class UtilsDemoViewController: NSViewController {
             }
         }
         
-        // 测试AES加密
-        if let encryptedText = TFYSwiftUtils.encrypt(content: originalText, key: key) {
-            appendResult("AES加密成功: \(encryptedText)")
+        // 测试AES-GCM加密（现代安全方式）
+        if let encryptedText = TFYSwiftUtils.encryptAESGCM(content: originalText, key: key) {
+            appendResult("AES-GCM加密成功: \(encryptedText)")
             
-            if let decryptedText = TFYSwiftUtils.decrypt(content: encryptedText, key: key) {
-                appendResult("AES解密成功: \(decryptedText)")
+            if let decryptedText = TFYSwiftUtils.decryptAESGCM(content: encryptedText, key: key) {
+                appendResult("AES-GCM解密成功: \(decryptedText)")
             } else {
-                appendResult("AES解密失败")
+                appendResult("AES-GCM解密失败")
             }
         } else {
-            appendResult("AES加密失败")
+            appendResult("AES-GCM加密失败")
         }
     }
     
@@ -950,5 +1019,146 @@ final class UtilsDemoViewController: NSViewController {
         if previousCount == onceExecutionCount {
             appendResult("同一个 token 已经执行过，当前点击不会再次运行 once block")
         }
+    }
+
+    @objc private func testAESGCM() {
+        appendResult("=== AES-GCM 加密测试 ===")
+        guard #available(macOS 10.15, *) else {
+            appendResult("需要 macOS 10.15+")
+            return
+        }
+        let original = "Hello, TFYSwiftMacOSAppKit! 这是需要加密的内容。"
+        let key = "tfy-demo-secret-key-2024"
+        appendResult("原文: \(original)")
+
+        guard let encrypted = TFYSwiftUtils.encryptAESGCM(content: original, key: key) else {
+            appendResult("AES-GCM 加密失败")
+            return
+        }
+        appendResult("加密结果 (Base64): \(encrypted)")
+
+        guard let decrypted = TFYSwiftUtils.decryptAESGCM(content: encrypted, key: key) else {
+            appendResult("AES-GCM 解密失败")
+            return
+        }
+        appendResult("解密还原: \(decrypted)")
+        appendResult("往返一致: \(original == decrypted ? "✅" : "❌")")
+        updatePreview(
+            image: NSImage(systemSymbolName: "lock.shield.fill", accessibilityDescription: nil)?.tintedImage(withColor: .systemIndigo),
+            title: "AES-GCM 加密往返成功",
+            details: "原文 → 加密 → 解密，三段内容已在日志中打印。"
+        )
+    }
+
+    @objc private func testVersionCompare() {
+        appendResult("=== 版本号比较测试 ===")
+        let pairs: [(String, String)] = [
+            ("1.2.3", "1.2.4"),
+            ("2.0.0", "1.9.9"),
+            ("1.0",   "1.0.0"),
+            ("3.10.0", "3.9.9"),
+            ("1.0.0", "1.0.0")
+        ]
+        for (current, latest) in pairs {
+            let result = current.compare(latest, options: .numeric)
+            let verdict: String
+            switch result {
+            case .orderedAscending:  verdict = "有新版本 ↑"
+            case .orderedDescending: verdict = "当前版本更新 ↓"
+            case .orderedSame:       verdict = "已是最新 ✅"
+            }
+            appendResult("当前 \(current) vs 最新 \(latest) → \(verdict)")
+        }
+        updatePreview(
+            image: NSImage(systemSymbolName: "arrow.up.circle.fill", accessibilityDescription: nil)?.tintedImage(withColor: .systemGreen),
+            title: "版本比较完成",
+            details: "使用 String.compare(_:options: .numeric) 进行语义版本大小比较。"
+        )
+    }
+
+    @objc private func testIPValidation() {
+        appendResult("=== IP 地址验证测试 ===")
+        let addresses = [
+            "192.168.1.1",
+            "10.0.0.255",
+            "256.0.0.1",
+            "0.0.0.0",
+            "999.999.999.999",
+            "172.16.254.1",
+            "not.an.ip",
+            "::1",
+            "127.0.0.1"
+        ]
+        for ip in addresses {
+            let valid = TFYSwiftUtils.isValidIP(ipAddress: ip)
+            appendResult("\(ip.padding(toLength: 20, withPad: " ", startingAt: 0)) → \(valid ? "✅ 有效" : "❌ 无效")")
+        }
+        updatePreview(
+            image: NSImage(systemSymbolName: "network", accessibilityDescription: nil)?.tintedImage(withColor: .systemTeal),
+            title: "IP 验证完成",
+            details: "TFYSwiftUtils.isValidIP(ipAddress:) 对 \(addresses.count) 个地址进行了格式检查。"
+        )
+    }
+
+    @objc private func testArrayExtensions() {
+        appendResult("=== Array+Dejal 扩展测试 ===")
+
+        let nums = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3]
+        appendResult("原始数组: \(nums)")
+
+        let deduped = nums.removingDuplicates()
+        appendResult("去重 (removingDuplicates): \(deduped)")
+
+        let small = [1, 2, 3]
+        let perms = small.permutations()
+        appendResult("排列组合 [1,2,3].permutations() 共 \(perms.count) 种: \(perms.prefix(6).map { "\($0)" }.joined(separator: ", "))")
+
+        let subs = small.subsets()
+        appendResult("子集 [1,2,3].subsets() 共 \(subs.count) 个: \(subs.map { "\($0)" }.joined(separator: ", "))")
+
+        let chunks = nums.chunked(into: 3)
+        appendResult("分块 chunked(into: 3): \(chunks)")
+
+        let safeVal = nums.object(atSafeIndex: 2)
+        let safeNil = nums.object(atSafeIndex: 100)
+        appendResult("安全下标 object(atSafeIndex: 2) = \(safeVal.map { "\($0)" } ?? "nil"), object(atSafeIndex: 100) = \(safeNil.map { "\($0)" } ?? "nil")")
+
+        updatePreview(
+            image: NSImage(systemSymbolName: "list.bullet.rectangle.fill", accessibilityDescription: nil)?.tintedImage(withColor: .systemOrange),
+            title: "Array 扩展演示完成",
+            details: "已展示 removingDuplicates / permutations / subsets / chunked / safe subscript 五项能力。"
+        )
+    }
+
+    @objc private func testStringExtensions() {
+        appendResult("=== NSString+Dejal 扩展测试 ===")
+
+        let sample = "Hello TFYSwiftMacOSAppKit"
+        appendResult("原始字符串: \(sample)")
+        appendResult("sha256 (CryptoKit): \(sample.sha256)")
+        appendResult("sha256String (CC): \(sample.sha256String ?? "nil")")
+        appendResult("sha1String: \(sample.sha1String ?? "nil")")
+        appendResult("shortHash: \(sample.shortHash)")
+        appendResult("base64Encoded: \(sample.base64Encoded)")
+        appendResult("urlEncoded: \(sample.urlEncoded)")
+        appendResult("isBlank: \(sample.isBlank), \" \".isBlank: \(" ".isBlank)")
+
+        let currentTime = String.getCurrentTime()
+        appendResult("getCurrentTime(): \(currentTime)")
+        appendResult("getCurrentTimestamp(): \(String.getCurrentTimestamp())")
+        appendResult("getCurrentTimestamp(ms): \(String.getCurrentTimestamp(isMilliseconds: true))")
+
+        let a = "kitten"
+        let b = "sitting"
+        appendResult("levenshteinDistance(\"\(a)\", \"\(b)\"): \(a.levenshteinDistance(to: b))")
+
+        let email = "test@example.com"
+        appendResult("isValidEmail(\"\(email)\"): \(email.isValidEmail)")
+
+        updatePreview(
+            image: NSImage(systemSymbolName: "textformat.abc", accessibilityDescription: nil)?.tintedImage(withColor: .systemPurple),
+            title: "字符串扩展演示完成",
+            details: "已展示 sha256/sha1/base64/url编码/时间获取/编辑距离等 String+Dejal 能力。"
+        )
     }
 }

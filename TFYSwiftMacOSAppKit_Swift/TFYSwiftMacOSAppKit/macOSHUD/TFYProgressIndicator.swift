@@ -24,12 +24,12 @@ public enum TFYProgressIndicatorSize {
 
 public class TFYProgressIndicator: NSView {
     // MARK: - Properties
-    private(set) var progressIndicator: NSProgressIndicator
+    public private(set) var progressIndicator: NSProgressIndicator
     private var style: TFYProgressIndicatorStyle = .spinning
     private var size: TFYProgressIndicatorSize = .regular
     private var isAnimating: Bool = false
     
-    var tintColor: NSColor? {
+    public var tintColor: NSColor? {
         didSet {
             if let color = tintColor {
                 setColor(color)
@@ -37,26 +37,26 @@ public class TFYProgressIndicator: NSView {
         }
     }
     
-    var progress: Double = 0.0 {
+    public var progress: Double = 0.0 {
         didSet {
             updateProgress()
         }
     }
     
-    var isIndeterminate: Bool = true {
+    public var isIndeterminate: Bool = true {
         didSet {
             updateIndeterminateState()
         }
     }
     
     // MARK: - Initialization
-    override init(frame: NSRect) {
+    public override init(frame: NSRect) {
         progressIndicator = NSProgressIndicator(frame: .zero)
         super.init(frame: frame)
         setupProgressIndicator()
     }
     
-    required init?(coder: NSCoder) {
+    public required init?(coder: NSCoder) {
         progressIndicator = NSProgressIndicator(frame: .zero)
         super.init(coder: coder)
         setupProgressIndicator()
@@ -83,7 +83,7 @@ public class TFYProgressIndicator: NSView {
     }
     
     // MARK: - Public Methods
-    func setStyle(_ style: TFYProgressIndicatorStyle) {
+    public func setStyle(_ style: TFYProgressIndicatorStyle) {
         self.style = style
         
         switch style {
@@ -99,7 +99,7 @@ public class TFYProgressIndicator: NSView {
         }
     }
     
-    func setSize(_ size: TFYProgressIndicatorSize) {
+    public func setSize(_ size: TFYProgressIndicatorSize) {
         self.size = size
         
         let sizeValue: CGFloat
@@ -135,8 +135,19 @@ public class TFYProgressIndicator: NSView {
         ])
     }
     
-    func setColor(_ color: NSColor) {
-        // Method 1: Using Core Image filter (only apply when available)
+    public func setColor(_ color: NSColor) {
+        // Primary: clear any existing filters, apply appearance tinting
+        progressIndicator.contentFilters = []
+        progressIndicator.layer?.backgroundColor = NSColor.clear.cgColor
+        
+        // Use appearance-based tinting as the simpler, more reliable approach
+        if let brightness = color.usingColorSpace(.sRGB)?.brightnessComponent {
+            progressIndicator.appearance = brightness > 0.5 ?
+                NSAppearance(named: .aqua) :
+                NSAppearance(named: .darkAqua)
+        }
+        
+        // Fallback: CIColorMonochrome filter for precise color matching
         if let colorFilter = CIFilter(name: "CIColorMonochrome") {
             colorFilter.setDefaults()
             colorFilter.setValue(CIColor(color: color), forKey: "inputColor")
@@ -144,24 +155,13 @@ public class TFYProgressIndicator: NSView {
             progressIndicator.contentFilters = [colorFilter]
         }
         
-        // Method 2: Set layer properties
-        progressIndicator.layer?.backgroundColor = NSColor.clear.cgColor
-        
-        // Method 3: Set appearance based on color brightness
-        if let brightness = color.usingColorSpace(.sRGB)?.brightnessComponent {
-            progressIndicator.appearance = brightness > 0.5 ?
-                NSAppearance(named: .aqua) :
-                NSAppearance(named: .darkAqua)
-        }
-        
-        // Method 4: Custom drawing for determinate style
         if style == .determinate {
             progressIndicator.layer?.borderColor = color.cgColor
             progressIndicator.layer?.borderWidth = 1.0
         }
     }
     
-    func setProgress(_ progress: Double, animated: Bool = true) {
+    public func setProgress(_ progress: Double, animated: Bool = true) {
         self.progress = max(0.0, min(1.0, progress))
         
         if animated {
@@ -175,7 +175,7 @@ public class TFYProgressIndicator: NSView {
         }
     }
     
-    func startAnimation() {
+    public func startAnimation() {
         guard !isAnimating else { return }
         
         DispatchQueue.main.async { [weak self] in
@@ -184,7 +184,7 @@ public class TFYProgressIndicator: NSView {
         }
     }
     
-    func stopAnimation() {
+    public func stopAnimation() {
         guard isAnimating else { return }
         
         DispatchQueue.main.async { [weak self] in
@@ -193,7 +193,7 @@ public class TFYProgressIndicator: NSView {
         }
     }
     
-    func reset() {
+    public func reset() {
         stopAnimation()
         setProgress(0.0, animated: false)
     }
@@ -210,7 +210,7 @@ public class TFYProgressIndicator: NSView {
     }
     
     // MARK: - Convenience Methods
-    func configure(style: TFYProgressIndicatorStyle, size: TFYProgressIndicatorSize, color: NSColor? = nil) {
+    public func configure(style: TFYProgressIndicatorStyle, size: TFYProgressIndicatorSize, color: NSColor? = nil) {
         setStyle(style)
         setSize(size)
         if let color = color {
@@ -218,17 +218,17 @@ public class TFYProgressIndicator: NSView {
         }
     }
     
-    func showProgress(_ progress: Double, animated: Bool = true) {
+    public func showProgress(_ progress: Double, animated: Bool = true) {
         setStyle(.determinate)
         setProgress(progress, animated: animated)
     }
     
-    func showSpinning() {
+    public func showSpinning() {
         setStyle(.spinning)
         startAnimation()
     }
     
-    func showIndeterminate() {
+    public func showIndeterminate() {
         setStyle(.indeterminate)
         startAnimation()
     }

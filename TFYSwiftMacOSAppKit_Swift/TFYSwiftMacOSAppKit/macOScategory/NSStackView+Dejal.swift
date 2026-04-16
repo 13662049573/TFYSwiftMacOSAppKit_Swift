@@ -75,4 +75,83 @@ public extension NSStackView {
         stackView.distribution = distribution
         return stackView
     }
+
+    /// 安全地在指定位置插入 arranged subview（自动钳制索引）
+    /// - Parameters:
+    ///   - view: 待插入视图
+    ///   - index: 插入位置
+    func insertArrangedSubviewSafely(_ view: NSView, at index: Int) {
+        let clampedIndex = min(max(index, 0), arrangedSubviews.count)
+        insertArrangedSubview(view, at: clampedIndex)
+    }
+
+    /// 替换指定位置的 arranged subview
+    /// - Parameters:
+    ///   - index: 替换位置
+    ///   - newView: 新视图
+    func replaceArrangedSubview(at index: Int, with newView: NSView) {
+        guard index < arrangedSubviews.count else { return }
+        let oldView = arrangedSubviews[index]
+        insertArrangedSubview(newView, at: index)
+        removeArrangedSubview(oldView)
+        oldView.removeFromSuperview()
+    }
+
+    /// 设置边距
+    /// - Parameter insets: 边距值
+    func setEdgeInsets(_ insets: NSEdgeInsets) {
+        edgeInsets = insets
+    }
+
+    /// 设置统一边距
+    /// - Parameter value: 边距值
+    func setUniformPadding(_ value: CGFloat) {
+        edgeInsets = NSEdgeInsets(top: value, left: value, bottom: value, right: value)
+    }
+
+    /// 添加分隔视图
+    /// - Parameters:
+    ///   - color: 分隔线颜色
+    ///   - thickness: 分隔线厚度
+    func addSeparator(color: NSColor = .separatorColor, thickness: CGFloat = 1) {
+        let separator = NSView()
+        separator.wantsLayer = true
+        separator.layer?.backgroundColor = color.cgColor
+        addArrangedSubview(separator)
+        if orientation == .vertical {
+            separator.translatesAutoresizingMaskIntoConstraints = false
+            separator.heightAnchor.constraint(equalToConstant: thickness).isActive = true
+        } else {
+            separator.translatesAutoresizingMaskIntoConstraints = false
+            separator.widthAnchor.constraint(equalToConstant: thickness).isActive = true
+        }
+    }
+
+    /// 添加弹性空间
+    /// - Parameter priority: 内容拥抱优先级
+    func addFlexibleSpace(priority: NSLayoutConstraint.Priority = .defaultLow) {
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(priority, for: orientation == .vertical ? .vertical : .horizontal)
+        addArrangedSubview(spacer)
+    }
+
+    /// 添加固定间距
+    /// - Parameter spacing: 间距值
+    func addFixedSpace(_ spacing: CGFloat) {
+        let spacer = NSView()
+        spacer.translatesAutoresizingMaskIntoConstraints = false
+        addArrangedSubview(spacer)
+        if orientation == .vertical {
+            spacer.heightAnchor.constraint(equalToConstant: spacing).isActive = true
+            spacer.widthAnchor.constraint(equalToConstant: 0).isActive = true
+        } else {
+            spacer.widthAnchor.constraint(equalToConstant: spacing).isActive = true
+            spacer.heightAnchor.constraint(equalToConstant: 0).isActive = true
+        }
+    }
+
+    /// 当前可见 arranged subviews
+    var visibleArrangedSubviews: [NSView] {
+        arrangedSubviews.filter { !$0.isHidden }
+    }
 }

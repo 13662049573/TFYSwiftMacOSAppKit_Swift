@@ -62,6 +62,10 @@ public class TFYSwiftTimer: NSObject {
     private let lifecycleLock = NSLock()
     private var dispatchSourceLifecycle: DispatchSourceLifecycle = .suspended
     
+    /// Lock protecting `state`, `handler`, `isRunning`, `startDate`, and `pauseDate`
+    /// to guard against concurrent access from the timer queue and caller threads.
+    private let stateLock = NSLock()
+    
     /// 是否正在运行
     private var isRunning = false
     
@@ -169,8 +173,12 @@ public class TFYSwiftTimer: NSObject {
     
     /// 立即触发定时器
     public func fire() {
-        guard state != .cancelled else { return }
-        handler(self)
+        stateLock.lock()
+        guard state != .cancelled else { stateLock.unlock(); return }
+        let currentHandler = handler
+        stateLock.unlock()
+        
+        currentHandler(self)
         if !repeats {
             finishTimer()
             cancelDispatchSourceIfNeeded()
@@ -179,63 +187,80 @@ public class TFYSwiftTimer: NSObject {
     
     /// 启动定时器
     public func start() throws {
-        guard state != .running else {
+        stateLock.lock()
+        if state == .running {
+            stateLock.unlock()
             throw TFYTimerError.timerAlreadyRunning
         }
-        guard state != .cancelled else {
+        if state == .cancelled {
+            stateLock.unlock()
             throw TFYTimerError.timerCancelled
         }
-        
-        resumeDispatchSourceIfNeeded()
-        isRunning = true
         state = .running
+        isRunning = true
         startDate = Date()
         pauseDate = nil
+        stateLock.unlock()
+        
+        resumeDispatchSourceIfNeeded()
     }
     
     /// 暂停定时器
     public func pause() throws {
+        stateLock.lock()
         guard state == .running else {
+            stateLock.unlock()
             throw TFYTimerError.timerNotRunning
         }
+        state = .paused
+        isRunning = false
+        pauseDate = Date()
+        stateLock.unlock()
         
         suspendDispatchSourceIfNeeded()
-        isRunning = false
-        state = .paused
-        pauseDate = Date()
     }
     
     /// 恢复定时器
     public func resume() throws {
+        stateLock.lock()
         guard state == .paused else {
+            stateLock.unlock()
             throw TFYTimerError.timerNotRunning
         }
+        state = .running
+        isRunning = true
+        pauseDate = nil
+        stateLock.unlock()
         
         resumeDispatchSourceIfNeeded()
-        isRunning = true
-        state = .running
-        pauseDate = nil
     }
     
     /// 停止定时器
     public func stop() {
-        guard state != .cancelled else { return }
-        if state == .running {
-            suspendDispatchSourceIfNeeded()
-        }
+        stateLock.lock()
+        guard state != .cancelled else { stateLock.unlock(); return }
+        let wasRunning = state == .running
         isRunning = false
         state = .idle
         startDate = nil
         pauseDate = nil
+        stateLock.unlock()
+        
+        if wasRunning {
+            suspendDispatchSourceIfNeeded()
+        }
     }
     
     /// 取消定时器
     public func cancel() {
-        cancelDispatchSourceIfNeeded()
+        stateLock.lock()
         isRunning = false
         state = .cancelled
         startDate = nil
         pauseDate = nil
+        stateLock.unlock()
+        
+        cancelDispatchSourceIfNeeded()
     }
     
     // MARK: - Configuration Methods
@@ -251,9 +276,9 @@ public class TFYSwiftTimer: NSObject {
     /// 重新设置处理器
     /// - Parameter handler: 新的处理器闭包
     public func rescheduleHandler(handler: @escaping SwiftTimerHandler) {
-        self.handler = handler
+        withStateLock { self.handler = handler }
         internalTimer.setEventHandler { [weak self] in
-            self?.handler(self)
+            self?.handleTimerFired()
         }
     }
     
@@ -261,7 +286,7 @@ public class TFYSwiftTimer: NSObject {
     
     /// 检查定时器是否正在运行
     public var isActive: Bool {
-        return state == .running
+        return withStateLock { state == .running }
     }
     
     /// 获取剩余时间（仅适用于单次定时器）
@@ -280,8 +305,12 @@ public class TFYSwiftTimer: NSObject {
     }
     
     private func handleTimerFired() {
-        guard state != .cancelled else { return }
-        handler(self)
+        stateLock.lock()
+        guard state != .cancelled else { stateLock.unlock(); return }
+        let currentHandler = handler
+        stateLock.unlock()
+        
+        currentHandler(self)
         if !repeats {
             finishTimer()
             cancelDispatchSourceIfNeeded()
@@ -289,14 +318,22 @@ public class TFYSwiftTimer: NSObject {
     }
     
     private func finishTimer() {
-        isRunning = false
-        state = .finished
-        pauseDate = nil
+        withStateLock {
+            isRunning = false
+            state = .finished
+            pauseDate = nil
+        }
     }
     
     private func withLifecycleLock<T>(_ work: () -> T) -> T {
         lifecycleLock.lock()
         defer { lifecycleLock.unlock() }
+        return work()
+    }
+    
+    private func withStateLock<T>(_ work: () -> T) -> T {
+        stateLock.lock()
+        defer { stateLock.unlock() }
         return work()
     }
     

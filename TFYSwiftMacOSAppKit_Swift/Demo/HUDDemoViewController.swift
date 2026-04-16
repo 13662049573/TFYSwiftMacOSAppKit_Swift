@@ -257,6 +257,9 @@ class HUDDemoViewController: NSViewController {
         
         let errorAnimButton = createButton(title: "错误动画", action: #selector(showErrorAnimation), frame: NSRect(x: 440, y: 390, width: 120, height: 35))
         containerView.addSubview(errorAnimButton)
+
+        let springButton = createButton(title: "弹簧动画", action: #selector(showSpringAnimation), frame: NSRect(x: 580, y: 390, width: 120, height: 35))
+        containerView.addSubview(springButton)
         
         // 进度视图样式演示
         let ringProgressButton = createButton(title: "环形进度", action: #selector(showRingProgress), frame: NSRect(x: 20, y: 435, width: 120, height: 35))
@@ -833,22 +836,35 @@ class HUDDemoViewController: NSViewController {
     }
     
     private func createCustomImage() -> NSImage {
-        let image = NSImage(size: NSSize(width: 32, height: 32))
-        image.lockFocus()
-        
-        // 创建一个简单的自定义图像
-        let rect = NSRect(x: 4, y: 4, width: 24, height: 24)
-        let path = NSBezierPath(ovalIn: rect)
-        NSColor.systemBlue.setFill()
-        path.fill()
-        
-        // 添加一些装饰
-        let innerRect = NSRect(x: 8, y: 8, width: 16, height: 16)
-        let innerPath = NSBezierPath(ovalIn: innerRect)
-        NSColor.white.setFill()
-        innerPath.fill()
-        
-        image.unlockFocus()
-        return image
+        NSImage(size: NSSize(width: 32, height: 32), flipped: false) { rect in
+            let path = NSBezierPath(ovalIn: rect.insetBy(dx: 4, dy: 4))
+            NSColor.systemBlue.setFill()
+            path.fill()
+            let innerPath = NSBezierPath(ovalIn: rect.insetBy(dx: 8, dy: 8))
+            NSColor.white.setFill()
+            innerPath.fill()
+            return true
+        }
+    }
+
+    @objc private func showSpringAnimation() {
+        hideCurrentHUD()
+
+        currentHUD = TFYProgressMacOSHUD.showHUD(addedTo: view)
+        currentHUD?.mode = .customView
+        currentHUD?.position = getCurrentPosition()
+        currentHUD?.statusLabel.stringValue = "弹簧动画演示 (springDamping + velocity)"
+        configureCurrentHUD()
+        currentHUD?.show()
+
+        if let animation = animationEnhancer, let hud = currentHUD {
+            animation.springDamping = 8.0
+            animation.initialSpringVelocity = 15.0
+            animation.addSuccessAnimation(to: hud.containerView)
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            self.currentHUD?.hide()
+        }
     }
 } 

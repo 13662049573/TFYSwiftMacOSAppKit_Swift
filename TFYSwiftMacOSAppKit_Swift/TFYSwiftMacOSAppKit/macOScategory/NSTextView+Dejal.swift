@@ -15,6 +15,8 @@ private enum TFYTextViewAssociatedKeys {
     static var selectionChangeHandler: UInt8 = 0
     static var placeholder: UInt8 = 0
     static var observerBag: UInt8 = 0
+    static var placeholderLayer: UInt8 = 0
+    static var placeholderObserver: UInt8 = 0
 }
 
 private final class TFYTextViewObserverBag {
@@ -142,8 +144,12 @@ public extension NSTextView {
     func setupAutomaticLineWrapping() {
         guard let textContainer else { return }
         textContainer.widthTracksTextView = true
-        textContainer.containerSize = CGSize(width: bounds.width, height: CGFloat.greatestFiniteMagnitude)
+        let containerWidth = bounds.width > 0 ? bounds.width : CGFloat.greatestFiniteMagnitude
+        textContainer.containerSize = CGSize(width: containerWidth, height: CGFloat.greatestFiniteMagnitude)
         textContainer.lineBreakMode = .byWordWrapping
+        isVerticallyResizable = true
+        isHorizontallyResizable = false
+        maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
     }
 
     @objc private func handleTextClick(_ sender: NSClickGestureRecognizer) {
@@ -224,10 +230,17 @@ public extension NSTextView {
 
     func setWraps(_ wraps: Bool) {
         textContainer?.widthTracksTextView = wraps
+        isHorizontallyResizable = !wraps
+        isVerticallyResizable = true
         if wraps {
-            textContainer?.containerSize = CGSize(width: bounds.width, height: CGFloat.greatestFiniteMagnitude)
+            let containerWidth = bounds.width > 0 ? bounds.width : CGFloat.greatestFiniteMagnitude
+            textContainer?.containerSize = CGSize(width: containerWidth, height: CGFloat.greatestFiniteMagnitude)
             textContainer?.lineBreakMode = .byWordWrapping
+        } else {
+            textContainer?.containerSize = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         }
+        maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        minSize = NSSize(width: 0, height: 0)
     }
 
     func setLineSpacing(_ lineSpacing: CGFloat) {
@@ -267,7 +280,7 @@ public extension NSTextView {
     }
 
     func setCursorPosition(_ position: Int) {
-        let safePosition = max(0, min(position, string.count))
+        let safePosition = max(0, min(position, (string as NSString).length))
         setSelectedRange(NSRange(location: safePosition, length: 0))
     }
 
@@ -277,7 +290,7 @@ public extension NSTextView {
     }
 
     func selectAllText() {
-        setSelectedRange(NSRange(location: 0, length: string.count))
+        setSelectedRange(NSRange(location: 0, length: (string as NSString).length))
     }
 
     func deselectText() {
@@ -300,14 +313,14 @@ public extension NSTextView {
         let range = selectedRange()
         let attributedString = NSAttributedString(string: text)
         textStorage?.insert(attributedString, at: range.location)
-        setSelectedRange(NSRange(location: range.location + text.count, length: 0))
+        setSelectedRange(NSRange(location: range.location + (text as NSString).length, length: 0))
     }
 
     func replaceSelectedText(_ text: String) {
         let range = selectedRange()
         let attributedString = NSAttributedString(string: text)
         textStorage?.replaceCharacters(in: range, with: attributedString)
-        setSelectedRange(NSRange(location: range.location, length: text.count))
+        setSelectedRange(NSRange(location: range.location, length: (text as NSString).length))
     }
 
     func deleteSelectedText() {
@@ -357,13 +370,18 @@ public extension NSTextView {
     }
 
     func replaceAllText(_ searchText: String, with replaceText: String, options: NSString.CompareOptions = []) -> Int {
+        guard !searchText.isEmpty else { return 0 }
+        let searchLen = (searchText as NSString).length
+        let replaceLen = (replaceText as NSString).length
         var count = 0
-        var range = findText(searchText, options: options)
-        while range.location != NSNotFound {
-            let attributedString = NSAttributedString(string: replaceText)
-            textStorage?.replaceCharacters(in: range, with: attributedString)
+        var searchStart = 0
+        while searchStart + searchLen <= (string as NSString).length {
+            let searchRange = NSRange(location: searchStart, length: (string as NSString).length - searchStart)
+            let foundRange = (string as NSString).range(of: searchText, options: options, range: searchRange)
+            guard foundRange.location != NSNotFound else { break }
+            textStorage?.replaceCharacters(in: foundRange, with: NSAttributedString(string: replaceText))
             count += 1
-            range = findText(searchText, options: options)
+            searchStart = foundRange.location + replaceLen
         }
         return count
     }
@@ -439,11 +457,52 @@ public extension NSTextView {
 
     func setPlaceholder(_ placeholder: String) {
         objc_setAssociatedObject(self, &TFYTextViewAssociatedKeys.placeholder, placeholder, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        setupPlaceholderLayer(placeholder)
         needsDisplay = true
     }
 
     var placeholder: String? {
         objc_getAssociatedObject(self, &TFYTextViewAssociatedKeys.placeholder) as? String
+    }
+
+    private func setupPlaceholderLayer(_ text: String) {
+        if let existing = objc_getAssociatedObject(self, &TFYTextViewAssociatedKeys.placeholderLayer) as? CATextLayer {
+            existing.removeFromSuperlayer()
+        }
+        wantsLayer = true
+        let textLayer = CATextLayer()
+        let viewFont = font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        textLayer.string = text
+        textLayer.font = viewFont
+        textLayer.fontSize = viewFont.pointSize
+        textLayer.foregroundColor = NSColor.placeholderTextColor.cgColor
+        textLayer.contentsScale = window?.backingScaleFactor ?? 2.0
+        textLayer.frame = CGRect(x: 5, y: 5, width: max(bounds.width - 10, 0), height: max(bounds.height - 10, 0))
+        textLayer.isWrapped = true
+        textLayer.alignmentMode = .left
+        layer?.addSublayer(textLayer)
+        objc_setAssociatedObject(self, &TFYTextViewAssociatedKeys.placeholderLayer, textLayer, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        updatePlaceholderVisibility()
+        setupPlaceholderObserver()
+    }
+
+    private func updatePlaceholderVisibility() {
+        guard let textLayer = objc_getAssociatedObject(self, &TFYTextViewAssociatedKeys.placeholderLayer) as? CATextLayer else { return }
+        textLayer.isHidden = !string.isEmpty
+    }
+
+    private func setupPlaceholderObserver() {
+        if let existing = objc_getAssociatedObject(self, &TFYTextViewAssociatedKeys.placeholderObserver) as? NSObjectProtocol {
+            NotificationCenter.default.removeObserver(existing)
+        }
+        let observer = NotificationCenter.default.addObserver(
+            forName: NSText.didChangeNotification,
+            object: self,
+            queue: .main
+        ) { [weak self] _ in
+            self?.updatePlaceholderVisibility()
+        }
+        objc_setAssociatedObject(self, &TFYTextViewAssociatedKeys.placeholderObserver, observer, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
 
     func setMinHeight(_ minHeight: CGFloat) {

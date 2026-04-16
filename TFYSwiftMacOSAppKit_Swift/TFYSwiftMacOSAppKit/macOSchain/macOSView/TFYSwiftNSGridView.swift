@@ -41,7 +41,7 @@ public extension Chain where Base: NSGridView {
     }
     
     @discardableResult
-    func detachesHiddenViews(_ hRange:NSRange,vRange:NSRange) -> Self {
+    func mergeCells(inHorizontalRange hRange: NSRange, verticalRange vRange: NSRange) -> Self {
         base.mergeCells(inHorizontalRange: hRange, verticalRange: vRange)
         return self
     }

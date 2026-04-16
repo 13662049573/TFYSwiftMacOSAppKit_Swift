@@ -300,13 +300,11 @@ public class TFYStitchImage: NSObject {
     ) -> Bool {
         // 检查图片数组
         guard !images.isEmpty else {
-            print("TFYStitchImage: 图片数组为空")
             return false
         }
         
         // 检查尺寸
         guard size.width > 0, size.height > 0 else {
-            print("TFYStitchImage: 无效的尺寸参数")
             return false
         }
         
@@ -315,7 +313,6 @@ public class TFYStitchImage: NSObject {
               config.maxImageCount >= 0,
               config.itemsPerPage >= 0,
               config.imageQuality >= 0 && config.imageQuality <= 1 else {
-            print("TFYStitchImage: 无效的配置参数")
             return false
         }
         
@@ -364,9 +361,6 @@ public class TFYStitchImage: NSObject {
             // 处理图片数量限制
             let validImages = config.maxImageCount > 0 ? 
                 Array(images.prefix(config.maxImageCount)) : images
-            if config.maxImageCount > 0 && images.count > config.maxImageCount {
-                print("TFYStitchImage: 图片数量超出最大限制，已截断到\(config.maxImageCount)张")
-            }
             
             // 是否需要分页
             let resultImages: [NSImage]
@@ -486,14 +480,9 @@ public class TFYStitchImage: NSObject {
         )
         
         // 绘制图片
-        print("TFYStitchImage: 开始绘制 \(images.count) 张图片")
         for (index, image) in images.enumerated() {
-            guard index < frames.count else { 
-                print("TFYStitchImage: 图片索引 \(index) 超出帧数组范围 \(frames.count)")
-                break 
-            }
+            guard index < frames.count else { break }
             let frame = frames[index]
-            print("TFYStitchImage: 绘制第 \(index + 1) 张图片，帧: \(frame)")
             
             // 绘制阴影
             if config.enableShadow {
@@ -530,7 +519,6 @@ public class TFYStitchImage: NSObject {
                 )
             }
         }
-        print("TFYStitchImage: 图片绘制完成")
         
         NSGraphicsContext.restoreGraphicsState()
         
@@ -554,7 +542,6 @@ public class TFYStitchImage: NSObject {
         
         // 验证可用区域
         guard availableSize.width > 0, availableSize.height > 0 else {
-            print("TFYStitchImage: 可用区域无效，返回空数组")
             return []
         }
         

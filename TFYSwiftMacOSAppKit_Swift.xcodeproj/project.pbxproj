@@ -116,6 +116,11 @@
 		3D04F8A62CDEEF4E009493BF /* NSSplitView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8A52CDEEF4E009493BF /* NSSplitView+Dejal.swift */; };
 		3D04F8AC2CDF2E51009493BF /* NSPopover+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8AB2CDF2E51009493BF /* NSPopover+Dejal.swift */; };
 		3D04F8B12CDF66E7009493BF /* NSGestureRecognizer+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D04F8B02CDF66E7009493BF /* NSGestureRecognizer+Dejal.swift */; };
+		8496AC102F90CAD50052E441 /* NSScrollView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496AC0F2F90CAD50052E441 /* NSScrollView+Dejal.swift */; };
+		8496AC122F90CB130052E441 /* NSWindow+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496AC112F90CB130052E441 /* NSWindow+Dejal.swift */; };
+		8496AC142F90CB400052E441 /* NSStackView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496AC132F90CB400052E441 /* NSStackView+Dejal.swift */; };
+		8496AC162F90CB6A0052E441 /* NSClipView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496AC152F90CB6A0052E441 /* NSClipView+Dejal.swift */; };
+		8496AC182F90CB8A0052E441 /* NSCollectionView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496AC172F90CB8A0052E441 /* NSCollectionView+Dejal.swift */; };
 		84CB83E52E376C1B005B1152 /* TFYSwiftCacheKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CB83E42E376C1B005B1152 /* TFYSwiftCacheKit.swift */; };
 		84CB83E92E376D02005B1152 /* TFYStitchImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CB83E82E376D02005B1152 /* TFYStitchImage.swift */; };
 /* End PBXBuildFile section */
@@ -232,6 +237,11 @@
 		3D04F8A52CDEEF4E009493BF /* NSSplitView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSSplitView+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F8AB2CDF2E51009493BF /* NSPopover+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSPopover+Dejal.swift"; sourceTree = "<group>"; };
 		3D04F8B02CDF66E7009493BF /* NSGestureRecognizer+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSGestureRecognizer+Dejal.swift"; sourceTree = "<group>"; };
+		8496AC0F2F90CAD50052E441 /* NSScrollView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSScrollView+Dejal.swift"; sourceTree = "<group>"; };
+		8496AC112F90CB130052E441 /* NSWindow+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSWindow+Dejal.swift"; sourceTree = "<group>"; };
+		8496AC132F90CB400052E441 /* NSStackView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSStackView+Dejal.swift"; sourceTree = "<group>"; };
+		8496AC152F90CB6A0052E441 /* NSClipView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSClipView+Dejal.swift"; sourceTree = "<group>"; };
+		8496AC172F90CB8A0052E441 /* NSCollectionView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSCollectionView+Dejal.swift"; sourceTree = "<group>"; };
 		84CB83E42E376C1B005B1152 /* TFYSwiftCacheKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCacheKit.swift; sourceTree = "<group>"; };
 		84CB83E82E376D02005B1152 /* TFYStitchImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStitchImage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -286,6 +296,11 @@
 				3D04F8AB2CDF2E51009493BF /* NSPopover+Dejal.swift */,
 				3D04F8B02CDF66E7009493BF /* NSGestureRecognizer+Dejal.swift */,
 				36D89F9A2CE6457B00BD1A5D /* NSTextView+Dejal.swift */,
+				8496AC0F2F90CAD50052E441 /* NSScrollView+Dejal.swift */,
+				8496AC112F90CB130052E441 /* NSWindow+Dejal.swift */,
+				8496AC132F90CB400052E441 /* NSStackView+Dejal.swift */,
+				8496AC152F90CB6A0052E441 /* NSClipView+Dejal.swift */,
+				8496AC172F90CB8A0052E441 /* NSCollectionView+Dejal.swift */,
 			);
 			path = macOScategory;
 			sourceTree = "<group>";
@@ -586,9 +601,11 @@
 				3D04F80D2CDCA31F009493BF /* TFYSwiftNSSlider.swift in Sources */,
 				3D04F80E2CDCA31F009493BF /* TFYSwiftNSView.swift in Sources */,
 				3D04F8AC2CDF2E51009493BF /* NSPopover+Dejal.swift in Sources */,
+				8496AC182F90CB8A0052E441 /* NSCollectionView+Dejal.swift in Sources */,
 				3D04F8A42CDEEA40009493BF /* NSMenu+Dejal.swift in Sources */,
 				3D04F84A2CDCB269009493BF /* TFYSwiftCATextLayer.swift in Sources */,
 				18C7EDA82CEDC00B00914927 /* TFYStatusItemNotifications.swift in Sources */,
+				8496AC122F90CB130052E441 /* NSWindow+Dejal.swift in Sources */,
 				18C7EDA92CEDC00B00914927 /* TFYStatusItemError.swift in Sources */,
 				84CB83E92E376D02005B1152 /* TFYStitchImage.swift in Sources */,
 				3D04F80F2CDCA31F009493BF /* TFYSwiftNSTextField.swift in Sources */,
@@ -605,6 +622,7 @@
 				3D04F8182CDCA31F009493BF /* TFYSwiftNSTabView.swift in Sources */,
 				3D04F8312CDCA3A0009493BF /* TFYSwiftNSGestureRecognizer.swift in Sources */,
 				3636D18C2CECE939002AA074 /* TFYProgressView.swift in Sources */,
+				8496AC102F90CAD50052E441 /* NSScrollView+Dejal.swift in Sources */,
 				3D04F8192CDCA31F009493BF /* TFYSwiftNSTableRowView.swift in Sources */,
 				3D04F81A2CDCA31F009493BF /* TFYSwiftNSProgressIndicator.swift in Sources */,
 				36EC0CBF2CDCF032003EBAD5 /* TFYStatusItemWindow.swift in Sources */,
@@ -624,6 +642,7 @@
 				3D04F8222CDCA31F009493BF /* TFYSwiftNSTokenField.swift in Sources */,
 				3636D1942CECE991002AA074 /* TFYThemeManager.swift in Sources */,
 				3D04F8232CDCA31F009493BF /* TFYSwiftNSMatrix.swift in Sources */,
+				8496AC162F90CB6A0052E441 /* NSClipView+Dejal.swift in Sources */,
 				18C7ED9F2CEDAEB300914927 /* Array+Dejal.swift in Sources */,
 				3D04F8242CDCA31F009493BF /* TFYSwiftNSScroller.swift in Sources */,
 				1891C9332CF086E7002DAD89 /* TFYSwiftTextFieldView.swift in Sources */,
@@ -646,6 +665,7 @@
 				3D04F8A02CDEE720009493BF /* CAGradientLayer+Dejal.swift in Sources */,
 				3D04F8382CDCA6F6009493BF /* TFYSwiftNSRotationGestureRecognizer.swift in Sources */,
 				3D04F7582CDA251A009493BF /* TFYSwiftSecureTextField.swift in Sources */,
+				8496AC142F90CB400052E441 /* NSStackView+Dejal.swift in Sources */,
 				3D04F8632CDDAE09009493BF /* NSControl+Dejal.swift in Sources */,
 				36EC0CC52CDCF457003EBAD5 /* TFYStatusItem.swift in Sources */,
 				84CB83E52E376C1B005B1152 /* TFYSwiftCacheKit.swift in Sources */,

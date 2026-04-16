@@ -8,90 +8,183 @@
 
 import Cocoa
 
+private enum TFYButtonAssociatedKeys {
+    static var actionHandler: UInt8 = 0
+}
+
 @MainActor public extension NSControl {
     
     // MARK: - 私有辅助方法
     
-    /// 为文本设置单个属性
-    /// - Parameters:
-    ///   - attributeKey: 属性键
-    ///   - value: 属性值
-    ///   - changeText: 要修改的文本，nil则修改全部
-    ///   - options: 文本匹配选项
-    private func setAttribute(forKey attributeKey: NSAttributedString.Key,
-                            value: Any,
-                            changeText: String? = nil,
-                            options: String.CompareOptions = [.caseInsensitive, .regularExpression]) {
-        let attributedString = NSMutableAttributedString(attributedString: attributedStringValue)
-        let textToSearch = changeText ?? stringValue
-        if let textRange = findTextRange(stringValue, forKeyword: textToSearch, options: options) {
-            attributedString.addAttribute(attributeKey, value: value, range: textRange)
+    private var tfyDefaultMatchOptions: String.CompareOptions {
+        [.caseInsensitive, .regularExpression]
+    }
+    
+    private var tfyBaseAttributedString: NSAttributedString {
+        let current = attributedStringValue
+        if current.length > 0 || stringValue.isEmpty {
+            return current
         }
+        return NSAttributedString(string: stringValue)
+    }
+    
+    private var tfyDefaultFont: NSFont {
+        font ?? .systemFont(ofSize: NSFont.systemFontSize)
+    }
+    
+    private func makeMutableAttributedString() -> NSMutableAttributedString {
+        NSMutableAttributedString(attributedString: tfyBaseAttributedString)
+    }
+    
+    private func fullRange(in attributedString: NSAttributedString) -> NSRange {
+        NSRange(location: 0, length: attributedString.length)
+    }
+    
+    private func matchingRanges(
+        in attributedString: NSAttributedString,
+        changeText: String?,
+        options: String.CompareOptions
+    ) -> [NSRange] {
+        let content = attributedString.string
+        guard !content.isEmpty else { return [] }
+        
+        guard let changeText, !changeText.isEmpty else {
+            return [fullRange(in: attributedString)]
+        }
+        
+        var result: [NSRange] = []
+        var searchStartIndex = content.startIndex
+        
+        while searchStartIndex < content.endIndex,
+              let range = content.range(
+                of: changeText,
+                options: options,
+                range: searchStartIndex..<content.endIndex
+              ) {
+            let nsRange = NSRange(range, in: content)
+            guard nsRange.length > 0 else {
+                searchStartIndex = content.index(after: range.lowerBound)
+                continue
+            }
+            
+            result.append(nsRange)
+            
+            if range.upperBound >= content.endIndex {
+                break
+            }
+            searchStartIndex = range.upperBound
+        }
+        
+        return result
+    }
+    
+    private func updateAttributedString(_ updates: (NSMutableAttributedString) -> Void) {
+        let attributedString = makeMutableAttributedString()
+        updates(attributedString)
         self.attributedStringValue = attributedString
     }
     
-    /// 查找文本范围
-    /// - Parameters:
-    ///   - text: 源文本
-    ///   - keyword: 要查找的关键词
-    ///   - options: 查找选项
-    /// - Returns: 文本范围
-    private func findTextRange(_ text: String,
-                             forKeyword keyword: String,
-                             options: String.CompareOptions) -> NSRange? {
-        if let range = text.range(of: keyword, options: options) {
-            let start = text.distance(from: text.startIndex, to: range.lowerBound)
-            let end = text.distance(from: text.startIndex, to: range.upperBound)
-            return NSRange(location: start, length: end - start)
-        }
-        return nil
+    private func setAttribute(
+        forKey attributeKey: NSAttributedString.Key,
+        value: Any,
+        changeText: String? = nil,
+        options: String.CompareOptions? = nil
+    ) {
+        setAttributes([attributeKey: value], changeText: changeText, options: options ?? tfyDefaultMatchOptions)
     }
     
-    /// 为多段文本设置属性
-    /// - Parameters:
-    ///   - attributeKey: 属性键
-    ///   - value: 属性值数组
-    ///   - changeTexts: 要修改的文本数组
-    ///   - options: 文本匹配选项
-    private func setAttributes(forKey attributeKey: NSAttributedString.Key,
-                             value: [Any],
-                             changeTexts: [String]? = nil,
-                             options: String.CompareOptions = [.caseInsensitive, .regularExpression]) {
-        let attributedString = NSMutableAttributedString(attributedString: attributedStringValue)
-        let textsToSearch = changeTexts ?? [stringValue]
-        let valuesToUse = value
-        let fullLength = stringValue.utf16.count
+    private func setAttributes(
+        forKey attributeKey: NSAttributedString.Key,
+        values: [Any],
+        changeTexts: [String]? = nil,
+        options: String.CompareOptions? = nil
+    ) {
+        guard !values.isEmpty else { return }
         
-        guard fullLength > 0, !valuesToUse.isEmpty else {
-            return
-        }
-        
-        for (index, markContent) in textsToSearch.enumerated() {
-            guard !markContent.isEmpty else { continue }
-            
-            var searchRange = NSRange(location: 0, length: fullLength)
-            
-            while searchRange.location < fullLength,
-                  let rangeBounds = Range(searchRange, in: stringValue),
-                  let range = stringValue.range(of: markContent,
-                                                options: options,
-                                                range: rangeBounds) {
-                
-                let start = stringValue.distance(from: stringValue.startIndex, to: range.lowerBound)
-                let end = stringValue.distance(from: stringValue.startIndex, to: range.upperBound)
-                let nsRange = NSRange(location: start, length: end - start)
-                
-                let value = valuesToUse.indices.contains(index) ? valuesToUse[index] : valuesToUse[0]
-                attributedString.addAttribute(attributeKey, value: value, range: nsRange)
-                
-                let nextLocation = nsRange.upperBound
-                if nextLocation >= fullLength {
-                    break
+        let searchOptions = options ?? tfyDefaultMatchOptions
+        updateAttributedString { attributedString in
+            if let changeTexts, !changeTexts.isEmpty {
+                for (index, text) in changeTexts.enumerated() {
+                    let attributeValue = values[values.indices.contains(index) ? index : 0]
+                    let ranges = matchingRanges(
+                        in: attributedString,
+                        changeText: text,
+                        options: searchOptions
+                    )
+                    for range in ranges {
+                        attributedString.addAttribute(attributeKey, value: attributeValue, range: range)
+                    }
                 }
-                searchRange = NSRange(location: nextLocation, length: fullLength - nextLocation)
+            } else {
+                let range = fullRange(in: attributedString)
+                guard range.length > 0 else { return }
+                attributedString.addAttribute(attributeKey, value: values[0], range: range)
             }
         }
-        self.attributedStringValue = attributedString
+    }
+    
+    private func updateParagraphStyle(
+        changeText: String? = nil,
+        options: String.CompareOptions? = nil,
+        updates: (NSMutableParagraphStyle) -> Void
+    ) {
+        let searchOptions = options ?? tfyDefaultMatchOptions
+        updateAttributedString { attributedString in
+            let ranges = matchingRanges(in: attributedString, changeText: changeText, options: searchOptions)
+            for range in ranges where range.length > 0 {
+                let existingStyle = attributedString.attribute(.paragraphStyle, at: range.location, effectiveRange: nil) as? NSParagraphStyle
+                let style = (existingStyle?.mutableCopy() as? NSMutableParagraphStyle) ?? NSMutableParagraphStyle()
+                if existingStyle == nil {
+                    style.alignment = self.alignment
+                }
+                updates(style)
+                attributedString.addAttribute(.paragraphStyle, value: style, range: range)
+            }
+        }
+    }
+    
+    private func makeSpacerAttributedString(spacing: CGFloat, font: NSFont) -> NSAttributedString {
+        var attributes: [NSAttributedString.Key: Any] = [.font: font]
+        if spacing != 0 {
+            attributes[.kern] = spacing
+        }
+        return NSAttributedString(string: " ", attributes: attributes)
+    }
+    
+    private func makeInlineImageAttachment(image: NSImage, font: NSFont) -> NSAttributedString {
+        let attachment = NSTextAttachment()
+        attachment.image = image
+        
+        let imageHeight = max(font.pointSize, 1)
+        let imageWidth: CGFloat
+        if image.size.height > 0 {
+            imageWidth = max((image.size.width / image.size.height) * imageHeight, 1)
+        } else {
+            imageWidth = imageHeight
+        }
+        
+        let yOffset = (font.capHeight - imageHeight) / 2
+        attachment.bounds = CGRect(x: 0, y: yOffset, width: imageWidth, height: imageHeight)
+        
+        return NSAttributedString(attachment: attachment)
+    }
+    
+    private func appendInlineImages(
+        _ images: [NSImage],
+        to attributedString: NSMutableAttributedString,
+        font: NSFont,
+        spacing: CGFloat,
+        includeTrailingSpacer: Bool
+    ) {
+        guard !images.isEmpty else { return }
+        
+        for (index, image) in images.enumerated() {
+            attributedString.append(makeInlineImageAttachment(image: image, font: font))
+            let shouldAddSpacer = index < images.count - 1 || includeTrailingSpacer
+            if shouldAddSpacer {
+                attributedString.append(makeSpacerAttributedString(spacing: spacing, font: font))
+            }
+        }
     }
     
     // MARK: - 文本样式修改方法
@@ -99,18 +192,59 @@ import Cocoa
     /// 修改字间距
     /// - Parameters:
     ///   - textSpace: 间距值
-    ///   - changeText: 要修改的文本，nil则修改全部
+    ///   - changeText: 要修改的文本，nil 则修改全部
     func changeSpace(with textSpace: CGFloat, changeText: String? = nil) {
         setAttribute(forKey: .kern, value: textSpace, changeText: changeText)
     }
     
     /// 修改行间距
-    /// - Parameter textLineSpace: 行间距值
-    func changeLineSpace(with textLineSpace: CGFloat) {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = textLineSpace
-        paragraphStyle.alignment = alignment
-        setAttribute(forKey: .paragraphStyle, value: paragraphStyle)
+    /// - Parameters:
+    ///   - textLineSpace: 行间距值
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeLineSpace(with textLineSpace: CGFloat, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.lineSpacing = textLineSpace
+        }
+    }
+    
+    /// 修改段落间距
+    /// - Parameters:
+    ///   - paragraphSpacing: 段后间距
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeParagraphSpacing(with paragraphSpacing: CGFloat, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.paragraphSpacing = paragraphSpacing
+        }
+    }
+    
+    /// 修改段前间距
+    /// - Parameters:
+    ///   - paragraphSpacingBefore: 段前间距
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeParagraphSpacingBefore(with paragraphSpacingBefore: CGFloat, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.paragraphSpacingBefore = paragraphSpacingBefore
+        }
+    }
+    
+    /// 修改行高倍数
+    /// - Parameters:
+    ///   - lineHeightMultiple: 行高倍数
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeLineHeightMultiple(with lineHeightMultiple: CGFloat, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.lineHeightMultiple = lineHeightMultiple
+        }
+    }
+    
+    /// 修改文本对齐方式
+    /// - Parameters:
+    ///   - textAlignment: 对齐方式
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeTextAlignment(with textAlignment: NSTextAlignment, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.alignment = textAlignment
+        }
     }
     
     /// 修改字体
@@ -118,7 +252,7 @@ import Cocoa
     ///   - textFonts: 字体数组
     ///   - changeTexts: 要修改的文本数组
     func changeFonts(with textFonts: [NSFont], changeTexts: [String]? = nil) {
-        setAttributes(forKey: .font, value: textFonts, changeTexts: changeTexts)
+        setAttributes(forKey: .font, values: textFonts, changeTexts: changeTexts)
     }
     
     /// 修改文本颜色
@@ -126,7 +260,7 @@ import Cocoa
     ///   - colors: 颜色数组
     ///   - changeTexts: 要修改的文本数组
     func changeColors(with colors: [NSColor], changeTexts: [String]? = nil) {
-        setAttributes(forKey: .foregroundColor, value: colors, changeTexts: changeTexts)
+        setAttributes(forKey: .foregroundColor, values: colors, changeTexts: changeTexts)
     }
     
     /// 修改背景颜色
@@ -144,6 +278,11 @@ import Cocoa
         setAttribute(forKey: .ligature, value: textLigature, changeText: changeText)
     }
     
+    /// 修改连字属性
+    func changeLigature(enabled: Bool, changeText: String? = nil) {
+        changeLigature(with: NSNumber(value: enabled ? 1 : 0), changeText: changeText)
+    }
+    
     /// 修改字距调整
     func changeKern(with textKern: NSNumber, changeText: String? = nil) {
         setAttribute(forKey: .kern, value: textKern, changeText: changeText)
@@ -154,6 +293,11 @@ import Cocoa
         setAttribute(forKey: .strikethroughStyle, value: textStrikethroughStyle, changeText: changeText)
     }
     
+    /// 修改删除线样式
+    func changeStrikethroughStyle(with style: NSUnderlineStyle, changeText: String? = nil) {
+        changeStrikethroughStyle(with: NSNumber(value: style.rawValue), changeText: changeText)
+    }
+    
     /// 修改删除线颜色
     func changeStrikethroughColor(with textStrikethroughColor: NSColor, changeText: String? = nil) {
         setAttribute(forKey: .strikethroughColor, value: textStrikethroughColor, changeText: changeText)
@@ -162,6 +306,11 @@ import Cocoa
     /// 修改下划线样式
     func changeUnderlineStyle(with textUnderlineStyle: NSNumber, changeText: String? = nil) {
         setAttribute(forKey: .underlineStyle, value: textUnderlineStyle, changeText: changeText)
+    }
+    
+    /// 修改下划线样式
+    func changeUnderlineStyle(with style: NSUnderlineStyle, changeText: String? = nil) {
+        changeUnderlineStyle(with: NSNumber(value: style.rawValue), changeText: changeText)
     }
     
     /// 修改下划线颜色
@@ -179,6 +328,11 @@ import Cocoa
     /// 修改描边宽度
     func changeStrokeWidth(with textStrokeWidth: NSNumber, changeText: String? = nil) {
         setAttribute(forKey: .strokeWidth, value: textStrokeWidth, changeText: changeText)
+    }
+    
+    /// 修改描边宽度
+    func changeStrokeWidth(with textStrokeWidth: CGFloat, changeText: String? = nil) {
+        changeStrokeWidth(with: NSNumber(value: Double(textStrokeWidth)), changeText: changeText)
     }
     
     /// 修改阴影效果
@@ -203,9 +357,19 @@ import Cocoa
         setAttribute(forKey: .link, value: textLink, changeText: changeText)
     }
     
+    /// 修改链接属性
+    func changeLink(with textLink: URL, changeText: String? = nil) {
+        setAttribute(forKey: .link, value: textLink, changeText: changeText)
+    }
+    
     /// 修改基线偏移
     func changeBaselineOffset(with textBaselineOffset: NSNumber, changeText: String? = nil) {
         setAttribute(forKey: .baselineOffset, value: textBaselineOffset, changeText: changeText)
+    }
+    
+    /// 修改基线偏移
+    func changeBaselineOffset(with textBaselineOffset: CGFloat, changeText: String? = nil) {
+        changeBaselineOffset(with: NSNumber(value: Double(textBaselineOffset)), changeText: changeText)
     }
     
     /// 修改倾斜度
@@ -213,13 +377,29 @@ import Cocoa
         setAttribute(forKey: .obliqueness, value: textObliqueness, changeText: changeText)
     }
     
+    /// 修改倾斜度
+    func changeObliqueness(with textObliqueness: CGFloat, changeText: String? = nil) {
+        changeObliqueness(with: NSNumber(value: Double(textObliqueness)), changeText: changeText)
+    }
+    
     /// 修改文本扩展
     func changeExpansions(with textExpansion: NSNumber, changeText: String? = nil) {
         setAttribute(forKey: .expansion, value: textExpansion, changeText: changeText)
     }
     
+    /// 修改文本扩展
+    func changeExpansions(with textExpansion: CGFloat, changeText: String? = nil) {
+        changeExpansions(with: NSNumber(value: Double(textExpansion)), changeText: changeText)
+    }
+    
     /// 修改书写方向
     func changeWritingDirection(with textWritingDirection: [NSWritingDirection], changeText: String? = nil) {
+        let values = textWritingDirection.map(\.rawValue)
+        setAttribute(forKey: .writingDirection, value: values, changeText: changeText)
+    }
+    
+    /// 修改书写方向
+    func changeWritingDirectionValues(with textWritingDirection: [Int], changeText: String? = nil) {
         setAttribute(forKey: .writingDirection, value: textWritingDirection, changeText: changeText)
     }
     
@@ -228,12 +408,48 @@ import Cocoa
         setAttribute(forKey: .verticalGlyphForm, value: textVerticalGlyphForm, changeText: changeText)
     }
     
-    /// 修改CoreText字距
+    /// 修改垂直字形
+    func changeVerticalGlyphForm(enabled: Bool, changeText: String? = nil) {
+        changeVerticalGlyphForm(with: NSNumber(value: enabled ? 1 : 0), changeText: changeText)
+    }
+    
+    /// 修改 CoreText 字距
     func changeCTKern(with textCTKern: NSNumber) {
-        let attributedString = NSMutableAttributedString(attributedString: attributedStringValue)
-        let fullRange = NSRange(location: 0, length: attributedString.length)
-        attributedString.addAttribute(.kern, value: textCTKern, range: fullRange)
-        self.attributedStringValue = attributedString
+        setAttribute(forKey: .kern, value: textCTKern)
+    }
+    
+    /// 修改 CoreText 字距
+    func changeCTKern(with textCTKern: CGFloat) {
+        changeCTKern(with: NSNumber(value: Double(textCTKern)))
+    }
+    
+    /// 移除指定文本属性
+    /// - Parameters:
+    ///   - keys: 要移除的属性键
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    ///   - options: 文本匹配选项
+    func removeAttributes(
+        _ keys: [NSAttributedString.Key],
+        changeText: String? = nil,
+        options: String.CompareOptions? = nil
+    ) {
+        guard !keys.isEmpty else { return }
+        
+        let searchOptions = options ?? tfyDefaultMatchOptions
+        updateAttributedString { attributedString in
+            let ranges = matchingRanges(in: attributedString, changeText: changeText, options: searchOptions)
+            for range in ranges where range.length > 0 {
+                for key in keys {
+                    attributedString.removeAttribute(key, range: range)
+                }
+            }
+        }
+    }
+    
+    /// 重置富文本样式，仅保留纯文本内容
+    func resetTextAttributes() {
+        let plainText = attributedStringValue.string.isEmpty ? stringValue : attributedStringValue.string
+        attributedStringValue = NSAttributedString(string: plainText)
     }
     
     /// 修改文本并添加前置图片
@@ -242,38 +458,54 @@ import Cocoa
     ///   - frontImages: 前置图片数组
     ///   - imageSpan: 图片间距
     func changeText(text: String, frontImages: [NSImage], imageSpan: CGFloat) {
-        let textAttrStr = NSMutableAttributedString()
-        let currentFont = self.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        setText(text, prefixImages: frontImages, imageSpan: imageSpan)
+    }
+    
+    /// 设置文本并附加前后置图片
+    /// - Parameters:
+    ///   - text: 文本内容
+    ///   - prefixImages: 前置图片
+    ///   - suffixImages: 后置图片
+    ///   - imageSpan: 图片和文本之间的间距
+    ///   - textAttributes: 文本属性
+    func setText(
+        _ text: String,
+        prefixImages: [NSImage] = [],
+        suffixImages: [NSImage] = [],
+        imageSpan: CGFloat = 0,
+        textAttributes: [NSAttributedString.Key: Any] = [:]
+    ) {
+        let currentFont = (textAttributes[.font] as? NSFont) ?? tfyDefaultFont
+        var resolvedAttributes = textAttributes
+        resolvedAttributes[.font] = currentFont
         
-        // 添加图片
-        for img in frontImages {
-            let attach = NSTextAttachment()
-            attach.image = img
-            
-            // 计算图片尺寸
-            let imgH = currentFont.pointSize
-            let imgW = (img.size.width / img.size.height) * imgH
-            let textPaddingTop = (currentFont.capHeight - currentFont.pointSize) / 2
-            
-            // 设置图片位置和大小
-            attach.bounds = CGRect(x: 0, y: -textPaddingTop, width: imgW, height: imgH)
-            
-            // 添加图片和空格
-            textAttrStr.append(NSAttributedString(attachment: attach))
-            textAttrStr.append(NSAttributedString(string: " "))
+        let attributedString = NSMutableAttributedString()
+        appendInlineImages(
+            prefixImages,
+            to: attributedString,
+            font: currentFont,
+            spacing: imageSpan,
+            includeTrailingSpacer: !text.isEmpty || !suffixImages.isEmpty
+        )
+        
+        if !text.isEmpty {
+            attributedString.append(NSAttributedString(string: text, attributes: resolvedAttributes))
         }
         
-        // 添加文本
-        textAttrStr.append(NSAttributedString(string: text))
-        
-        // 设置图片间距
-        if imageSpan != 0 {
-            textAttrStr.addAttribute(.kern,
-                                   value: imageSpan,
-                                   range: NSRange(0..<frontImages.count * 2))
+        if !suffixImages.isEmpty {
+            if !text.isEmpty {
+                attributedString.append(makeSpacerAttributedString(spacing: imageSpan, font: currentFont))
+            }
+            appendInlineImages(
+                suffixImages,
+                to: attributedString,
+                font: currentFont,
+                spacing: imageSpan,
+                includeTrailingSpacer: false
+            )
         }
         
-        self.attributedStringValue = textAttrStr
+        self.attributedStringValue = attributedString
     }
     
     // MARK: - 新增实用方法
@@ -283,21 +515,20 @@ import Cocoa
     ///   - attributes: 属性字典
     ///   - changeText: 要修改的文本，nil 则修改全部
     ///   - options: 文本匹配选项
-    func setAttributes(_ attributes: [NSAttributedString.Key: Any],
-                       changeText: String? = nil,
-                       options: String.CompareOptions = [.caseInsensitive, .regularExpression]) {
+    func setAttributes(
+        _ attributes: [NSAttributedString.Key: Any],
+        changeText: String? = nil,
+        options: String.CompareOptions? = nil
+    ) {
         guard !attributes.isEmpty else { return }
         
-        let attributedString = NSMutableAttributedString(attributedString: attributedStringValue)
-        let textToSearch = changeText ?? stringValue
-        
-        guard !textToSearch.isEmpty,
-              let textRange = findTextRange(stringValue, forKeyword: textToSearch, options: options) else {
-            return
+        let searchOptions = options ?? tfyDefaultMatchOptions
+        updateAttributedString { attributedString in
+            let ranges = matchingRanges(in: attributedString, changeText: changeText, options: searchOptions)
+            for range in ranges where range.length > 0 {
+                attributedString.addAttributes(attributes, range: range)
+            }
         }
-        
-        attributedString.addAttributes(attributes, range: textRange)
-        self.attributedStringValue = attributedString
     }
     
     /// 设置富文本样式
@@ -319,6 +550,14 @@ import Cocoa
         self.attributedStringValue = NSAttributedString(string: text, attributes: attributes)
     }
     
+    /// 设置富文本样式
+    /// - Parameters:
+    ///   - text: 文本内容
+    ///   - attributes: 文本属性
+    func setAttributedText(_ text: String, attributes: [NSAttributedString.Key: Any]) {
+        self.attributedStringValue = NSAttributedString(string: text, attributes: attributes)
+    }
+    
     /// 设置圆角边框
     /// - Parameters:
     ///   - cornerRadius: 圆角半径
@@ -329,6 +568,7 @@ import Cocoa
         self.layer?.cornerRadius = cornerRadius
         self.layer?.borderWidth = borderWidth
         self.layer?.borderColor = borderColor.cgColor
+        self.layer?.masksToBounds = cornerRadius > 0
     }
     
     /// 设置阴影效果
@@ -337,56 +577,93 @@ import Cocoa
     ///   - shadowOffset: 阴影偏移
     ///   - shadowRadius: 阴影半径
     ///   - shadowOpacity: 阴影透明度
-    func setShadow(shadowColor: NSColor = .black, shadowOffset: CGSize = CGSize(width: 0, height: 2), shadowRadius: CGFloat = 4, shadowOpacity: Float = 0.3) {
+    func setShadow(
+        shadowColor: NSColor = .black,
+        shadowOffset: CGSize = CGSize(width: 0, height: 2),
+        shadowRadius: CGFloat = 4,
+        shadowOpacity: Float = 0.3
+    ) {
         self.wantsLayer = true
+        self.layer?.masksToBounds = false
         self.layer?.shadowColor = shadowColor.cgColor
         self.layer?.shadowOffset = shadowOffset
         self.layer?.shadowRadius = shadowRadius
         self.layer?.shadowOpacity = shadowOpacity
     }
     
-    /// 添加渐变动画
+    /// 动画修改透明度
+    /// - Parameters:
+    ///   - alpha: 目标透明度
+    ///   - duration: 动画时长
+    ///   - delay: 延迟时间
+    ///   - completion: 完成回调
+    func animateAlpha(
+        to alpha: CGFloat,
+        duration: TimeInterval = 0.25,
+        delay: TimeInterval = 0,
+        completion: (@Sendable () -> Void)? = nil
+    ) {
+        let animations = {
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = duration
+                context.allowsImplicitAnimation = true
+                self.animator().alphaValue = alpha
+            }, completionHandler: {
+                completion?()
+            })
+        }
+        
+        if delay > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                animations()
+            }
+        } else {
+            animations()
+        }
+    }
+    
+    /// 添加淡入淡出动画
     /// - Parameters:
     ///   - duration: 动画时长
     ///   - delay: 延迟时间
     func addFadeAnimation(duration: TimeInterval = 0.3, delay: TimeInterval = 0) {
-        let fadeOut = {
-            NSAnimationContext.runAnimationGroup({ context in
-                context.duration = duration
-                context.allowsImplicitAnimation = true
-                self.animator().alphaValue = 0.0
-            }, completionHandler: {
-                NSAnimationContext.runAnimationGroup({ context in
-                    context.duration = duration
-                    context.allowsImplicitAnimation = true
-                    self.animator().alphaValue = 1.0
-                })
-            })
-        }
-        if delay > 0 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                fadeOut()
+        animateAlpha(to: 0.0, duration: duration, delay: delay) {
+            Task { @MainActor in
+                self.animateAlpha(to: 1.0, duration: duration)
             }
-        } else {
-            fadeOut()
         }
     }
-
+    
     /// 获取当前文本的尺寸
     /// - Parameter maxSize: 最大尺寸限制
     /// - Returns: 文本尺寸
-    func textSize(maxSize: NSSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)) -> NSSize {
-        return self.attributedStringValue.boundingRect(with: maxSize, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil).size
+    func textSize(
+        maxSize: NSSize = NSSize(
+            width: CGFloat.greatestFiniteMagnitude,
+            height: CGFloat.greatestFiniteMagnitude
+        )
+    ) -> NSSize {
+        let rect = self.attributedStringValue.boundingRect(
+            with: maxSize,
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            context: nil
+        )
+        return NSSize(width: ceil(rect.width), height: ceil(rect.height))
+    }
+    
+    /// 当前文本去除空白后的内容
+    var trimmedStringValue: String {
+        stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     /// 检查文本是否为空或只包含空白字符
     var isEmptyOrWhitespace: Bool {
-        return stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        trimmedStringValue.isEmpty
     }
     
     /// 清除文本内容
     func clearText() {
-        self.stringValue = ""
+        self.attributedStringValue = NSAttributedString(string: "")
     }
     
     /// 设置占位符文本
@@ -394,12 +671,119 @@ import Cocoa
     ///   - placeholder: 占位符文本
     ///   - color: 占位符颜色
     func setPlaceholder(_ placeholder: String, color: NSColor = .placeholderTextColor) {
-        if let textField = self as? NSTextField {
-            let attributes: [NSAttributedString.Key: Any] = [
-                .foregroundColor: color,
-                .font: textField.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
-            ]
-            textField.placeholderAttributedString = NSAttributedString(string: placeholder, attributes: attributes)
+        guard let textField = self as? NSTextField else { return }
+        
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = textField.alignment
+        
+        let attributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: color,
+            .font: textField.font ?? .systemFont(ofSize: NSFont.systemFontSize),
+            .paragraphStyle: paragraphStyle
+        ]
+        textField.placeholderAttributedString = NSAttributedString(string: placeholder, attributes: attributes)
+    }
+}
+
+@MainActor public extension NSButton {
+    /// 使用闭包处理按钮点击
+    /// - Parameter action: 点击回调
+    func onAction(_ action: @escaping (NSButton) -> Void) {
+        target = self
+        self.action = #selector(tfy_handleButtonAction(_:))
+        objc_setAssociatedObject(self, &TFYButtonAssociatedKeys.actionHandler, action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+    }
+
+    @objc private func tfy_handleButtonAction(_ sender: NSButton) {
+        let action = objc_getAssociatedObject(self, &TFYButtonAssociatedKeys.actionHandler) as? (NSButton) -> Void
+        action?(sender)
+    }
+
+    /// 当前是否处于选中状态
+    var isOn: Bool {
+        get { state == .on }
+        set { state = newValue ? .on : .off }
+    }
+
+    /// 切换按钮状态
+    func toggleState() {
+        state = state == .on ? .off : .on
+    }
+
+    /// 设置带图标的按钮内容
+    /// - Parameters:
+    ///   - title: 标题
+    ///   - image: 图标
+    ///   - imagePosition: 图标位置
+    func configure(
+        title: String,
+        image: NSImage? = nil,
+        imagePosition: NSControl.ImagePosition = .imageLeading
+    ) {
+        self.title = title
+        self.image = image
+        self.imagePosition = imagePosition
+    }
+
+    /// 创建复选框按钮
+    /// - Parameters:
+    ///   - title: 标题
+    ///   - checked: 是否选中
+    /// - Returns: 创建的按钮
+    static func makeCheckbox(title: String, checked: Bool = false) -> NSButton {
+        let button = NSButton(checkboxWithTitle: title, target: nil, action: nil)
+        button.state = checked ? .on : .off
+        return button
+    }
+}
+
+@MainActor public extension NSSegmentedControl {
+    /// 所有分段标题
+    var segmentTitles: [String] {
+        (0..<segmentCount).map { label(forSegment: $0) ?? "" }
+    }
+
+    /// 批量设置标题
+    /// - Parameter titles: 标题数组
+    func setSegmentTitles(_ titles: [String]) {
+        segmentCount = titles.count
+        for (index, title) in titles.enumerated() {
+            setLabel(title, forSegment: index)
         }
+    }
+
+    /// 取消全部选中状态
+    func deselectAllSegments() {
+        selectedSegment = -1
+    }
+
+    /// 选中下一个分段
+    /// - Parameter wrapping: 是否循环
+    func selectNextSegment(wrapping: Bool = true) {
+        guard segmentCount > 0 else { return }
+        let nextIndex = selectedSegment + 1
+        if nextIndex < segmentCount {
+            selectedSegment = nextIndex
+        } else if wrapping {
+            selectedSegment = 0
+        }
+    }
+}
+
+@MainActor public extension NSSearchField {
+    /// 当前搜索内容去除空白后的值
+    var trimmedSearchText: String {
+        stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// 清空搜索内容
+    func clearSearch() {
+        stringValue = ""
+    }
+
+    /// 设置最近搜索记录
+    /// - Parameter searches: 搜索记录数组
+    func setRecentSearches(_ searches: [String]) {
+        recentSearches = searches
     }
 }

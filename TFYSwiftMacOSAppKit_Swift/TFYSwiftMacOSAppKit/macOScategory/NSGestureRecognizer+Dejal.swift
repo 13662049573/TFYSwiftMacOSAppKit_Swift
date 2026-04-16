@@ -8,6 +8,31 @@
 
 import Cocoa
 
+private func tfyMatchingRanges(of searchText: String, in text: String) -> [NSRange] {
+    guard !searchText.isEmpty, !text.isEmpty else { return [] }
+    
+    var ranges: [NSRange] = []
+    var searchStartIndex = text.startIndex
+    
+    while searchStartIndex < text.endIndex,
+          let range = text.range(of: searchText, range: searchStartIndex..<text.endIndex) {
+        let nsRange = NSRange(range, in: text)
+        guard nsRange.length > 0 else {
+            searchStartIndex = text.index(after: range.lowerBound)
+            continue
+        }
+        
+        ranges.append(nsRange)
+        
+        if range.upperBound >= text.endIndex {
+            break
+        }
+        searchStartIndex = range.upperBound
+    }
+    
+    return ranges
+}
+
 public class LinkInfo {
     public let key: String
     public let value: String?
@@ -70,6 +95,27 @@ private enum GestureRecognizerAssociatedKeys {
         @unknown default: return "未知"
         }
     }
+
+    /// 当前手势在所属视图中的位置
+    var locationInView: NSPoint {
+        guard let view else { return .zero }
+        return location(in: view)
+    }
+
+    /// 清除闭包回调
+    func removeAction() {
+        self.target = nil
+        self.action = nil
+        objc_setAssociatedObject(self, &GestureRecognizerAssociatedKeys.closure, nil, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+    }
+
+    /// 要求当前手势等待另一个手势失败
+    /// - Parameter otherGestureRecognizer: 另一个手势
+    func requireFailure(of otherGestureRecognizer: NSGestureRecognizer) {
+        let selector = Selector(("requireGestureRecognizerToFail:"))
+        guard responds(to: selector) else { return }
+        perform(selector, with: otherGestureRecognizer)
+    }
 }
 
 public extension NSClickGestureRecognizer {
@@ -128,9 +174,7 @@ public extension NSClickGestureRecognizer {
             if charIndex < attributedText.length {
                 for linkInfo in linkInfos {
                     let key = linkInfo.key
-                    if let targetRange = attributedText.string.range(of: key) {
-                        let nsRange = NSRange(targetRange, in: attributedText.string)
-                        
+                    for nsRange in tfyMatchingRanges(of: key, in: attributedText.string) {
                         if NSLocationInRange(charIndex, nsRange) {
                             // 添加高亮背景色
                             attributedText.addAttribute(.backgroundColor,
@@ -146,7 +190,7 @@ public extension NSClickGestureRecognizer {
                                 // 触发回调
                                 action(key, linkInfo.value)
                             }
-                            break
+                            return
                         }
                     }
                 }

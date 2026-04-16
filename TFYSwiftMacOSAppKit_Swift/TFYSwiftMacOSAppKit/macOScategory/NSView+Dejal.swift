@@ -119,6 +119,30 @@ public extension NSView {
             return self.frame.origin.x + self.frame.size.width
         }
     }
+
+    /// 统一风格的 frame.origin 别名
+    var frameOriginValue: CGPoint {
+        get { macos_origin }
+        set { macos_origin = newValue }
+    }
+
+    /// 统一风格的 frame.size 别名
+    var frameSizeValue: CGSize {
+        get { macos_size }
+        set { macos_size = newValue }
+    }
+
+    /// 统一风格的宽度别名
+    var frameWidthValue: CGFloat {
+        get { macos_width }
+        set { macos_width = newValue }
+    }
+
+    /// 统一风格的高度别名
+    var frameHeightValue: CGFloat {
+        get { macos_height }
+        set { macos_height = newValue }
+    }
     
 }
 
@@ -136,12 +160,18 @@ public extension NSView {
         static var userTimeKey: UInt8 = 0
         static var clickHandlerKey: UInt8 = 0
         static var longPressHandlerKey: UInt8 = 0
+        static var dragGestureKey: UInt8 = 0
     }
 
     func removeAllSubviews() {
         while subviews.count > 0 {
             subviews.first?.removeFromSuperview()
         }
+    }
+
+    /// removeAllSubviews 的统一命名别名
+    func removeAllChildViews() {
+        removeAllSubviews()
     }
 
     func viewController() -> NSViewController? {
@@ -154,6 +184,11 @@ public extension NSView {
         }
         
         return window?.contentViewController
+    }
+
+    /// 当前视图所属控制器
+    var parentViewController: NSViewController? {
+        viewController()
     }
 
     var timeInterval: TimeInterval {
@@ -511,8 +546,17 @@ public extension NSView {
     /// - Parameter enabled: 是否启用拖拽
     func setDraggable(_ enabled: Bool) {
         if enabled {
+            if let dragGesture = objc_getAssociatedObject(self, &AssociatedObjectKeys.dragGestureKey) as? NSPanGestureRecognizer {
+                if !gestureRecognizers.contains(dragGesture) {
+                    addGestureRecognizer(dragGesture)
+                }
+                return
+            }
             let dragGesture = NSPanGestureRecognizer(target: self, action: #selector(handleDrag(_:)))
             self.addGestureRecognizer(dragGesture)
+            objc_setAssociatedObject(self, &AssociatedObjectKeys.dragGestureKey, dragGesture, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        } else if let dragGesture = objc_getAssociatedObject(self, &AssociatedObjectKeys.dragGestureKey) as? NSPanGestureRecognizer {
+            removeGestureRecognizer(dragGesture)
         }
     }
     
@@ -652,5 +696,71 @@ public extension NSView {
     func setContentCompressionResistancePriority(_ priority: NSLayoutConstraint.Priority) {
         self.setContentCompressionResistancePriority(priority, for: .horizontal)
         self.setContentCompressionResistancePriority(priority, for: .vertical)
+    }
+
+    /// 将当前视图嵌入滚动视图
+    /// - Parameters:
+    ///   - hasVerticalScroller: 是否显示垂直滚动条
+    ///   - hasHorizontalScroller: 是否显示水平滚动条
+    ///   - drawsBackground: 是否绘制背景
+    /// - Returns: 创建的滚动视图
+    @discardableResult
+    func wrappedInScrollView(
+        hasVerticalScroller: Bool = true,
+        hasHorizontalScroller: Bool = false,
+        drawsBackground: Bool = false
+    ) -> NSScrollView {
+        NSScrollView.wrap(
+            self,
+            hasVerticalScroller: hasVerticalScroller,
+            hasHorizontalScroller: hasHorizontalScroller,
+            drawsBackground: drawsBackground
+        )
+    }
+
+    /// wrappedInScrollView 的统一命名别名
+    @discardableResult
+    func embedInScrollView(
+        hasVerticalScroller: Bool = true,
+        hasHorizontalScroller: Bool = false,
+        drawsBackground: Bool = false
+    ) -> NSScrollView {
+        wrappedInScrollView(
+            hasVerticalScroller: hasVerticalScroller,
+            hasHorizontalScroller: hasHorizontalScroller,
+            drawsBackground: drawsBackground
+        )
+    }
+
+    /// 将当前视图约束到父视图边缘
+    /// - Parameters:
+    ///   - superview: 父视图
+    ///   - insets: 内边距
+    func pinEdges(
+        to superview: NSView,
+        insets: NSEdgeInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+    ) {
+        translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            leadingAnchor.constraint(equalTo: superview.leadingAnchor, constant: insets.left),
+            trailingAnchor.constraint(equalTo: superview.trailingAnchor, constant: -insets.right),
+            topAnchor.constraint(equalTo: superview.topAnchor, constant: insets.top),
+            bottomAnchor.constraint(equalTo: superview.bottomAnchor, constant: -insets.bottom)
+        ])
+    }
+
+    /// pinEdges 的统一命名别名
+    func pinToEdges(of superview: NSView, insets: NSEdgeInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)) {
+        pinEdges(to: superview, insets: insets)
+    }
+
+    /// 将当前视图居中到父视图
+    func centerInSuperview() {
+        guard let superview else { return }
+        translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            centerXAnchor.constraint(equalTo: superview.centerXAnchor),
+            centerYAnchor.constraint(equalTo: superview.centerYAnchor)
+        ])
     }
 }

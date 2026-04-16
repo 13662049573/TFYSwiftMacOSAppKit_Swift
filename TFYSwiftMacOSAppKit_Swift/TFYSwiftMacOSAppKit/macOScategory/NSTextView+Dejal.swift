@@ -42,7 +42,50 @@ private func textViewObserverBag(for textView: NSTextView) -> TFYTextViewObserve
     return bag
 }
 
+private func tfyTextViewMatchingRanges(of searchText: String, in text: String) -> [NSRange] {
+    guard !searchText.isEmpty, !text.isEmpty else { return [] }
+    
+    var ranges: [NSRange] = []
+    var searchStartIndex = text.startIndex
+    
+    while searchStartIndex < text.endIndex,
+          let range = text.range(of: searchText, range: searchStartIndex..<text.endIndex) {
+        let nsRange = NSRange(range, in: text)
+        guard nsRange.length > 0 else {
+            searchStartIndex = text.index(after: range.lowerBound)
+            continue
+        }
+        
+        ranges.append(nsRange)
+        
+        if range.upperBound >= text.endIndex {
+            break
+        }
+        searchStartIndex = range.upperBound
+    }
+    
+    return ranges
+}
+
 public extension NSTextView {
+    private func mergeTypingAttributes(_ attributes: [NSAttributedString.Key: Any]) {
+        var mergedAttributes = typingAttributes
+        for (key, value) in attributes {
+            mergedAttributes[key] = value
+        }
+        typingAttributes = mergedAttributes
+    }
+
+    private func updateTypingParagraphStyle(_ updates: (NSMutableParagraphStyle) -> Void) {
+        let existingStyle = (typingAttributes[.paragraphStyle] as? NSParagraphStyle)?.mutableCopy() as? NSMutableParagraphStyle
+        let paragraphStyle = existingStyle ?? NSMutableParagraphStyle()
+        if existingStyle == nil {
+            paragraphStyle.alignment = alignment
+        }
+        updates(paragraphStyle)
+        mergeTypingAttributes([.paragraphStyle: paragraphStyle])
+    }
+
     var clickableTexts: [String: Any] {
         get {
             (objc_getAssociatedObject(self, &TFYTextViewAssociatedKeys.clickableTexts) as? [String: Any]) ?? [:]
@@ -111,10 +154,11 @@ public extension NSTextView {
         if characterIndex < textStorage?.length ?? 0 {
             for (currentIndex, key) in clickableTexts.keys.sorted().enumerated() {
                 guard let value = clickableTexts[key] else { continue }
-                let range = (string as NSString).range(of: key)
-                if NSLocationInRange(characterIndex, range) {
-                    tapCallback?(key, value, currentIndex)
-                    return
+                for range in tfyTextViewMatchingRanges(of: key, in: string) {
+                    if NSLocationInRange(characterIndex, range) {
+                        tapCallback?(key, value, currentIndex)
+                        return
+                    }
                 }
             }
         }
@@ -187,29 +231,29 @@ public extension NSTextView {
     }
 
     func setLineSpacing(_ lineSpacing: CGFloat) {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = lineSpacing
-        typingAttributes = [.paragraphStyle: paragraphStyle]
+        updateTypingParagraphStyle { paragraphStyle in
+            paragraphStyle.lineSpacing = lineSpacing
+        }
     }
 
     func setCharacterSpacing(_ characterSpacing: CGFloat) {
-        typingAttributes = [.kern: characterSpacing]
+        mergeTypingAttributes([.kern: characterSpacing])
     }
 
     func setAlignment(_ alignment: NSTextAlignment) {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = alignment
-        typingAttributes = [.paragraphStyle: paragraphStyle]
+        updateTypingParagraphStyle { paragraphStyle in
+            paragraphStyle.alignment = alignment
+        }
     }
 
     func setFont(_ font: NSFont) {
         self.font = font
-        typingAttributes = [.font: font]
+        mergeTypingAttributes([.font: font])
     }
 
     func setTextColor(_ color: NSColor) {
         textColor = color
-        typingAttributes = [.foregroundColor: color]
+        mergeTypingAttributes([.foregroundColor: color])
     }
 
     func setBorder(_ borderColor: NSColor) {
@@ -408,5 +452,39 @@ public extension NSTextView {
 
     func setMaxHeight(_ maxHeight: CGFloat) {
         maxSize = NSSize(width: maxSize.width, height: maxHeight)
+    }
+
+    /// 追加纯文本
+    /// - Parameter text: 追加的内容
+    func appendText(_ text: String) {
+        setSelectedRange(NSRange(location: textLength, length: 0))
+        insertText(text)
+    }
+
+    /// 追加一行文本
+    /// - Parameter text: 追加的文本
+    func appendLine(_ text: String) {
+        appendText((string.isEmpty ? "" : "\n") + text)
+    }
+
+    /// 获取所有匹配文本范围
+    /// - Parameters:
+    ///   - searchText: 查找文本
+    ///   - options: 查找选项
+    /// - Returns: 匹配范围数组
+    func ranges(of searchText: String, options: NSString.CompareOptions = []) -> [NSRange] {
+        let content = string as NSString
+        var ranges: [NSRange] = []
+        var searchRange = NSRange(location: 0, length: content.length)
+        
+        while searchRange.location < content.length {
+            let foundRange = content.range(of: searchText, options: options, range: searchRange)
+            guard foundRange.location != NSNotFound, foundRange.length > 0 else { break }
+            ranges.append(foundRange)
+            let nextLocation = foundRange.location + foundRange.length
+            searchRange = NSRange(location: nextLocation, length: content.length - nextLocation)
+        }
+        
+        return ranges
     }
 }

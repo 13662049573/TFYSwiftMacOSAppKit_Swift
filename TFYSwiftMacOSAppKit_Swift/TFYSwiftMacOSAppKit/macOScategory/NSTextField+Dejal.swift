@@ -57,6 +57,12 @@ public extension NSTextField {
             self.placeholderAttributedString = attributedString
         }
     }
+
+    /// 设置富文本占位符
+    /// - Parameter attributedString: 富文本占位符
+    func setAttributedPlaceholder(_ attributedString: NSAttributedString?) {
+        placeholderAttributedString = attributedString
+    }
     
     func fitFontSize(maxSize: NSSize = NSSize.zero) {
         var text = self.stringValue
@@ -208,7 +214,7 @@ public extension NSTextField {
     var isEmpty: Bool {
         return stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
-    
+
     /// 设置文本字段为只读
     /// - Parameter readOnly: 是否只读
     func setReadOnly(_ readOnly: Bool) {
@@ -263,6 +269,35 @@ public extension NSTextField {
         if let textView = self.currentEditor() as? NSTextView {
             textView.undoManager?.redo()
         }
+    }
+
+    /// 选中全部文本
+    func selectAllText() {
+        currentEditor()?.selectAll(nil)
+    }
+
+    /// 追加文本
+    /// - Parameter text: 需要追加的文本
+    func appendText(_ text: String) {
+        stringValue += text
+    }
+
+    /// 前置插入文本
+    /// - Parameter text: 需要插入的文本
+    func prependText(_ text: String) {
+        stringValue = text + stringValue
+    }
+
+    /// 设置边框样式
+    /// - Parameters:
+    ///   - color: 边框颜色
+    ///   - width: 边框宽度
+    ///   - cornerRadius: 圆角
+    func setBorderStyle(color: NSColor, width: CGFloat = 1, cornerRadius: CGFloat = 6) {
+        wantsLayer = true
+        layer?.borderColor = color.cgColor
+        layer?.borderWidth = width
+        layer?.cornerRadius = cornerRadius
     }
 }
 

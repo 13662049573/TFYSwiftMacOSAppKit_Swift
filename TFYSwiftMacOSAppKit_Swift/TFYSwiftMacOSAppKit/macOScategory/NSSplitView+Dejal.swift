@@ -13,21 +13,25 @@ public extension NSSplitView {
     // 第一个分割分隔符的位置属性，可以通过 animator 进行动画设置
     var splitPosition: CGFloat {
         get {
+            guard subviews.count > 1 else { return 0 }
             return splitPositionOfDivider(atIndex: 0)
         }
         set {
+            guard subviews.count > 1 else { return }
             setPosition(newValue, ofDividerAt: 0)
         }
     }
 
     // 获取指定索引的分割分隔符位置
     func splitPositionOfDivider(atIndex index: Int) -> CGFloat {
+        guard subviews.indices.contains(index) else { return 0 }
         let frame = subviews[index].frame
         return isVertical ? NSMaxX(frame) : NSMaxY(frame)
     }
 
     // 切换指定索引子视图的可见性（假设只使用了两个子视图）
     func toggleSubview(atIndex index: Int) {
+        guard subviews.count == 2, subviews.indices.contains(index) else { return }
         let isCollapsed = isSubviewCollapsed(subviews[index])
         if isCollapsed {
             expandSubview(atIndex: index)
@@ -38,6 +42,7 @@ public extension NSSplitView {
 
     // 折叠指定索引的子视图（假设只使用了两个子视图）
     func collapseSubview(atIndex index: Int) {
+        guard subviews.count == 2, subviews.indices.contains(index) else { return }
         let otherIndex = index == 0 ? 1 : 0
         let remainingSubview = subviews[otherIndex]
         let collapsingSubview = subviews[index]
@@ -61,6 +66,7 @@ public extension NSSplitView {
 
     // 展开指定索引的子视图（假设只使用了两个子视图）
     func expandSubview(atIndex index: Int) {
+        guard subviews.count == 2, subviews.indices.contains(index) else { return }
         let otherIndex = index == 0 ? 1 : 0
         let remainingSubview = subviews[otherIndex]
         let collapsingSubview = subviews[index]
@@ -151,6 +157,7 @@ public extension NSSplitView {
     
     /// 平均分配子视图尺寸
     func distributeSubviewsEqually() {
+        guard !subviews.isEmpty else { return }
         let totalSize = isVertical ? frame.size.width : frame.size.height
         let dividerThickness = self.dividerThickness
         let availableSize = totalSize - (CGFloat(subviews.count - 1) * dividerThickness)
@@ -254,6 +261,35 @@ public extension NSSplitView {
             } else {
                 return subview.accessibilityLabel()
             }
+        }
+    }
+
+    /// 当前可见的子视图
+    var visibleSubviews: [NSView] {
+        subviews.filter { !$0.isHidden && !isSubviewCollapsed($0) }
+    }
+
+    /// 当前折叠的子视图索引
+    var collapsedSubviewIndexes: [Int] {
+        subviews.enumerated().compactMap { index, view in
+            isSubviewCollapsed(view) ? index : nil
+        }
+    }
+
+    /// 展开全部子视图
+    func expandAllSubviews() {
+        for index in subviews.indices where isSubviewCollapsed(atIndex: index) || subviews[index].isHidden {
+            subviews[index].isHidden = false
+        }
+        adjustSubviews()
+        display()
+    }
+
+    /// 设置多个分隔条位置
+    /// - Parameter positions: 分隔条位置数组
+    func setDividerPositions(_ positions: [CGFloat]) {
+        for (index, position) in positions.enumerated() where index < max(subviews.count - 1, 0) {
+            setPosition(position, ofDividerAt: index)
         }
     }
 }

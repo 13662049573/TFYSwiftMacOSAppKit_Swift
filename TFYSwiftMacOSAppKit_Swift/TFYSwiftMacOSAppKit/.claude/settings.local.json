@@ -1,0 +1,17 @@
+{
+  "disabledMcpjsonServers": [
+    "sequential-thinking",
+    "home_github",
+    "gitlab",
+    "context7",
+    "chrome-devtools",
+    "XcodeBuildMCP",
+    "apple-docs",
+    "memory",
+    "brave-search",
+    "MCP_DOCKER",
+    "figma",
+    "playwright",
+    "filesystem"
+  ]
+}

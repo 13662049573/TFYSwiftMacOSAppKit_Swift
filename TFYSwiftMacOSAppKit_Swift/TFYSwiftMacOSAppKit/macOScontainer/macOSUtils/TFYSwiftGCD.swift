@@ -281,22 +281,28 @@ public class TFYSwiftGCD: NSObject {
     ///   - completion: 完成回调
     public static func asyncWithTimeout(_ timeout: TimeInterval, queue: DispatchQueue = .global(), execute work: @escaping () -> Void, completion: @escaping (Result<Void, TFYGCDError>) -> Void) {
         let semaphore = DispatchSemaphore(value: 0)
-        var isCompleted = false
+        let lock = NSLock()
+        var hasReported = false
         
         queue.async {
             work()
-            if !isCompleted {
-                isCompleted = true
-                semaphore.signal()
-            }
+            semaphore.signal()
         }
         
-        let result = semaphore.wait(timeout: .now() + timeout)
-        if !isCompleted {
-            isCompleted = true
-            completion(.failure(.timeout))
-        } else {
-            completion(result == .success ? .success(()) : .failure(.timeout))
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = semaphore.wait(timeout: .now() + timeout)
+            lock.lock()
+            let alreadyReported = hasReported
+            hasReported = true
+            lock.unlock()
+            guard !alreadyReported else { return }
+            DispatchQueue.main.async {
+                if result == .success {
+                    completion(.success(()))
+                } else {
+                    completion(.failure(.timeout))
+                }
+            }
         }
     }
     
@@ -404,9 +410,7 @@ public extension TFYSwiftGCD {
     ///   - work: 要执行的任务闭包
     ///   - completion: 完成回调
     static func asyncWithRetry(retryCount: Int, queue: DispatchQueue = .global(), execute work: @escaping () -> Bool, completion: @escaping (Bool) -> Void) {
-        var currentRetry = 0
-        
-        func attempt() {
+        func attempt(_ currentRetry: Int) {
             queue.async {
                 let success = work()
                 if success || currentRetry >= retryCount {
@@ -414,12 +418,11 @@ public extension TFYSwiftGCD {
                         completion(success)
                     }
                 } else {
-                    currentRetry += 1
-                    attempt()
+                    attempt(currentRetry + 1)
                 }
             }
         }
         
-        attempt()
+        attempt(0)
     }
 }

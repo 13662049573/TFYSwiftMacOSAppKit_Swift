@@ -355,22 +355,47 @@ public extension Bundle {
         return results
     }
     
-    /// 异步获取资源路径
+    /// 异步获取资源路径（支持超时和重试）
     func pathForResourceAsync(_ name: String,
                              ofType ext: String?,
                              inDirectory subpath: String? = nil,
                              configuration: BundleConfiguration = .default) async throws -> String {
         
-        return try await withCheckedThrowingContinuation { continuation in
-            let config = configuration // 创建本地副本以避免Sendable问题
-            DispatchQueue.global(qos: .userInitiated).async {
-                do {
-                    let path = try self.pathForResource(name, ofType: ext, inDirectory: subpath, configuration: config)
-                    continuation.resume(returning: path)
-                } catch {
-                    continuation.resume(throwing: error)
+        let config = configuration
+        return try await withThrowingTaskGroup(of: String.self) { group in
+            group.addTask {
+                var lastError: Error = BundleError.resourceNotFound(name)
+                let retries = max(1, config.maxRetries)
+                for attempt in 1...retries {
+                    do {
+                        return try await withCheckedThrowingContinuation { continuation in
+                            DispatchQueue.global(qos: .userInitiated).async {
+                                do {
+                                    let path = try self.pathForResource(name, ofType: ext, inDirectory: subpath, configuration: config)
+                                    continuation.resume(returning: path)
+                                } catch {
+                                    continuation.resume(throwing: error)
+                                }
+                            }
+                        }
+                    } catch {
+                        lastError = error
+                        if attempt < retries {
+                            try? await Task.sleep(nanoseconds: 500_000_000)
+                        }
+                    }
                 }
+                throw lastError
             }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(config.timeout * 1_000_000_000))
+                throw BundleError.timeoutError("资源获取超时: \(name)")
+            }
+            guard let result = try await group.next() else {
+                throw BundleError.resourceNotFound(name)
+            }
+            group.cancelAll()
+            return result
         }
     }
     

@@ -31,6 +31,12 @@ private struct ThreadSafeNotificationData {
 }
 
 // MARK: - 可跨线程传递的值类型
+// @unchecked Sendable is intentional: every case wraps only immutable value types
+// (String, Data, Date) or thread-safe Foundation objects (NSNumber), and the
+// recursive array/dictionary cases only contain other SendableValue instances.
+// AnyHashable keys in the dictionary case may theoretically wrap non-Sendable
+// types, but this enum is private and only constructed via ThreadSafeNotificationData
+// whose callers are responsible for supplying Sendable-compatible keys.
 private enum SendableValue: @unchecked Sendable {
     case string(String)
     case number(NSNumber)
@@ -317,14 +323,6 @@ public extension NotificationCenter {
                           name: NSNotification.Name?,
                           object: Any? = nil) {
         removeObserver(observer, name: name, object: object)
-    }
-    
-    /// 检查是否有观察者监听指定通知
-    /// - Parameter name: 通知名称
-    /// - Returns: 是否有观察者
-    func hasObservers(for name: NSNotification.Name) -> Bool {
-        // 注意：这是一个简化的实现，实际检查需要更复杂的逻辑
-        return true // 默认返回true，因为无法直接检查
     }
     
     /// 获取通知统计信息

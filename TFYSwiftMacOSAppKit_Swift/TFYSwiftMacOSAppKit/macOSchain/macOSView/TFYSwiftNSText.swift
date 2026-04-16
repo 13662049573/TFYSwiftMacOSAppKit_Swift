@@ -144,9 +144,15 @@ public extension Chain where Base: NSText {
     }
     
     @discardableResult
-    func columnSpacing(_ range:NSRange) -> Self {
+    func scrollRangeToVisible(_ range:NSRange) -> Self {
         base.scrollRangeToVisible(range)
         return self
+    }
+    
+    @available(*, deprecated, renamed: "scrollRangeToVisible(_:)")
+    @discardableResult
+    func columnSpacing(_ range:NSRange) -> Self {
+        return scrollRangeToVisible(range)
     }
     
     @discardableResult

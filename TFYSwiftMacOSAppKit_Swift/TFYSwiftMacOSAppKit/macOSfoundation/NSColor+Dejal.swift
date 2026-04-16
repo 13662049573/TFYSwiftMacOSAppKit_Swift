@@ -88,8 +88,13 @@ public extension NSColor {
     /// - Throws: NSColorError.invalidHexString 如果十六进制字符串无效
     convenience init(hexString: String, alpha: CGFloat = 1.0) throws {
         // 清理十六进制字符串
-        let cleanHex = hexString.trimmingCharacters(in: .whitespacesAndNewlines)
-        let hexString = cleanHex.hasPrefix("#") ? String(cleanHex.dropFirst()) : cleanHex
+        var cleanHex = hexString.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleanHex.hasPrefix("#") {
+            cleanHex = String(cleanHex.dropFirst())
+        } else if cleanHex.hasPrefix("0x") || cleanHex.hasPrefix("0X") {
+            cleanHex = String(cleanHex.dropFirst(2))
+        }
+        let hexString = cleanHex
         
         // 验证十六进制字符串
         guard hexString.count == 6 || hexString.count == 8 else {
@@ -215,9 +220,8 @@ public extension NSColor {
             throw NSColorError.invalidCMYKValues("C: \(c), M: \(m), Y: \(y), K: \(k)")
         }
         
-        let cmyk = [c / 100.0, m / 100.0, y / 100.0, k / 100.0]
-        self.init(colorSpace: NSColorSpace.genericCMYK, components: cmyk, count: 4)
-        self.withAlphaComponent(alpha)
+        let cmykWithAlpha = [c / 100.0, m / 100.0, y / 100.0, k / 100.0, alpha]
+        self.init(colorSpace: NSColorSpace.genericCMYK, components: cmykWithAlpha, count: 5)
     }
     
     // MARK: - 颜色空间创建
@@ -641,140 +645,3 @@ public enum ColorEmotion {
     case mysterious
 }
 
-// MARK: - 使用示例和最佳实践
-
-/*
- 
- // MARK: - 基础使用示例
- 
- // 1. 使用十六进制字符串创建颜色
-let redColor = try NSColor(hexString: "#FF0000")
-let blueColor = NSColor(safeHexString: "0x0000FF", alpha: 0.8)
-let greenColor = NSColor(hex: 0x00FF00)
-
-// 2. 使用RGB值创建颜色
-let purpleColor = try NSColor(r: 128, g: 0, b: 128)
-let orangeColor = NSColor(safeR: 255, g: 165, b: 0, alpha: 0.9)
-
-// 3. 使用HSB值创建颜色
-let pinkColor = try NSColor(h: 330, s: 100, b: 100)
-let cyanColor = NSColor(safeH: 180, s: 100, b: 100, alpha: 0.7)
- 
- // 4. 使用CMYK值创建颜色
- let brownColor = try NSColor(c: 0, m: 50, y: 100, k: 50)
- 
- // MARK: - 颜色属性使用
- 
- // 5. 获取颜色属性
- let color = NSColor.red
- print("十六进制: \(color.hexString)")
- print("RGB: \(color.rgbComponents)")
- print("HSB: \(color.hsbComponents)")
- print("亮度: \(color.brightness)")
- print("是否为深色: \(color.isDark)")
- 
- // MARK: - 颜色操作
- 
- // 6. 调整颜色
- let adjustedColor = color.adjustedBrightness(by: 0.2)
- let saturatedColor = color.adjustedSaturation(by: -0.3)
- let hueShiftedColor = color.adjustedHue(by: 0.1)
- 
- // 7. 混合颜色
- let blendedColor = NSColor.red.blended(with: NSColor.blue, ratio: 0.5)
- let complementaryColor = color.complementary
- let invertedColor = color.inverted
- 
- // MARK: - 预设颜色
- 
- // 8. 随机颜色
- let randomColor = NSColor.random
- let vibrantRandomColor = NSColor.random(saturation: 0.8...1.0, brightness: 0.7...1.0)
- 
- // 9. 动态颜色
- let dynamicColor = NSColor.dynamicColor(light: .white, dark: .black)
- let systemAccentColor = NSColor.systemAccent
- let systemBackgroundColor = NSColor.systemBackground
- 
- // MARK: - 错误处理
- 
- // 10. 错误处理示例
- do {
-     let invalidColor = try NSColor(hexString: "invalid")
- } catch NSColorError.invalidHexString {
-     print("无效的十六进制字符串")
- } catch {
-     print("其他错误: \(error)")
- }
- 
- // 11. 安全创建
-if let safeColor = NSColor(safeHexString: "FF0000") {
-    print("成功创建颜色: \(safeColor)")
-} else {
-    print("创建颜色失败")
-}
- 
- // MARK: - 高级用法
- 
- // 12. 颜色空间
- let p3Color = NSColor.color(with: .displayP3, components: [1.0, 0.5, 0.3])
- let labColor = NSColor.color(with: .genericLab, components: [50, 20, 30])
- 
- // 13. 颜色渐变
- func createGradientColors(from startColor: NSColor, to endColor: NSColor, steps: Int) -> [NSColor] {
-     var colors: [NSColor] = []
-     for i in 0..<steps {
-         let ratio = CGFloat(i) / CGFloat(steps - 1)
-         colors.append(startColor.blended(with: endColor, ratio: ratio))
-     }
-     return colors
- }
- 
- // 14. 颜色主题
- struct ColorTheme {
-     let primary: NSColor
-     let secondary: NSColor
-     let accent: NSColor
-     let background: NSColor
-     let text: NSColor
-     
-     static let light = ColorTheme(
-         primary: NSColor(hex: 0x007AFF),
-         secondary: NSColor(hex: 0x5856D6),
-         accent: NSColor(hex: 0xFF3B30),
-         background: .white,
-         text: .black
-     )
-     
-     static let dark = ColorTheme(
-         primary: NSColor(hex: 0x0A84FF),
-         secondary: NSColor(hex: 0x5E5CE6),
-         accent: NSColor(hex: 0xFF453A),
-         background: .black,
-         text: .white
-     )
- }
- 
- // 15. 性能优化 - 颜色缓存
- class ColorCache {
-     private static var cache: [String: NSColor] = [:]
-     
-     static func color(for hexString: String) -> NSColor {
-         if let cachedColor = cache[hexString] {
-             return cachedColor
-         }
-         
-         if let color = NSColor(hexString: hexString) {
-             cache[hexString] = color
-             return color
-         }
-         
-         return .black
-     }
-     
-     static func clearCache() {
-         cache.removeAll()
-     }
- }
- 
- */

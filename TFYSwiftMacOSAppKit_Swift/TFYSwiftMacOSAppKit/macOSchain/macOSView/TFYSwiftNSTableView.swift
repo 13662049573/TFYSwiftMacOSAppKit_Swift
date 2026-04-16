@@ -216,8 +216,14 @@ public extension Chain where Base: NSTableView {
     }
     
     @discardableResult
-    func addTableColumn(_ old: Int,toColumn: Int) -> Self {
-        base.moveColumn(old, toColumn: toColumn)
+    func moveColumn(_ column: Int, toColumn: Int) -> Self {
+        base.moveColumn(column, toColumn: toColumn)
         return self
+    }
+    
+    @available(*, deprecated, renamed: "moveColumn(_:toColumn:)")
+    @discardableResult
+    func addTableColumn(_ old: Int,toColumn: Int) -> Self {
+        return moveColumn(old, toColumn: toColumn)
     }
 }

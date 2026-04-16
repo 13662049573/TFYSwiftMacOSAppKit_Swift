@@ -21,20 +21,20 @@ public enum TFYAnimationType {
 
 public class TFYAnimationEnhancer: NSObject {
     // MARK: - Properties
-    var duration: CGFloat = 0.0
-    var springDamping: CGFloat = 0.0
-    var initialSpringVelocity: CGFloat = 0.0
-    var animationCurve: NSAnimation.Curve = .easeInOut
-    var animationType: TFYAnimationType = .fade
+    public var duration: CGFloat = 0.0
+    public var springDamping: CGFloat = 0.0
+    public var initialSpringVelocity: CGFloat = 0.0
+    public var animationCurve: NSAnimation.Curve = .easeInOut
+    public var animationType: TFYAnimationType = .fade
     
     // MARK: - Initialization
-    override init() {
+    public override init() {
         super.init()
         configureAnimationDefaults()
     }
     
     // MARK: - Configuration
-    func configureAnimationDefaults() {
+    public func configureAnimationDefaults() {
         duration = 0.3
         springDamping = 0.7
         initialSpringVelocity = 0.5
@@ -42,26 +42,26 @@ public class TFYAnimationEnhancer: NSObject {
         animationType = .fade
     }
     
-    func configure(duration: CGFloat, springDamping: CGFloat, initialSpringVelocity: CGFloat, animationCurve: NSAnimation.Curve) {
+    public func configure(duration: CGFloat, springDamping: CGFloat, initialSpringVelocity: CGFloat, animationCurve: NSAnimation.Curve) {
         self.duration = duration
         self.springDamping = springDamping
         self.initialSpringVelocity = initialSpringVelocity
         self.animationCurve = animationCurve
     }
     
-    func setAnimationType(_ type: TFYAnimationType) {
+    public func setAnimationType(_ type: TFYAnimationType) {
         animationType = type
     }
     
     // MARK: - View Setup
     /// 每次 show 前调用，重置 layer 状态，避免上一轮方向/缩放/旋转残留
-    func setup(with view: NSView) {
+    public func setup(with view: NSView) {
         view.wantsLayer = true
         view.layer?.opacity = 0.0
         view.layer?.transform = CATransform3DIdentity
     }
     
-    func applyAnimation(to view: NSView) {
+    public func applyAnimation(to view: NSView) {
         switch animationType {
         case .fade:
             applyFadeAnimation(to: view)
@@ -80,7 +80,7 @@ public class TFYAnimationEnhancer: NSObject {
         }
     }
     
-    func reset(_ view: NSView) {
+    public func reset(_ view: NSView) {
         switch animationType {
         case .fade:
             applyFadeOutAnimation(to: view)
@@ -123,11 +123,12 @@ public class TFYAnimationEnhancer: NSObject {
     }
     
     private func applyScaleAnimation(to view: NSView) {
-        let scaleAnimation = CABasicAnimation(keyPath: "transform.scale")
+        let scaleAnimation = CASpringAnimation(keyPath: "transform.scale")
         scaleAnimation.fromValue = 0.01
         scaleAnimation.toValue = 1.0
-        scaleAnimation.duration = duration
-        scaleAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        scaleAnimation.damping = springDamping
+        scaleAnimation.initialVelocity = initialSpringVelocity
+        scaleAnimation.duration = max(duration, scaleAnimation.settlingDuration)
         
         view.layer?.add(scaleAnimation, forKey: "scaleIn")
         view.layer?.opacity = 1.0
@@ -135,11 +136,12 @@ public class TFYAnimationEnhancer: NSObject {
     }
     
     private func applyScaleOutAnimation(to view: NSView) {
-        let scaleAnimation = CABasicAnimation(keyPath: "transform.scale")
+        let scaleAnimation = CASpringAnimation(keyPath: "transform.scale")
         scaleAnimation.fromValue = 1.0
         scaleAnimation.toValue = 0.01
-        scaleAnimation.duration = duration
-        scaleAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        scaleAnimation.damping = springDamping
+        scaleAnimation.initialVelocity = initialSpringVelocity
+        scaleAnimation.duration = max(duration, scaleAnimation.settlingDuration)
         
         view.layer?.add(scaleAnimation, forKey: "scaleOut")
         view.layer?.opacity = 0.0
@@ -348,7 +350,7 @@ public class TFYAnimationEnhancer: NSObject {
     }
     
     // MARK: - Animations
-    func addSuccessAnimation(to view: NSView) {
+    public func addSuccessAnimation(to view: NSView) {
         // Scale animation
         let scaleAnimation = CAKeyframeAnimation(keyPath: "transform.scale")
         scaleAnimation.values = [1.0, 1.2, 0.9, 1.0]
@@ -370,7 +372,7 @@ public class TFYAnimationEnhancer: NSObject {
         view.layer?.add(groupAnimation, forKey: "successAnimation")
     }
     
-    func addErrorAnimation(to view: NSView) {
+    public func addErrorAnimation(to view: NSView) {
         // Shake animation
         let shakeAnimation = CAKeyframeAnimation(keyPath: "transform.rotation")
         shakeAnimation.values = [0, -Double.pi/8, Double.pi/8, 0]
@@ -392,7 +394,7 @@ public class TFYAnimationEnhancer: NSObject {
         view.layer?.add(groupAnimation, forKey: "errorAnimation")
     }
     
-    func addShakeAnimation(to view: NSView) {
+    public func addShakeAnimation(to view: NSView) {
         let shakeAnimation = CAKeyframeAnimation(keyPath: "transform.translation.x")
         shakeAnimation.values = [0, -10, 10, -5, 5, 0]
         shakeAnimation.keyTimes = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0] as [NSNumber]
@@ -402,7 +404,7 @@ public class TFYAnimationEnhancer: NSObject {
         view.layer?.add(shakeAnimation, forKey: "shakeAnimation")
     }
     
-    func addPulseAnimation(to view: NSView) {
+    public func addPulseAnimation(to view: NSView) {
         let pulseAnimation = CABasicAnimation(keyPath: "transform.scale")
         pulseAnimation.fromValue = 1.0
         pulseAnimation.toValue = 1.1

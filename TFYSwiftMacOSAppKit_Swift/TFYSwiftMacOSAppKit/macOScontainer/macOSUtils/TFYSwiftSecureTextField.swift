@@ -40,7 +40,7 @@ public class TFYSwiftSecureTextField: NSSecureTextField {
         registerForNotifications()
     }
     
-    func registerForNotifications() {
+    private func registerForNotifications() {
         cell = TFYSwiftSecureTextFieldCell(textCell: "")
         cell?.lineBreakMode = .byWordWrapping
         cell?.truncatesLastVisibleLine = true

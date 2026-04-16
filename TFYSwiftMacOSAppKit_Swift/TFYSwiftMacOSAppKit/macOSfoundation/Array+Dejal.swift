@@ -605,6 +605,7 @@ public extension Array {
     /// - Returns: 所有排列组合
     func permutations() -> [[Element]] where Element: Hashable {
         guard count > 1 else { return [self] }
+        guard count <= 10 else { return [] }
         
         var result: [[Element]] = []
         let elements = self
@@ -631,6 +632,7 @@ public extension Array {
     /// - Returns: 所有子集
     func subsets() -> [[Element]] {
         guard !isEmpty else { return [[]] }
+        guard count <= 20 else { return [] }
         
         let first = self[0]
         let rest = Array(self.dropFirst())

@@ -39,7 +39,18 @@ class TFYSwiftHomeController: NSViewController {
         
         let emitterLayer = CAEmitterLayer()
         let cell = CAEmitterCell()
-        cell.contents = NSImage(named: "mood_background_1")?.cgImage
+        // Use a system symbol image as the emitter particle; avoids a missing-asset crash
+        let particleImage: NSImage
+        if let sym = NSImage(systemSymbolName: "sparkle", accessibilityDescription: nil) {
+            particleImage = sym
+        } else {
+            particleImage = NSImage(size: NSSize(width: 8, height: 8), flipped: false) { rect in
+                NSColor.systemYellow.setFill()
+                NSBezierPath(ovalIn: rect).fill()
+                return true
+            }
+        }
+        cell.contents = particleImage.cgImage(forProposedRect: nil, context: nil, hints: nil)
         cell.birthRate = 10
         cell.lifetime = 5
         cell.velocity = 100

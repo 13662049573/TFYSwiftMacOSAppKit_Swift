@@ -417,9 +417,15 @@ public extension Chain where Base: NSView {
     }
     
     @discardableResult
-    func removeFormSuperView() -> Self {
+    func removeFromSuperview() -> Self {
         base.removeFromSuperview()
         return self
+    }
+    
+    @available(*, deprecated, renamed: "removeFromSuperview()")
+    @discardableResult
+    func removeFormSuperView() -> Self {
+        return removeFromSuperview()
     }
     
     @discardableResult

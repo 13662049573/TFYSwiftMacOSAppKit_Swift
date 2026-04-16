@@ -289,6 +289,12 @@ public class TFYProgressView: NSView {
         completionBlock = completion
 
         if animated {
+            CATransaction.begin()
+            CATransaction.setAnimationDuration(animationDuration)
+            CATransaction.setCompletionBlock { [weak self] in
+                self?.animationDidComplete()
+            }
+
             let animation = CABasicAnimation(keyPath: "strokeEnd")
             animation.fromValue = lastProgress
             animation.toValue = clampedProgress
@@ -296,20 +302,26 @@ public class TFYProgressView: NSView {
             animation.timingFunction = timingFunction
             animation.isRemovedOnCompletion = false
             animation.fillMode = .forwards
-            
+
             progressLayer.add(animation, forKey: "progressAnimation")
             progressLayer.strokeEnd = clampedProgress
 
             if style == .pie {
+                let fromPath = pieLayer.presentation()?.path ?? pieLayer.path
+                updatePiePath()
+                let toPath = pieLayer.path
+
                 let pieAnimation = CABasicAnimation(keyPath: "path")
+                pieAnimation.fromValue = fromPath
+                pieAnimation.toValue = toPath
                 pieAnimation.duration = animationDuration
                 pieAnimation.timingFunction = timingFunction
+                pieAnimation.isRemovedOnCompletion = false
+                pieAnimation.fillMode = .forwards
                 pieLayer.add(pieAnimation, forKey: "pieAnimation")
             }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) { [weak self] in
-                self?.animationDidComplete()
-            }
+
+            CATransaction.commit()
         } else {
             progressLayer.strokeEnd = clampedProgress
             if style == .pie {

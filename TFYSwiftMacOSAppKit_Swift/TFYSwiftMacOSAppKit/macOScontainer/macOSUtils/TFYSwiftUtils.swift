@@ -13,6 +13,7 @@ import Network
 import NetworkExtension
 import IOKit
 import CommonCrypto
+import CryptoKit
 
 // MARK: - Network Utilities Class
 public final class TFYSwiftUtils: NSObject {
@@ -209,14 +210,19 @@ public final class TFYSwiftUtils: NSObject {
 
             let addresses = getAllIPAddresses()
             for key in searchArray {
-                if let address = addresses[key], isValidatIP(ipAddress: address) {
+                if let address = addresses[key], isValidIP(ipAddress: address) {
                     return address
                 }
             }
             return ""
         }
 
+        @available(*, deprecated, renamed: "isValidIP(ipAddress:)")
         public static func isValidatIP(ipAddress: String) -> Bool {
+            return isValidIP(ipAddress: ipAddress)
+        }
+
+        public static func isValidIP(ipAddress: String) -> Bool {
             let urlRegEx = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$"
             let regex = try? NSRegularExpression(pattern: urlRegEx, options: [])
             if let match = regex?.firstMatch(in: ipAddress, options: [], range: NSRange(location: 0, length: ipAddress.utf16.count)) {
@@ -433,11 +439,12 @@ public final class TFYSwiftUtils: NSObject {
             }
         }
     
-    /// 加密方法
+    /// 加密方法（已废弃：3DES ECB 不安全，请使用 encryptAESGCM）
     /// - Parameters:
     ///   - content: 要加密的内容
     ///   - key: 密钥
     /// - Returns: 加密后的 Base64 字符串
+    @available(*, deprecated, message: "3DES ECB is insecure. Use AES-GCM via CryptoKit instead.")
     public static func encrypt(content: String, key: String) -> String? {
         guard let contentData = content.data(using: .utf8),
               let keyData = key.data(using: .utf8) else {
@@ -480,11 +487,12 @@ public final class TFYSwiftUtils: NSObject {
         return buffer.base64EncodedString()
     }
     
-    /// 解密方法
+    /// 解密方法（已废弃：3DES ECB 不安全，请使用 decryptAESGCM）
     /// - Parameters:
     ///   - content: 要解密的 Base64 字符串
     ///   - key: 密钥
     /// - Returns: 解密后的原文
+    @available(*, deprecated, message: "3DES ECB is insecure. Use AES-GCM via CryptoKit instead.")
     public static func decrypt(content: String, key: String) -> String? {
         guard let contentData = Data(base64Encoded: content),
               let keyData = key.data(using: .utf8) else {
@@ -527,6 +535,35 @@ public final class TFYSwiftUtils: NSObject {
         return String(data: buffer, encoding: .utf8)
     }
     
+    /// AES-GCM 加密（推荐替代 encrypt(content:key:)）
+    /// - Parameters:
+    ///   - content: 要加密的内容
+    ///   - key: 密钥字符串（将通过 SHA-256 派生为 256-bit 对称密钥）
+    /// - Returns: 加密后的 Base64 字符串（含 nonce + ciphertext + tag），失败返回 nil
+    @available(macOS 10.15, *)
+    public static func encryptAESGCM(content: String, key: String) -> String? {
+        guard let contentData = content.data(using: .utf8),
+              let keyData = key.data(using: .utf8) else { return nil }
+        let symmetricKey = SymmetricKey(data: SHA256.hash(data: keyData))
+        guard let sealedBox = try? AES.GCM.seal(contentData, using: symmetricKey) else { return nil }
+        return sealedBox.combined?.base64EncodedString()
+    }
+    
+    /// AES-GCM 解密（推荐替代 decrypt(content:key:)）
+    /// - Parameters:
+    ///   - content: encryptAESGCM 返回的 Base64 字符串
+    ///   - key: 密钥字符串（须与加密时相同）
+    /// - Returns: 解密后的原文，失败返回 nil
+    @available(macOS 10.15, *)
+    public static func decryptAESGCM(content: String, key: String) -> String? {
+        guard let contentData = Data(base64Encoded: content),
+              let keyData = key.data(using: .utf8) else { return nil }
+        let symmetricKey = SymmetricKey(data: SHA256.hash(data: keyData))
+        guard let sealedBox = try? AES.GCM.SealedBox(combined: contentData),
+              let decryptedData = try? AES.GCM.open(sealedBox, using: symmetricKey) else { return nil }
+        return String(data: decryptedData, encoding: .utf8)
+    }
+    
 }
 
 // MARK: - Usage Example
@@ -558,7 +595,13 @@ public final class TFYAppUpdateChecker {
         }
         
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
-        return (currentVersion == version, version)
+        let isUpToDate: Bool
+        if let current = currentVersion {
+            isUpToDate = current.compare(version, options: .numeric) != .orderedAscending
+        } else {
+            isUpToDate = false
+        }
+        return (isUpToDate, version)
     }
 }
 

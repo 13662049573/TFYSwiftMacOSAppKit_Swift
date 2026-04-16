@@ -8,6 +8,11 @@
 
 import Cocoa
 
+private enum TFYMenuAssociatedKeys {
+    static var menuAction: UInt8 = 0
+    static var menuItemAction: UInt8 = 0
+}
+
 public extension NSMenu {
     /// 向菜单中添加分隔符项。
     func addSeparatorItemSwift() {
@@ -54,21 +59,18 @@ public extension NSMenu {
 
     /// 根据菜单项的目标和操作移除菜单项。返回它的菜单项索引，以防相邻的项（例如分隔符）也需要删除。
     func removeItemWithTargetSwift(target: AnyObject?, action: Selector) -> Int {
-        var index: Int?
-       let tempIndex = indexOfItem(withTarget: target, andAction: action)
-        index = tempIndex
-        removeItem(at: tempIndex)
-        return index ?? -1
+        let index = indexOfItem(withTarget: target, andAction: action)
+        guard index >= 0 else { return -1 }
+        removeItem(at: index)
+        return index
     }
 
     /// 基于目标和操作移除所有菜单项。
     func removeItemsWithTargetSwift(target: AnyObject?, action: Selector) {
-        var tempIndex: Int?
-        while tempIndex != nil {
-            tempIndex = indexOfItem(withTarget: target, andAction: action)
-            if let index = tempIndex {
-                removeItem(at: index)
-            }
+        while true {
+            let index = indexOfItem(withTarget: target, andAction: action)
+            guard index >= 0 else { break }
+            removeItem(at: index)
         }
     }
 
@@ -84,7 +86,9 @@ public extension NSMenu {
     /// 返回带有给定目标、操作和标记值（如果有的话）的接收器中的菜单项。
     func itemWithTargetSwift(target: AnyObject?, action: Selector, tag: Int) -> NSMenuItem? {
         for item in items {
-            if let itemTarget = item.target as AnyObject?, target != nil && itemTarget === target && item.action == action && item.tag == tag {
+            let itemTarget = item.target as AnyObject?
+            let matchesTarget = (target == nil && itemTarget == nil) || (target != nil && itemTarget === target)
+            if matchesTarget && item.action == action && item.tag == tag {
                 return item
             }
         }
@@ -94,7 +98,9 @@ public extension NSMenu {
     /// 使用给定的目标和操作切换接收器中所有菜单项的状态，以便只检查与指定标记值匹配的项，不检查与其他标记值匹配的项。
     func setCheckedItemForTargetSwift(target: AnyObject?, action: Selector, tag: Int) {
         for item in items {
-            if let itemTarget = item.target as AnyObject?, target != nil && itemTarget === target && item.action == action {
+            let itemTarget = item.target as AnyObject?
+            let matchesTarget = (target == nil && itemTarget == nil) || (target != nil && itemTarget === target)
+            if matchesTarget && item.action == action {
                 item.state = item.tag == tag ? .on :.off
             }
         }
@@ -116,14 +122,14 @@ public extension NSMenu {
         item.target = self
         
         // 存储回调
-        objc_setAssociatedObject(item, "menuAction", action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        objc_setAssociatedObject(item, &TFYMenuAssociatedKeys.menuAction, action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
         
         addItem(item)
         return item
     }
     
     @objc private func handleMenuAction(_ sender: NSMenuItem) {
-        if let action = objc_getAssociatedObject(sender, "menuAction") as? (NSMenuItem) -> Void {
+        if let action = objc_getAssociatedObject(sender, &TFYMenuAssociatedKeys.menuAction) as? (NSMenuItem) -> Void {
             action(sender)
         }
     }
@@ -164,6 +170,26 @@ public extension NSMenu {
     func item(withTag tag: Int) -> NSMenuItem? {
         return items.first { $0.tag == tag }
     }
+
+    /// 根据标题移除菜单项
+    /// - Parameter title: 菜单项标题
+    /// - Returns: 是否移除成功
+    @discardableResult
+    func removeItem(withTitle title: String) -> Bool {
+        guard let item = item(withTitle: title) else { return false }
+        removeItem(item)
+        return true
+    }
+
+    /// 根据标签移除菜单项
+    /// - Parameter tag: 菜单项标签
+    /// - Returns: 移除的数量
+    @discardableResult
+    func removeItems(withTag tag: Int) -> Int {
+        let matchedItems = items.filter { $0.tag == tag }
+        matchedItems.forEach(removeItem(_:))
+        return matchedItems.count
+    }
     
     /// 启用或禁用菜单项
     /// - Parameters:
@@ -181,6 +207,30 @@ public extension NSMenu {
     ///   - state: 菜单项状态
     func setItemState(title: String, state: NSControl.StateValue) {
         if let item = item(withTitle: title) {
+            item.state = state
+        }
+    }
+
+    /// 更新菜单项配置
+    /// - Parameters:
+    ///   - title: 菜单项标题
+    ///   - enabled: 是否启用
+    ///   - hidden: 是否隐藏
+    ///   - state: 菜单项状态
+    func updateItem(
+        title: String,
+        enabled: Bool? = nil,
+        hidden: Bool? = nil,
+        state: NSControl.StateValue? = nil
+    ) {
+        guard let item = item(withTitle: title) else { return }
+        if let enabled {
+            item.isEnabled = enabled
+        }
+        if let hidden {
+            item.isHidden = hidden
+        }
+        if let state {
             item.state = state
         }
     }
@@ -206,10 +256,20 @@ public extension NSMenu {
     var itemTitles: [String] {
         return items.map { $0.title }
     }
+
+    /// 使用标题批量添加菜单项
+    /// - Parameters:
+    ///   - titles: 菜单项标题数组
+    ///   - action: 点击回调
+    /// - Returns: 创建的菜单项数组
+    @discardableResult
+    func addItems(titles: [String], action: @escaping (NSMenuItem) -> Void) -> [NSMenuItem] {
+        titles.map { addItem(title: $0, action: action) }
+    }
 }
 
 // 扩展 NSMenuItem
-extension NSMenuItem {
+public extension NSMenuItem {
     /// 返回具有给定标题和其他设置的新菜单项实例。
     static func menuItemWithTitleSwift(title: String, settings: ((NSMenuItem) -> Void)? = nil) -> NSMenuItem {
         let menuItem = NSMenuItem(title: title, action: nil, keyEquivalent: "")
@@ -226,12 +286,30 @@ extension NSMenuItem {
         self.target = self
         
         // 存储回调
-        objc_setAssociatedObject(self, "menuItemAction", action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        objc_setAssociatedObject(self, &TFYMenuAssociatedKeys.menuItemAction, action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
     }
     
     @objc private func handleAction(_ sender: NSMenuItem) {
-        if let action = objc_getAssociatedObject(self, "menuItemAction") as? (NSMenuItem) -> Void {
+        if let action = objc_getAssociatedObject(self, &TFYMenuAssociatedKeys.menuItemAction) as? (NSMenuItem) -> Void {
             action(sender)
         }
+    }
+
+    /// 设置快捷键
+    /// - Parameters:
+    ///   - keyEquivalent: 快捷键字符
+    ///   - modifiers: 修饰键
+    func setShortcut(_ keyEquivalent: String, modifiers: NSEvent.ModifierFlags = [.command]) {
+        self.keyEquivalent = keyEquivalent
+        self.keyEquivalentModifierMask = modifiers
+    }
+
+    /// 便捷配置菜单项
+    /// - Parameter updates: 配置回调
+    /// - Returns: 当前菜单项
+    @discardableResult
+    func configured(_ updates: (NSMenuItem) -> Void) -> Self {
+        updates(self)
+        return self
     }
 }

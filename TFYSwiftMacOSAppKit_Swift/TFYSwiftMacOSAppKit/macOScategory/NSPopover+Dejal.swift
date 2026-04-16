@@ -8,6 +8,10 @@
 
 import Cocoa
 
+private enum TFYPopoverAssociatedKeys {
+    static var delegate: UInt8 = 0
+}
+
 public extension NSPopover {
     
     /// 创建弹窗
@@ -64,6 +68,18 @@ public extension NSPopover {
             close()
         } else {
             show(in: view, preferredEdge: .minY)
+        }
+    }
+
+    /// 切换弹窗显示状态
+    /// - Parameters:
+    ///   - view: 相对于的视图
+    ///   - preferredEdge: 首选边缘
+    func toggle(in view: NSView, preferredEdge: NSRectEdge) {
+        if isShown {
+            close()
+        } else {
+            show(in: view, preferredEdge: preferredEdge)
         }
     }
     
@@ -131,14 +147,14 @@ public extension NSPopover {
         
         let cancelButton = NSButton(title: "取消", target: nil, action: nil)
         cancelButton.bezelStyle = .rounded
-        cancelButton.addAction { _ in
+        cancelButton.onAction { _ in
             cancelAction()
         }
         
         let confirmButton = NSButton(title: "确认", target: nil, action: nil)
         confirmButton.bezelStyle = .rounded
         confirmButton.keyEquivalent = "\r"
-        confirmButton.addAction { _ in
+        confirmButton.onAction { _ in
             confirmAction()
         }
         
@@ -181,14 +197,14 @@ public extension NSPopover {
         
         let cancelButton = NSButton(title: "取消", target: nil, action: nil)
         cancelButton.bezelStyle = .rounded
-        cancelButton.addAction { _ in
+        cancelButton.onAction { _ in
             cancelAction()
         }
         
         let confirmButton = NSButton(title: "确认", target: nil, action: nil)
         confirmButton.bezelStyle = .rounded
         confirmButton.keyEquivalent = "\r"
-        confirmButton.addAction { _ in
+        confirmButton.onAction { _ in
             confirmAction(textField.stringValue)
         }
         
@@ -199,6 +215,44 @@ public extension NSPopover {
         let popover = createWithTitle("输入", contentView: stackView)
         popover.contentSize = NSSize(width: 280, height: stackView.fittingSize.height)
         
+        return popover
+    }
+
+    /// 设置关闭回调
+    /// - Parameter handler: 关闭回调
+    func setCloseHandler(_ handler: @escaping () -> Void) {
+        let delegate = PopoverDelegate(closeHandler: handler)
+        self.delegate = delegate
+        objc_setAssociatedObject(self, &TFYPopoverAssociatedKeys.delegate, delegate, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    }
+
+    /// 关闭当前弹窗（如果已显示）
+    func closeIfNeeded() {
+        guard isShown else { return }
+        close()
+    }
+
+    /// 根据内容自动调整大小
+    /// - Parameters:
+    ///   - maxWidth: 最大宽度
+    ///   - minWidth: 最小宽度
+    func sizeToFitContent(maxWidth: CGFloat = 360, minWidth: CGFloat = 160) {
+        guard let view = contentViewController?.view else { return }
+        let fitting = view.fittingSize
+        contentSize = NSSize(
+            width: min(max(fitting.width, minWidth), maxWidth),
+            height: fitting.height
+        )
+    }
+
+    /// 使用视图直接创建弹窗
+    /// - Parameters:
+    ///   - view: 内容视图
+    ///   - behavior: 弹窗行为
+    /// - Returns: 创建的弹窗
+    static func create(with view: NSView, behavior: NSPopover.Behavior = .transient) -> NSPopover {
+        let popover = createWithTitle("", contentView: view)
+        popover.behavior = behavior
         return popover
     }
 }
@@ -218,18 +272,3 @@ private class PopoverDelegate: NSObject, NSPopoverDelegate {
 }
 
 // MARK: - NSButton 扩展（用于支持闭包回调）
-private extension NSButton {
-    func addAction(_ action: @escaping (NSButton) -> Void) {
-        self.target = self
-        self.action = #selector(handleAction(_:))
-        
-        // 存储回调
-        objc_setAssociatedObject(self, "buttonAction", action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
-    }
-    
-    @objc private func handleAction(_ sender: NSButton) {
-        if let action = objc_getAssociatedObject(self, "buttonAction") as? (NSButton) -> Void {
-            action(sender)
-        }
-    }
-}

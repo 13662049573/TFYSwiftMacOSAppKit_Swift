@@ -20,7 +20,8 @@ public class TFYSwiftTextFieldCell: NSTextFieldCell {
     
     public override func select(withFrame rect: NSRect, in controlView: NSView?, editor textObj: NSText?, delegate: Any?, start selStart: Int, length selLength: Int) {
         let adjustedRect = adjustedRect(forBounds: rect, controlView: controlView)
-        super.select(withFrame: adjustedRect, in: controlView!, editor: textObj!, delegate: delegate, start: selStart, length: selLength)
+        guard let controlView = controlView, let textObj = textObj else { return }
+        super.select(withFrame: adjustedRect, in: controlView, editor: textObj, delegate: delegate, start: selStart, length: selLength)
     }
     
     /// 基于当前可用宽度计算真实文本尺寸，兼容单行、省略和多行换行场景。

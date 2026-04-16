@@ -58,17 +58,18 @@ public extension NSImage {
     func applyBadge(badge: NSImage?, withAlpha alpha: CGFloat, scale: CGFloat) {
         guard let badge = badge,
               let newBadge = badge.copy() as? NSImage else { return }
-        // 根据缩放比例调整徽章大小
         newBadge.size = NSSize(width: size.width * scale, height: size.height * scale)
-        
-        // 绘制徽章
-        lockFocus()
-        NSGraphicsContext.current?.imageInterpolation = .high
-        newBadge.draw(at: NSPoint(x: size.width - newBadge.size.width, y: 0),
-                     from: .zero,
-                     operation: .sourceOver,
-                     fraction: alpha)
-        unlockFocus()
+
+        let currentSize = size
+        let composed = NSImage(size: currentSize, flipped: false) { [self, newBadge] bounds in
+            NSGraphicsContext.current?.imageInterpolation = .high
+            self.draw(in: bounds, from: .zero, operation: .copy, fraction: 1.0)
+            newBadge.draw(at: NSPoint(x: bounds.width - newBadge.size.width, y: 0),
+                         from: .zero, operation: .sourceOver, fraction: alpha)
+            return true
+        }
+        representations.forEach { removeRepresentation($0) }
+        composed.representations.forEach { addRepresentation($0) }
     }
     
     /// 创建一个带有指定颜色染色的图像副本
@@ -77,17 +78,12 @@ public extension NSImage {
     ///   - operation: 合成操作方式
     /// - Returns: 染色后的新图像
     func tintedImage(withColor tint: NSColor, operation: NSCompositingOperation = .sourceAtop) -> NSImage {
-        let size = self.size
-        let bounds = NSRect(origin: .zero, size: size)
-        let image = NSImage(size: size)
-        
-        image.lockFocus()
-        draw(at: .zero, from: bounds, operation: .sourceOver, fraction: 1.0)
-        tint.setFill()
-        NSBezierPath(rect: bounds).fill()
-        image.unlockFocus()
-        
-        return image
+        return NSImage(size: size, flipped: false) { [self] bounds in
+            self.draw(at: .zero, from: bounds, operation: .sourceOver, fraction: 1.0)
+            tint.setFill()
+            NSBezierPath(rect: bounds).fill()
+            return true
+        }
     }
     
     /// 获取图像的PNG格式数据
@@ -114,14 +110,11 @@ public extension NSImage {
     /// - Returns: 创建的纯色图像
     static func image(withColor color: NSColor) -> NSImage {
         let size = NSSize(width: 1, height: 1)
-        let image = NSImage(size: size)
-        
-        image.lockFocus()
-        color.setFill()
-        NSBezierPath(rect: NSRect(origin: .zero, size: size)).fill()
-        image.unlockFocus()
-        
-        return image
+        return NSImage(size: size, flipped: false) { bounds in
+            color.setFill()
+            NSBezierPath(rect: bounds).fill()
+            return true
+        }
     }
     
     /// 创建渐变图像
@@ -131,17 +124,13 @@ public extension NSImage {
     ///   - direction: 渐变方向
     /// - Returns: 渐变图像
     static func gradientImage(colors: [NSColor], size: NSSize, direction: NSGradient.DrawingOptions = .drawsBeforeStartingLocation) -> NSImage {
-        let image = NSImage(size: size)
-        
         guard let gradient = NSGradient(colors: colors), !colors.isEmpty else {
-            return image
+            return NSImage(size: size)
         }
-        
-        image.lockFocus()
-        gradient.draw(in: NSRect(origin: .zero, size: size), angle: 0)
-        image.unlockFocus()
-        
-        return image
+        return NSImage(size: size, flipped: false) { bounds in
+            gradient.draw(in: bounds, angle: 0)
+            return true
+        }
     }
     
     // MARK: - 图像处理新方法
@@ -150,23 +139,21 @@ public extension NSImage {
     /// - Parameter newSize: 新尺寸
     /// - Returns: 调整后的图像
     func resized(to newSize: NSSize) -> NSImage {
-        let image = NSImage(size: newSize)
-        image.lockFocus()
-        NSGraphicsContext.current?.imageInterpolation = .high
-        draw(in: NSRect(origin: .zero, size: newSize), from: .zero, operation: .copy, fraction: 1.0)
-        image.unlockFocus()
-        return image
+        return NSImage(size: newSize, flipped: false) { [self] bounds in
+            NSGraphicsContext.current?.imageInterpolation = .high
+            self.draw(in: bounds, from: .zero, operation: .copy, fraction: 1.0)
+            return true
+        }
     }
     
     /// 裁剪图像
     /// - Parameter rect: 裁剪区域
     /// - Returns: 裁剪后的图像
     func cropped(to rect: NSRect) -> NSImage {
-        let image = NSImage(size: rect.size)
-        image.lockFocus()
-        draw(in: NSRect(origin: .zero, size: rect.size), from: rect, operation: .copy, fraction: 1.0)
-        image.unlockFocus()
-        return image
+        return NSImage(size: rect.size, flipped: false) { [self] bounds in
+            self.draw(in: bounds, from: rect, operation: .copy, fraction: 1.0)
+            return true
+        }
     }
     
     /// 旋转图像
@@ -179,21 +166,16 @@ public extension NSImage {
         let bounds = NSRect(origin: .zero, size: size)
         let rotatedBounds = transformedRect(bounds, by: transform)
         
-        let image = NSImage(size: rotatedBounds.size)
-        image.lockFocus()
-        
-        let context = NSGraphicsContext.current!
-        context.saveGraphicsState()
-        context.cgContext.translateBy(x: rotatedBounds.width / 2, y: rotatedBounds.height / 2)
-        context.cgContext.rotate(by: angle)
-        context.cgContext.translateBy(x: -size.width / 2, y: -size.height / 2)
-        
-        draw(in: bounds, from: .zero, operation: .copy, fraction: 1.0)
-        
-        context.restoreGraphicsState()
-        image.unlockFocus()
-        
-        return image
+        return NSImage(size: rotatedBounds.size, flipped: false) { [self] _ in
+            guard let context = NSGraphicsContext.current else { return false }
+            context.saveGraphicsState()
+            context.cgContext.translateBy(x: rotatedBounds.width / 2, y: rotatedBounds.height / 2)
+            context.cgContext.rotate(by: angle)
+            context.cgContext.translateBy(x: -self.size.width / 2, y: -self.size.height / 2)
+            self.draw(in: bounds, from: .zero, operation: .copy, fraction: 1.0)
+            context.restoreGraphicsState()
+            return true
+        }
     }
     
     /// 应用模糊效果
@@ -355,16 +337,15 @@ public extension NSImage {
     
     /// 添加Logo到二维码中心
     private static func addLogo(to image: NSImage, logo: NSImage, logoSize: CGSize) -> NSImage {
-        // 计算Logo的位置（居中）
         let logoRect = CGRect(x: (image.size.width - logoSize.width) / 2,
                             y: (image.size.height - logoSize.height) / 2,
                             width: logoSize.width,
                             height: logoSize.height)
-        // 绘制Logo
-        image.lockFocus()
-        logo.draw(in: logoRect)
-        image.unlockFocus()
-        return image
+        return NSImage(size: image.size, flipped: false) { _ in
+            image.draw(in: CGRect(origin: .zero, size: image.size))
+            logo.draw(in: logoRect)
+            return true
+        }
     }
     
     /// 为二维码添加颜色
@@ -426,80 +407,43 @@ public extension NSImage {
     /// - Returns: 平均颜色
     func averageColor() -> NSColor? {
         guard let cgImage = cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
-        
-        let width = Int(size.width)
-        let height = Int(size.height)
-        guard width > 0, height > 0 else { return nil }
-        let bytesPerPixel = 4
-        let bytesPerRow = width * bytesPerPixel
-        let bitsPerComponent = 8
-        
-        guard let context = CGContext(data: nil,
-                                    width: width,
-                                    height: height,
-                                    bitsPerComponent: bitsPerComponent,
-                                    bytesPerRow: bytesPerRow,
-                                    space: CGColorSpaceCreateDeviceRGB(),
-                                    bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
-        
-        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        
-        guard let data = context.data else { return nil }
-        let buffer = data.bindMemory(to: UInt8.self, capacity: width * height * bytesPerPixel)
-        
-        var totalRed: Int = 0
-        var totalGreen: Int = 0
-        var totalBlue: Int = 0
-        var totalAlpha: Int = 0
-        
-        for y in 0..<height {
-            for x in 0..<width {
-                let pixelIndex = (y * width + x) * bytesPerPixel
-                totalRed += Int(buffer[pixelIndex])
-                totalGreen += Int(buffer[pixelIndex + 1])
-                totalBlue += Int(buffer[pixelIndex + 2])
-                totalAlpha += Int(buffer[pixelIndex + 3])
-            }
-        }
-        
-        let pixelCount = width * height
-        let averageRed = CGFloat(totalRed) / CGFloat(pixelCount) / 255.0
-        let averageGreen = CGFloat(totalGreen) / CGFloat(pixelCount) / 255.0
-        let averageBlue = CGFloat(totalBlue) / CGFloat(pixelCount) / 255.0
-        let averageAlpha = CGFloat(totalAlpha) / CGFloat(pixelCount) / 255.0
-        
-        return NSColor(red: averageRed, green: averageGreen, blue: averageBlue, alpha: averageAlpha)
+        let ciImage = CIImage(cgImage: cgImage)
+        guard let filter = CIFilter(name: "CIAreaAverage") else { return nil }
+        filter.setValue(ciImage, forKey: kCIInputImageKey)
+        filter.setValue(CIVector(cgRect: ciImage.extent), forKey: kCIInputExtentKey)
+        guard let outputImage = filter.outputImage else { return nil }
+        var bitmap = [UInt8](repeating: 0, count: 4)
+        let context = CIContext(options: [.workingColorSpace: kCFNull as Any])
+        context.render(outputImage, toBitmap: &bitmap, rowBytes: 4,
+                       bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                       format: .RGBA8, colorSpace: nil)
+        return NSColor(red: CGFloat(bitmap[0]) / 255,
+                       green: CGFloat(bitmap[1]) / 255,
+                       blue: CGFloat(bitmap[2]) / 255,
+                       alpha: CGFloat(bitmap[3]) / 255)
     }
     
     /// 创建圆形图像
     /// - Returns: 圆形图像
     func circularImage() -> NSImage {
-        let image = NSImage(size: size)
-        image.lockFocus()
-        
-        let path = NSBezierPath(ovalIn: NSRect(origin: .zero, size: size))
-        path.addClip()
-        
-        draw(in: NSRect(origin: .zero, size: size), from: .zero, operation: .copy, fraction: 1.0)
-        
-        image.unlockFocus()
-        return image
+        return NSImage(size: size, flipped: false) { [self] bounds in
+            let path = NSBezierPath(ovalIn: bounds)
+            path.addClip()
+            self.draw(in: bounds, from: .zero, operation: .copy, fraction: 1.0)
+            return true
+        }
     }
     
     /// 创建圆角图像
     /// - Parameter cornerRadius: 圆角半径
     /// - Returns: 圆角图像
     func roundedImage(cornerRadius: CGFloat) -> NSImage {
-        let image = NSImage(size: size)
-        image.lockFocus()
-        
-        let path = NSBezierPath(roundedRect: NSRect(origin: .zero, size: size), xRadius: cornerRadius, yRadius: cornerRadius)
-        path.addClip()
-        
-        draw(in: NSRect(origin: .zero, size: size), from: .zero, operation: .copy, fraction: 1.0)
-        
-        image.unlockFocus()
-        return image
+        return NSImage(size: size, flipped: false) { [self] bounds in
+            let path = NSBezierPath(roundedRect: bounds, xRadius: cornerRadius, yRadius: cornerRadius)
+            path.addClip()
+            self.draw(in: bounds, from: .zero, operation: .copy, fraction: 1.0)
+            return true
+        }
     }
     
     /// 添加边框
@@ -509,17 +453,13 @@ public extension NSImage {
     /// - Returns: 带边框的图像
     func addBorder(width borderWidth: CGFloat, color borderColor: NSColor) -> NSImage {
         let newSize = NSSize(width: size.width + borderWidth * 2, height: size.height + borderWidth * 2)
-        let image = NSImage(size: newSize)
-        
-        image.lockFocus()
-        borderColor.setFill()
-        NSBezierPath(rect: NSRect(origin: .zero, size: newSize)).fill()
-        
-        draw(in: NSRect(x: borderWidth, y: borderWidth, width: size.width, height: size.height),
-             from: .zero, operation: .copy, fraction: 1.0)
-        
-        image.unlockFocus()
-        return image
+        return NSImage(size: newSize, flipped: false) { [self] bounds in
+            borderColor.setFill()
+            NSBezierPath(rect: bounds).fill()
+            self.draw(in: NSRect(x: borderWidth, y: borderWidth, width: self.size.width, height: self.size.height),
+                     from: .zero, operation: .copy, fraction: 1.0)
+            return true
+        }
     }
     
     /// 创建缩略图

@@ -17,6 +17,8 @@ final class ComponentsDemoViewController: NSViewController {
     private var passwordFieldView: TFYSwiftTextFieldView!
     private var passwordStateLabel: NSTextField!
     private var textActionLabel: TFYSwiftLabel!
+    private var compGradientLayer: CAGradientLayer!
+    private var compGradientView: NSView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -61,6 +63,8 @@ final class ComponentsDemoViewController: NSViewController {
         yOffset = setupInputEnhancementSection(in: contentView, yOffset: yOffset)
         yOffset = setupPasswordContainerSection(in: contentView, yOffset: yOffset)
         yOffset = setupImageSection(in: contentView, yOffset: yOffset)
+        yOffset = setupGradientLayerSection(in: contentView, yOffset: yOffset)
+        yOffset = setupColorCreationSection(in: contentView, yOffset: yOffset)
         yOffset = setupLogSection(in: contentView, yOffset: yOffset)
         
         contentView.frame.size.height = yOffset + 24
@@ -292,6 +296,111 @@ final class ComponentsDemoViewController: NSViewController {
         return currentOffset + 106
     }
     
+    private func setupGradientLayerSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
+        var currentOffset = yOffset
+
+        let sectionLabel = makeSectionLabel("CAGradientLayer 渐变动画")
+        sectionLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(sectionLabel)
+        currentOffset += 30
+
+        compGradientView = NSView().chain
+            .frame(NSRect(x: 20, y: currentOffset, width: 460, height: 90))
+            .wantsLayer(true)
+            .cornerRadius(14)
+            .borderWidth(1)
+            .borderColor(.separatorColor)
+            .build
+        contentView.addSubview(compGradientView)
+
+        compGradientLayer = CAGradientLayer()
+        compGradientLayer.chain
+            .frame(CGRect(x: 0, y: 0, width: 460, height: 90))
+            .cornerRadius(14)
+            .masksToBounds(true)
+        compGradientLayer.colors = [NSColor.systemIndigo.cgColor, NSColor.systemPink.cgColor, NSColor.systemOrange.cgColor]
+        compGradientLayer.startPoint = CGPoint(x: 0, y: 0.5)
+        compGradientLayer.endPoint = CGPoint(x: 1, y: 0.5)
+        compGradientView.layer?.addSublayer(compGradientLayer)
+
+        let animateBtn = makeActionButton(title: "渐变动画", frame: NSRect(x: 500, y: currentOffset + 6, width: 90, height: 32), action: #selector(animateGradientColors))
+        contentView.addSubview(animateBtn)
+
+        let randomBtn = makeActionButton(title: "随机颜色", frame: NSRect(x: 604, y: currentOffset + 6, width: 90, height: 32), action: #selector(randomGradientColors))
+        contentView.addSubview(randomBtn)
+
+        let infoLabel = makeBodyLabel("CAGradientLayer 使用 chain API 设置 frame / cornerRadius / masksToBounds，点击按钮触发颜色动画。", width: 280, height: 44)
+        infoLabel.frame.origin = NSPoint(x: 500, y: currentOffset + 44)
+        contentView.addSubview(infoLabel)
+
+        return currentOffset + 110
+    }
+
+    private func setupColorCreationSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
+        var currentOffset = yOffset
+
+        let sectionLabel = makeSectionLabel("NSColor CMYK / Hex / HSB 创建")
+        sectionLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(sectionLabel)
+        currentOffset += 30
+
+        let coral = NSColor(safeHexString: "#FF6B6B") ?? .systemRed
+        let mint = (try? NSColor(c: 60, m: 0, y: 40, k: 0)) ?? .systemGreen
+        let violet = (try? NSColor(h: 260, s: 80, b: 90)) ?? .systemPurple
+        let dynamic = NSColor.dynamicColor(light: .systemBlue, dark: .systemTeal)
+
+        let colorData: [(String, NSColor, String)] = [
+            ("Hex #FF6B6B", coral, "暖 · 热情"),
+            ("CMYK(60,0,40,0)", mint, "冷 · 清新"),
+            ("HSB(260,80,90)", violet, "冷 · 神秘"),
+            ("dynamicColor", dynamic, "动态适配"),
+        ]
+
+        for (i, (name, color, desc)) in colorData.enumerated() {
+            let x = CGFloat(20 + i * 185)
+
+            let swatch = NSView().chain
+                .frame(NSRect(x: x, y: currentOffset, width: 165, height: 56))
+                .backgroundColor(color)
+                .cornerRadius(12)
+                .borderWidth(1)
+                .borderColor(.separatorColor)
+                .build
+            contentView.addSubview(swatch)
+
+            let nameLabel = NSTextField(labelWithString: name).chain
+                .font(.systemFont(ofSize: 11, weight: .semibold))
+                .textColor(color.bestContrastColor())
+                .alignment(.center)
+                .frame(NSRect(x: 4, y: 22, width: 157, height: 16))
+                .build
+            swatch.addSubview(nameLabel)
+
+            let descLabel = NSTextField(labelWithString: desc).chain
+                .font(.systemFont(ofSize: 10))
+                .textColor(color.bestContrastColor().withAlphaComponent(0.75))
+                .alignment(.center)
+                .frame(NSRect(x: 4, y: 6, width: 157, height: 14))
+                .build
+            swatch.addSubview(descLabel)
+
+            let hexLabel = makeBodyLabel(color.hexString, width: 165, height: 18)
+            hexLabel.frame.origin = NSPoint(x: x, y: currentOffset + 60)
+            contentView.addSubview(hexLabel)
+        }
+
+        let contrastInfo = coral.contrastRatio(with: .white)
+        let wcagPasses = coral.meetsWCAGContrast(with: .white, level: .AA)
+        let wcagLabel = makeBodyLabel(
+            "Hex #FF6B6B 与白色对比度: \(String(format: "%.2f", contrastInfo)):1 · WCAG AA: \(wcagPasses ? "✓ 通过" : "✗ 未通过") · 互补色: \(coral.complementary.hexString)",
+            width: 760, height: 22
+        )
+        wcagLabel.frame.origin = NSPoint(x: 20, y: currentOffset + 84)
+        contentView.addSubview(wcagLabel)
+
+        return currentOffset + 116
+    }
+
     private func setupLogSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
         var currentOffset = yOffset
         
@@ -417,6 +526,23 @@ final class ComponentsDemoViewController: NSViewController {
     
     @objc private func clearLog() {
         logTextView.string = ""
+    }
+
+    @objc private func animateGradientColors() {
+        let animation = CABasicAnimation(keyPath: "colors")
+        animation.fromValue = compGradientLayer.colors
+        animation.toValue = [NSColor.systemGreen.cgColor, NSColor.systemCyan.cgColor, NSColor.systemBlue.cgColor]
+        animation.duration = 0.8
+        animation.fillMode = .forwards
+        animation.isRemovedOnCompletion = false
+        compGradientLayer.add(animation, forKey: "colorAnimation")
+        compGradientLayer.colors = [NSColor.systemGreen.cgColor, NSColor.systemCyan.cgColor, NSColor.systemBlue.cgColor]
+        appendLog("CAGradientLayer 颜色动画已触发")
+    }
+
+    @objc private func randomGradientColors() {
+        compGradientLayer.colors = [NSColor.random.cgColor, NSColor.random.cgColor, NSColor.random.cgColor]
+        appendLog("CAGradientLayer 颜色已随机化")
     }
 
     @objc private func togglePasswordVisibilityState() {

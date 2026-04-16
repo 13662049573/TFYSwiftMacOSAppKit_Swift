@@ -23,8 +23,8 @@ public extension Chain where Base: NSPanGestureRecognizer {
     }
     
     @discardableResult
-    func translation(_ value:NSView) -> Self {
-        base.translation(in: value)
+    func resetTranslation(in view: NSView) -> Self {
+        base.setTranslation(.zero, in: view)
         return self
     }
     

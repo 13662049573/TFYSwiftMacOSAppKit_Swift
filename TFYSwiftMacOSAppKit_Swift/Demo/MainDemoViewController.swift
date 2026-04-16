@@ -72,6 +72,7 @@ class MainDemoViewController: NSViewController {
         createExtensionsDemoTab()
         createUtilsDemoTab()
         createHUDDemoTab()
+        createControlDemoTab()
         createStatusItemDemoTab()
     }
     
@@ -114,6 +115,13 @@ class MainDemoViewController: NSViewController {
         let tabViewItem = NSTabViewItem()
         tabViewItem.label = "HUD"
         tabViewItem.viewController = HUDDemoViewController()
+        tabView.addTabViewItem(tabViewItem)
+    }
+    
+    private func createControlDemoTab() {
+        let tabViewItem = NSTabViewItem()
+        tabViewItem.label = "富文本控件"
+        tabViewItem.viewController = ControlDemoViewController()
         tabView.addTabViewItem(tabViewItem)
     }
     

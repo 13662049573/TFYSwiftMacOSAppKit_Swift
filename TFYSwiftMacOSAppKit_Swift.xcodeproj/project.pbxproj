@@ -121,6 +121,12 @@
 		8496AC142F90CB400052E441 /* NSStackView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496AC132F90CB400052E441 /* NSStackView+Dejal.swift */; };
 		8496AC162F90CB6A0052E441 /* NSClipView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496AC152F90CB6A0052E441 /* NSClipView+Dejal.swift */; };
 		8496AC182F90CB8A0052E441 /* NSCollectionView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496AC172F90CB8A0052E441 /* NSCollectionView+Dejal.swift */; };
+		8496ACB12F91BF130052E441 /* NSButton+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496ACB02F91BF130052E441 /* NSButton+Dejal.swift */; };
+		8496ACB32F91BF5A0052E441 /* NSSegmentedControl+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496ACB22F91BF5A0052E441 /* NSSegmentedControl+Dejal.swift */; };
+		8496ACB52F91BF890052E441 /* NSSearchField+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496ACB42F91BF890052E441 /* NSSearchField+Dejal.swift */; };
+		8496ACB72F91BFB10052E441 /* NSSlider+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496ACB62F91BFB10052E441 /* NSSlider+Dejal.swift */; };
+		8496ACB92F91BFE10052E441 /* NSDatePicker+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496ACB82F91BFE10052E441 /* NSDatePicker+Dejal.swift */; };
+		8496ACBB2F91C00F0052E441 /* NSStepper+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496ACBA2F91C00F0052E441 /* NSStepper+Dejal.swift */; };
 		84CB83E52E376C1B005B1152 /* TFYSwiftCacheKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CB83E42E376C1B005B1152 /* TFYSwiftCacheKit.swift */; };
 		84CB83E92E376D02005B1152 /* TFYStitchImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CB83E82E376D02005B1152 /* TFYStitchImage.swift */; };
 /* End PBXBuildFile section */
@@ -242,6 +248,12 @@
 		8496AC132F90CB400052E441 /* NSStackView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSStackView+Dejal.swift"; sourceTree = "<group>"; };
 		8496AC152F90CB6A0052E441 /* NSClipView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSClipView+Dejal.swift"; sourceTree = "<group>"; };
 		8496AC172F90CB8A0052E441 /* NSCollectionView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSCollectionView+Dejal.swift"; sourceTree = "<group>"; };
+		8496ACB02F91BF130052E441 /* NSButton+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSButton+Dejal.swift"; sourceTree = "<group>"; };
+		8496ACB22F91BF5A0052E441 /* NSSegmentedControl+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSSegmentedControl+Dejal.swift"; sourceTree = "<group>"; };
+		8496ACB42F91BF890052E441 /* NSSearchField+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSSearchField+Dejal.swift"; sourceTree = "<group>"; };
+		8496ACB62F91BFB10052E441 /* NSSlider+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSSlider+Dejal.swift"; sourceTree = "<group>"; };
+		8496ACB82F91BFE10052E441 /* NSDatePicker+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSDatePicker+Dejal.swift"; sourceTree = "<group>"; };
+		8496ACBA2F91C00F0052E441 /* NSStepper+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSStepper+Dejal.swift"; sourceTree = "<group>"; };
 		84CB83E42E376C1B005B1152 /* TFYSwiftCacheKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftCacheKit.swift; sourceTree = "<group>"; };
 		84CB83E82E376D02005B1152 /* TFYStitchImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYStitchImage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -301,6 +313,10 @@
 				8496AC132F90CB400052E441 /* NSStackView+Dejal.swift */,
 				8496AC152F90CB6A0052E441 /* NSClipView+Dejal.swift */,
 				8496AC172F90CB8A0052E441 /* NSCollectionView+Dejal.swift */,
+				8496ACB02F91BF130052E441 /* NSButton+Dejal.swift */,
+				8496ACB22F91BF5A0052E441 /* NSSegmentedControl+Dejal.swift */,
+				8496ACB42F91BF890052E441 /* NSSearchField+Dejal.swift */,
+				8496ACB62F91BFB10052E441 /* NSSlider+Dejal.swift */,
 			);
 			path = macOScategory;
 			sourceTree = "<group>";
@@ -406,6 +422,8 @@
 				18C7EDA02CEDAF5D00914927 /* Timer+Dejal.swift */,
 				18C7EDA22CEDB04800914927 /* NotificationCenter+Dejal.swift */,
 				18C7EDA42CEDB13200914927 /* Bundle+Dejal.swift */,
+				8496ACB82F91BFE10052E441 /* NSDatePicker+Dejal.swift */,
+				8496ACBA2F91C00F0052E441 /* NSStepper+Dejal.swift */,
 			);
 			path = macOSfoundation;
 			sourceTree = "<group>";
@@ -590,12 +608,15 @@
 				3D04F8032CDCA31F009493BF /* TFYSwiftNSTableView.swift in Sources */,
 				3D04F8052CDCA31F009493BF /* TFYSwiftNSOutlineView.swift in Sources */,
 				3D04F8062CDCA31F009493BF /* TFYSwiftNSSegmentedControl.swift in Sources */,
+				8496ACB72F91BFB10052E441 /* NSSlider+Dejal.swift in Sources */,
 				3D04F8072CDCA31F009493BF /* TFYSwiftNSPopUpButton.swift in Sources */,
 				3D04F8082CDCA31F009493BF /* TFYSwiftNSBrowser.swift in Sources */,
 				3D04F8342CDCA5C9009493BF /* TFYSwiftNSPressGestureRecognizer.swift in Sources */,
 				3D04F8A22CDEE89D009493BF /* NSImage+Dejal.swift in Sources */,
 				3D04F8092CDCA31F009493BF /* TFYSwiftNSDatePicker.swift in Sources */,
 				3D04F80A2CDCA31F009493BF /* TFYSwiftNSPathControl.swift in Sources */,
+				8496ACB12F91BF130052E441 /* NSButton+Dejal.swift in Sources */,
+				8496ACB32F91BF5A0052E441 /* NSSegmentedControl+Dejal.swift in Sources */,
 				3D04F80B2CDCA31F009493BF /* TFYSwiftNSStepper.swift in Sources */,
 				3D04F80C2CDCA31F009493BF /* TFYSwiftNSSplitView.swift in Sources */,
 				3D04F80D2CDCA31F009493BF /* TFYSwiftNSSlider.swift in Sources */,
@@ -603,6 +624,7 @@
 				3D04F8AC2CDF2E51009493BF /* NSPopover+Dejal.swift in Sources */,
 				8496AC182F90CB8A0052E441 /* NSCollectionView+Dejal.swift in Sources */,
 				3D04F8A42CDEEA40009493BF /* NSMenu+Dejal.swift in Sources */,
+				8496ACB52F91BF890052E441 /* NSSearchField+Dejal.swift in Sources */,
 				3D04F84A2CDCB269009493BF /* TFYSwiftCATextLayer.swift in Sources */,
 				18C7EDA82CEDC00B00914927 /* TFYStatusItemNotifications.swift in Sources */,
 				8496AC122F90CB130052E441 /* NSWindow+Dejal.swift in Sources */,
@@ -646,6 +668,7 @@
 				18C7ED9F2CEDAEB300914927 /* Array+Dejal.swift in Sources */,
 				3D04F8242CDCA31F009493BF /* TFYSwiftNSScroller.swift in Sources */,
 				1891C9332CF086E7002DAD89 /* TFYSwiftTextFieldView.swift in Sources */,
+				8496ACBB2F91C00F0052E441 /* NSStepper+Dejal.swift in Sources */,
 				36EC0CBB2CDCEBE3003EBAD5 /* TFYStatusItemWindowConfiguration.swift in Sources */,
 				18C7EDA32CEDB04800914927 /* NotificationCenter+Dejal.swift in Sources */,
 				36EC0CC32CDCF3B5003EBAD5 /* TFYStatusItemWindowController.swift in Sources */,
@@ -686,6 +709,7 @@
 				3D04F75A2CDA27B4009493BF /* TFYSwiftOpenPanel.swift in Sources */,
 				36EC0CA72CDA5812003EBAD5 /* TFYSwiftUtils.swift in Sources */,
 				36EC0C9E2CDA4627003EBAD5 /* TFYSwiftLabel.swift in Sources */,
+				8496ACB92F91BFE10052E441 /* NSDatePicker+Dejal.swift in Sources */,
 				3D04F8462CDCB048009493BF /* TFYSwiftCAScrollLayer.swift in Sources */,
 				36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsynce.swift in Sources */,
 				36EC0CA92CDA62D4003EBAD5 /* TFYSwiftJsonUtils.swift in Sources */,

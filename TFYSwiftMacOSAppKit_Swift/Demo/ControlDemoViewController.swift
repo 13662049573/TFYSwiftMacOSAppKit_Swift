@@ -17,6 +17,11 @@ final class ControlDemoViewController: NSViewController {
     private var searchField: NSSearchField!
     private var checkboxButton: NSButton!
     private var closureButton: NSButton!
+    private var slider: NSSlider!
+    private var sliderValueLabel: NSTextField!
+    private var datePicker: NSDatePicker!
+    private var stepper: NSStepper!
+    private var stepperValueLabel: NSTextField!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -56,7 +61,7 @@ final class ControlDemoViewController: NSViewController {
 
         let subtitle = makeBody(
             "NSControl+Dejal 提供了在任意 NSControl 子类（NSTextField、NSButton 等）上直接操作富文本属性的能力，"
-            + "支持按子串匹配修改、前后置图片插入、段落样式、文本装饰、特效、外观圆角/阴影、动画以及 NSButton / NSSegmentedControl / NSSearchField 扩展。",
+            + "支持按子串匹配修改、前后置图片插入、段落样式、文本装饰、特效、外观圆角/阴影、动画以及 NSButton / NSSegmentedControl / NSSearchField / NSSlider / NSDatePicker / NSStepper 扩展。",
             width: 760, height: 44
         )
         subtitle.frame.origin = NSPoint(x: 20, y: y)
@@ -65,6 +70,7 @@ final class ControlDemoViewController: NSViewController {
 
         y = setupRichTextSubject(in: content, y: y)
         y = setupSpacingSection(in: content, y: y)
+        y = setupParagraphSection(in: content, y: y)
         y = setupFontColorSection(in: content, y: y)
         y = setupDecorationSection(in: content, y: y)
         y = setupEffectSection(in: content, y: y)
@@ -72,9 +78,13 @@ final class ControlDemoViewController: NSViewController {
         y = setupImageSection(in: content, y: y)
         y = setupAppearanceSection(in: content, y: y)
         y = setupAnimationSection(in: content, y: y)
+        y = setupUtilitySection(in: content, y: y)
         y = setupButtonSection(in: content, y: y)
         y = setupSegmentedSection(in: content, y: y)
         y = setupSearchFieldSection(in: content, y: y)
+        y = setupSliderSection(in: content, y: y)
+        y = setupDatePickerSection(in: content, y: y)
+        y = setupStepperSection(in: content, y: y)
         y = setupLogSection(in: content, y: y)
 
         content.frame.size.height = y + 24
@@ -128,12 +138,12 @@ final class ControlDemoViewController: NSViewController {
         return cy + 40
     }
 
-    // MARK: - 1. Spacing & Paragraph
+    // MARK: - 1. Spacing
 
     private func setupSpacingSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
 
-        let header = makeSection("1. 字间距 / 行间距 / 段落样式")
+        let header = makeSection("1. 字间距 / 行间距 / 行高倍数 / 对齐")
         header.frame.origin = NSPoint(x: 20, y: cy)
         c.addSubview(header)
         cy += 26
@@ -160,18 +170,51 @@ final class ControlDemoViewController: NSViewController {
         return cy + 8
     }
 
-    // MARK: - 2. Font & Color
+    // MARK: - 2. Paragraph Style (New)
 
-    private func setupFontColorSection(in c: NSView, y: CGFloat) -> CGFloat {
+    private func setupParagraphSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
 
-        let header = makeSection("2. 字体与颜色")
+        let header = makeSection("2. 段落样式（行高 / 缩进 / 换行 / 连字符）")
         header.frame.origin = NSPoint(x: 20, y: cy)
         c.addSubview(header)
         cy += 26
 
         let desc = makeBody(
-            "changeFonts · changeColors · changeBackgroundColor — 支持数组模式，对不同子串分别设置不同字体/颜色。",
+            "changeMinimumLineHeight · changeMaximumLineHeight · changeFixedLineHeight · changeFirstLineHeadIndent · changeHeadIndent · changeTailIndent · changeLineBreakMode · changeHyphenationFactor",
+            width: 760, height: 22
+        )
+        desc.frame.origin = NSPoint(x: 20, y: cy)
+        c.addSubview(desc)
+        cy += 26
+
+        let items: [(String, Selector)] = [
+            ("最小行高 24", #selector(applyMinLineHeight)),
+            ("最大行高 30", #selector(applyMaxLineHeight)),
+            ("固定行高 28", #selector(applyFixedLineHeight)),
+            ("首行缩进 30", #selector(applyFirstLineIndent)),
+            ("整体头部缩进 20", #selector(applyHeadIndent)),
+            ("尾部缩进 -40", #selector(applyTailIndent)),
+            ("换行:截断尾部", #selector(applyLineBreakTruncate)),
+            ("换行:按字换行", #selector(applyLineBreakByChar)),
+            ("连字符因子 1.0", #selector(applyHyphenation)),
+        ]
+        cy = layoutButtonGrid(items, in: c, y: cy)
+        return cy + 8
+    }
+
+    // MARK: - 3. Font & Color
+
+    private func setupFontColorSection(in c: NSView, y: CGFloat) -> CGFloat {
+        var cy = y
+
+        let header = makeSection("3. 字体与颜色")
+        header.frame.origin = NSPoint(x: 20, y: cy)
+        c.addSubview(header)
+        cy += 26
+
+        let desc = makeBody(
+            "changeFonts · changeFontSize · changeFontWeight · changeColors · changeBackgroundColor — 支持数组模式，对不同子串分别设置不同字体/颜色/大小/粗细。",
             width: 760, height: 22
         )
         desc.frame.origin = NSPoint(x: 20, y: cy)
@@ -184,17 +227,21 @@ final class ControlDemoViewController: NSViewController {
             ("多子串多颜色", #selector(applyMultiColor)),
             ("「链式」背景高亮", #selector(applyBgColor)),
             ("setAttributedText", #selector(applySetAttributedText)),
+            ("changeFontSize 22", #selector(applyFontSizeOnly)),
+            ("「Swift」字号 24", #selector(applyFontSizePartial)),
+            ("changeFontWeight .bold", #selector(applyFontWeightBold)),
+            ("「API」粗细 .heavy", #selector(applyFontWeightPartial)),
         ]
         cy = layoutButtonGrid(items, in: c, y: cy)
         return cy + 8
     }
 
-    // MARK: - 3. Decoration
+    // MARK: - 4. Decoration
 
     private func setupDecorationSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
 
-        let header = makeSection("3. 文本装饰（下划线 / 删除线 / 连字）")
+        let header = makeSection("4. 文本装饰（下划线 / 删除线 / 连字）")
         header.frame.origin = NSPoint(x: 20, y: cy)
         c.addSubview(header)
         cy += 26
@@ -218,12 +265,12 @@ final class ControlDemoViewController: NSViewController {
         return cy + 8
     }
 
-    // MARK: - 4. Effects
+    // MARK: - 5. Effects
 
     private func setupEffectSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
 
-        let header = makeSection("4. 文本特效（描边 / 阴影）")
+        let header = makeSection("5. 文本特效（描边 / 阴影）")
         header.frame.origin = NSPoint(x: 20, y: cy)
         c.addSubview(header)
         cy += 26
@@ -246,12 +293,12 @@ final class ControlDemoViewController: NSViewController {
         return cy + 8
     }
 
-    // MARK: - 5. Advanced
+    // MARK: - 6. Advanced
 
     private func setupAdvancedSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
 
-        let header = makeSection("5. 高级文本属性")
+        let header = makeSection("6. 高级文本属性")
         header.frame.origin = NSPoint(x: 20, y: cy)
         c.addSubview(header)
         cy += 26
@@ -275,12 +322,12 @@ final class ControlDemoViewController: NSViewController {
         return cy + 8
     }
 
-    // MARK: - 6. Inline Images
+    // MARK: - 7. Inline Images
 
     private func setupImageSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
 
-        let header = makeSection("6. 前后置图片插入")
+        let header = makeSection("7. 前后置图片插入")
         header.frame.origin = NSPoint(x: 20, y: cy)
         c.addSubview(header)
         cy += 26
@@ -303,12 +350,12 @@ final class ControlDemoViewController: NSViewController {
         return cy + 8
     }
 
-    // MARK: - 7. Appearance
+    // MARK: - 8. Appearance
 
     private func setupAppearanceSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
 
-        let header = makeSection("7. 外观（圆角边框 / 阴影 / 占位符）")
+        let header = makeSection("8. 外观（圆角边框 / 阴影 / 占位符）")
         header.frame.origin = NSPoint(x: 20, y: cy)
         c.addSubview(header)
         cy += 26
@@ -331,12 +378,12 @@ final class ControlDemoViewController: NSViewController {
         return cy + 8
     }
 
-    // MARK: - 8. Animation
+    // MARK: - 9. Animation
 
     private func setupAnimationSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
 
-        let header = makeSection("8. 动画效果")
+        let header = makeSection("9. 动画效果")
         header.frame.origin = NSPoint(x: 20, y: cy)
         c.addSubview(header)
         cy += 26
@@ -358,12 +405,41 @@ final class ControlDemoViewController: NSViewController {
         return cy + 8
     }
 
-    // MARK: - 9. NSButton Extension
+    // MARK: - 10. NSControl Utility (New)
+
+    private func setupUtilitySection(in c: NSView, y: CGFloat) -> CGFloat {
+        var cy = y
+
+        let header = makeSection("10. NSControl 实用工具")
+        header.frame.origin = NSPoint(x: 20, y: cy)
+        c.addSubview(header)
+        cy += 26
+
+        let desc = makeBody(
+            "setEnabled(animated:) · sizeToFit(withPadding:) · setTooltip · applyAttributeConfigurations — 控件级便捷操作。",
+            width: 760, height: 22
+        )
+        desc.frame.origin = NSPoint(x: 20, y: cy)
+        c.addSubview(desc)
+        cy += 26
+
+        let items: [(String, Selector)] = [
+            ("禁用(动画)", #selector(applyDisableAnimated)),
+            ("启用(动画)", #selector(applyEnableAnimated)),
+            ("sizeToFit+内边距", #selector(applySizeToFitPadding)),
+            ("设置 Tooltip", #selector(applyTooltip)),
+            ("applyAttributeConfigs", #selector(applyMultiAttrConfigs)),
+        ]
+        cy = layoutButtonGrid(items, in: c, y: cy)
+        return cy + 8
+    }
+
+    // MARK: - 11. NSButton Extension
 
     private func setupButtonSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
 
-        let header = makeSection("9. NSButton 扩展")
+        let header = makeSection("11. NSButton 扩展")
         header.frame.origin = NSPoint(x: 20, y: cy)
         c.addSubview(header)
         cy += 26
@@ -405,18 +481,18 @@ final class ControlDemoViewController: NSViewController {
         return cy + 42
     }
 
-    // MARK: - 10. NSSegmentedControl Extension
+    // MARK: - 12. NSSegmentedControl Extension
 
     private func setupSegmentedSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
 
-        let header = makeSection("10. NSSegmentedControl 扩展")
+        let header = makeSection("12. NSSegmentedControl 扩展")
         header.frame.origin = NSPoint(x: 20, y: cy)
         c.addSubview(header)
         cy += 26
 
         let desc = makeBody(
-            "segmentTitles · setSegmentTitles · deselectAllSegments · selectNextSegment — 快捷操作分段控件。",
+            "segmentTitles · setSegmentTitles · deselectAllSegments · selectNextSegment · selectPreviousSegment · setSegmentImages · setUniformSegmentWidth · setSegmentEnabled · setSegmentToolTip",
             width: 760, height: 22
         )
         desc.frame.origin = NSPoint(x: 20, y: cy)
@@ -429,38 +505,36 @@ final class ControlDemoViewController: NSViewController {
         segmentedControl.setSegmentTitles(["Swift", "Objective-C", "Rust", "Go"])
         segmentedControl.selectedSegment = 0
         c.addSubview(segmentedControl)
+        cy += 34
 
-        let nextBtn = makeBtn("selectNext", action: #selector(segmentNext))
-        nextBtn.frame.origin = NSPoint(x: 340, y: cy - 2)
-        c.addSubview(nextBtn)
-
-        let deselectBtn = makeBtn("deselectAll", action: #selector(segmentDeselectAll))
-        deselectBtn.frame.origin = NSPoint(x: 440, y: cy - 2)
-        c.addSubview(deselectBtn)
-
-        let titlesBtn = makeBtn("读取标题", action: #selector(readSegmentTitles))
-        titlesBtn.frame.origin = NSPoint(x: 550, y: cy - 2)
-        c.addSubview(titlesBtn)
-
-        let setBtn = makeBtn("更换标题", action: #selector(changeSegmentTitles))
-        setBtn.frame.origin = NSPoint(x: 650, y: cy - 2)
-        c.addSubview(setBtn)
-
-        return cy + 38
+        let items: [(String, Selector)] = [
+            ("selectNext", #selector(segmentNext)),
+            ("selectPrevious", #selector(segmentPrevious)),
+            ("deselectAll", #selector(segmentDeselectAll)),
+            ("读取标题", #selector(readSegmentTitles)),
+            ("更换标题", #selector(changeSegmentTitles)),
+            ("设置图标", #selector(segmentSetImages)),
+            ("统一宽度 80", #selector(segmentUniformWidth)),
+            ("禁用第2段", #selector(segmentDisableSecond)),
+            ("启用第2段", #selector(segmentEnableSecond)),
+            ("设置ToolTip", #selector(segmentSetToolTip)),
+        ]
+        cy = layoutButtonGrid(items, in: c, y: cy)
+        return cy + 8
     }
 
-    // MARK: - 11. NSSearchField Extension
+    // MARK: - 13. NSSearchField Extension
 
     private func setupSearchFieldSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
 
-        let header = makeSection("11. NSSearchField 扩展")
+        let header = makeSection("13. NSSearchField 扩展")
         header.frame.origin = NSPoint(x: 20, y: cy)
         c.addSubview(header)
         cy += 26
 
         let desc = makeBody(
-            "trimmedSearchText · clearSearch · setRecentSearches — 搜索框增强。",
+            "trimmedSearchText · clearSearch · setRecentSearches · limitRecentSearches · addRecentSearch — 搜索框增强。",
             width: 760, height: 22
         )
         desc.frame.origin = NSPoint(x: 20, y: cy)
@@ -472,23 +546,149 @@ final class ControlDemoViewController: NSViewController {
             .build
         searchField.placeholderString = "输入搜索内容..."
         c.addSubview(searchField)
+        cy += 34
 
-        let trimBtn = makeBtn("trimmedSearchText", action: #selector(searchTrimmed))
-        trimBtn.frame.origin = NSPoint(x: 320, y: cy - 2)
-        c.addSubview(trimBtn)
-
-        let clearBtn = makeBtn("clearSearch", action: #selector(searchClear))
-        clearBtn.frame.origin = NSPoint(x: 470, y: cy - 2)
-        c.addSubview(clearBtn)
-
-        let recentBtn = makeBtn("setRecentSearches", action: #selector(searchSetRecent))
-        recentBtn.frame.origin = NSPoint(x: 570, y: cy - 2)
-        c.addSubview(recentBtn)
-
-        return cy + 38
+        let items: [(String, Selector)] = [
+            ("trimmedSearchText", #selector(searchTrimmed)),
+            ("clearSearch", #selector(searchClear)),
+            ("setRecentSearches", #selector(searchSetRecent)),
+            ("limitRecentSearches(3)", #selector(searchLimitRecent)),
+            ("addRecentSearch", #selector(searchAddRecent)),
+        ]
+        cy = layoutButtonGrid(items, in: c, y: cy)
+        return cy + 8
     }
 
-    // MARK: - 12. Log
+    // MARK: - 14. NSSlider Extension (New)
+
+    private func setupSliderSection(in c: NSView, y: CGFloat) -> CGFloat {
+        var cy = y
+
+        let header = makeSection("14. NSSlider 扩展")
+        header.frame.origin = NSPoint(x: 20, y: cy)
+        c.addSubview(header)
+        cy += 26
+
+        let desc = makeBody(
+            "normalizedValue · setValue(animated:) · resetToMinimum/Maximum/Center · increment/decrement · configure(min:max:current:)",
+            width: 760, height: 22
+        )
+        desc.frame.origin = NSPoint(x: 20, y: cy)
+        c.addSubview(desc)
+        cy += 28
+
+        slider = NSSlider().chain
+            .frame(NSRect(x: 20, y: cy, width: 300, height: 26))
+            .build
+        slider.configure(min: 0, max: 100, current: 50)
+        slider.target = self
+        slider.action = #selector(sliderValueChanged)
+        c.addSubview(slider)
+
+        sliderValueLabel = NSTextField(labelWithString: "值: 50.0 | 归一化: 0.50").chain
+            .frame(NSRect(x: 340, y: cy, width: 250, height: 22))
+            .font(.monospacedSystemFont(ofSize: 12, weight: .regular))
+            .textColor(.secondaryLabelColor)
+            .build
+        c.addSubview(sliderValueLabel)
+        cy += 34
+
+        let items: [(String, Selector)] = [
+            ("resetToMinimum", #selector(sliderResetMin)),
+            ("resetToMaximum", #selector(sliderResetMax)),
+            ("resetToCenter", #selector(sliderResetCenter)),
+            ("increment +10", #selector(sliderIncrement)),
+            ("decrement -10", #selector(sliderDecrement)),
+            ("setValue(75,动画)", #selector(sliderSetAnimated)),
+            ("normalizedValue=0.3", #selector(sliderSetNormalized)),
+            ("configure(0~200,80)", #selector(sliderReconfigure)),
+            ("读取 normalizedValue", #selector(sliderReadNormalized)),
+        ]
+        cy = layoutButtonGrid(items, in: c, y: cy)
+        return cy + 8
+    }
+
+    // MARK: - 15. NSDatePicker Extension (New)
+
+    private func setupDatePickerSection(in c: NSView, y: CGFloat) -> CGFloat {
+        var cy = y
+
+        let header = makeSection("15. NSDatePicker 扩展")
+        header.frame.origin = NSPoint(x: 20, y: cy)
+        c.addSubview(header)
+        cy += 26
+
+        let desc = makeBody(
+            "setDateRange(from:to:) · resetToNow · isDateInRange — 日期选择器增强。",
+            width: 760, height: 22
+        )
+        desc.frame.origin = NSPoint(x: 20, y: cy)
+        c.addSubview(desc)
+        cy += 28
+
+        datePicker = NSDatePicker().chain
+            .frame(NSRect(x: 20, y: cy, width: 260, height: 26))
+            .build
+        datePicker.datePickerStyle = .textFieldAndStepper
+        datePicker.datePickerElements = [.yearMonthDay, .hourMinute]
+        datePicker.dateValue = Date()
+        c.addSubview(datePicker)
+        cy += 34
+
+        let items: [(String, Selector)] = [
+            ("resetToNow", #selector(datePickerResetNow)),
+            ("setDateRange(本月)", #selector(datePickerSetRange)),
+            ("isDateInRange?", #selector(datePickerCheckRange)),
+            ("清除日期范围", #selector(datePickerClearRange)),
+        ]
+        cy = layoutButtonGrid(items, in: c, y: cy)
+        return cy + 8
+    }
+
+    // MARK: - 16. NSStepper Extension (New)
+
+    private func setupStepperSection(in c: NSView, y: CGFloat) -> CGFloat {
+        var cy = y
+
+        let header = makeSection("16. NSStepper 扩展")
+        header.frame.origin = NSPoint(x: 20, y: cy)
+        c.addSubview(header)
+        cy += 26
+
+        let desc = makeBody(
+            "configure(min:max:increment:current:) · resetToMinimum — 步进器增强。",
+            width: 760, height: 22
+        )
+        desc.frame.origin = NSPoint(x: 20, y: cy)
+        c.addSubview(desc)
+        cy += 28
+
+        stepper = NSStepper().chain
+            .frame(NSRect(x: 20, y: cy, width: 40, height: 26))
+            .build
+        stepper.configure(min: 0, max: 20, increment: 2, current: 10)
+        stepper.target = self
+        stepper.action = #selector(stepperValueChanged)
+        c.addSubview(stepper)
+
+        stepperValueLabel = NSTextField(labelWithString: "步进器值: 10.0 (范围: 0~20, 步进: 2)").chain
+            .frame(NSRect(x: 70, y: cy, width: 350, height: 22))
+            .font(.monospacedSystemFont(ofSize: 12, weight: .regular))
+            .textColor(.secondaryLabelColor)
+            .build
+        c.addSubview(stepperValueLabel)
+        cy += 34
+
+        let items: [(String, Selector)] = [
+            ("resetToMinimum", #selector(stepperResetMin)),
+            ("configure(0~50,5,25)", #selector(stepperReconfigure)),
+            ("读取当前值", #selector(stepperReadValue)),
+        ]
+        cy = layoutButtonGrid(items, in: c, y: cy)
+        return cy + 8
+    }
+
+    // MARK: - 17. Log
 
     private func setupLogSection(in c: NSView, y: CGFloat) -> CGFloat {
         var cy = y
@@ -524,7 +724,7 @@ final class ControlDemoViewController: NSViewController {
         return cy + 200
     }
 
-    // MARK: - Actions: Spacing & Paragraph
+    // MARK: - Actions: Spacing
 
     @objc private func applyKerning() {
         richLabel.changeSpace(with: 4)
@@ -566,6 +766,53 @@ final class ControlDemoViewController: NSViewController {
         appendLog("changeTextAlignment(with: .right)")
     }
 
+    // MARK: - Actions: Paragraph Style (New)
+
+    @objc private func applyMinLineHeight() {
+        richLabel.changeMinimumLineHeight(with: 24)
+        appendLog("changeMinimumLineHeight(with: 24)")
+    }
+
+    @objc private func applyMaxLineHeight() {
+        richLabel.changeMaximumLineHeight(with: 30)
+        appendLog("changeMaximumLineHeight(with: 30)")
+    }
+
+    @objc private func applyFixedLineHeight() {
+        richLabel.changeFixedLineHeight(with: 28)
+        appendLog("changeFixedLineHeight(with: 28) — 同时设置最小和最大行高为 28")
+    }
+
+    @objc private func applyFirstLineIndent() {
+        richLabel.changeFirstLineHeadIndent(with: 30)
+        appendLog("changeFirstLineHeadIndent(with: 30) — 首行缩进 30pt")
+    }
+
+    @objc private func applyHeadIndent() {
+        richLabel.changeHeadIndent(with: 20)
+        appendLog("changeHeadIndent(with: 20) — 整体头部缩进 20pt")
+    }
+
+    @objc private func applyTailIndent() {
+        richLabel.changeTailIndent(with: -40)
+        appendLog("changeTailIndent(with: -40) — 右侧内缩 40pt（负值）")
+    }
+
+    @objc private func applyLineBreakTruncate() {
+        richLabel.changeLineBreakMode(with: .byTruncatingTail)
+        appendLog("changeLineBreakMode(with: .byTruncatingTail)")
+    }
+
+    @objc private func applyLineBreakByChar() {
+        richLabel.changeLineBreakMode(with: .byCharWrapping)
+        appendLog("changeLineBreakMode(with: .byCharWrapping)")
+    }
+
+    @objc private func applyHyphenation() {
+        richLabel.changeHyphenationFactor(with: 1.0)
+        appendLog("changeHyphenationFactor(with: 1.0) — 完全启用连字符")
+    }
+
     // MARK: - Actions: Font & Color
 
     @objc private func applyFontGlobal() {
@@ -597,6 +844,26 @@ final class ControlDemoViewController: NSViewController {
             alignment: .center
         )
         appendLog("setAttributedText(text, font, color, alignment)")
+    }
+
+    @objc private func applyFontSizeOnly() {
+        richLabel.changeFontSize(to: 22)
+        appendLog("changeFontSize(to: 22) — 仅修改字号，保持字体族不变")
+    }
+
+    @objc private func applyFontSizePartial() {
+        richLabel.changeFontSize(to: 24, changeText: "Swift")
+        appendLog("changeFontSize(to: 24, changeText: \"Swift\") — 仅「Swift」字号 24")
+    }
+
+    @objc private func applyFontWeightBold() {
+        richLabel.changeFontWeight(to: .bold)
+        appendLog("changeFontWeight(to: .bold) — 全局字重变粗")
+    }
+
+    @objc private func applyFontWeightPartial() {
+        richLabel.changeFontWeight(to: .heavy, changeText: "API")
+        appendLog("changeFontWeight(to: .heavy, changeText: \"API\") — 仅「API」加重")
     }
 
     // MARK: - Actions: Decoration
@@ -758,6 +1025,37 @@ final class ControlDemoViewController: NSViewController {
         appendLog("addFadeAnimation(0.4) — 淡出再淡入")
     }
 
+    // MARK: - Actions: NSControl Utility (New)
+
+    @objc private func applyDisableAnimated() {
+        richLabel.setEnabled(false, animated: true, duration: 0.3)
+        appendLog("setEnabled(false, animated: true) — 透明度渐变到 0.4 后禁用")
+    }
+
+    @objc private func applyEnableAnimated() {
+        richLabel.setEnabled(true, animated: true, duration: 0.3)
+        appendLog("setEnabled(true, animated: true) — 透明度渐变到 1.0 后启用")
+    }
+
+    @objc private func applySizeToFitPadding() {
+        richLabel.sizeToFit(withPadding: NSEdgeInsets(top: 8, left: 16, bottom: 8, right: 16))
+        appendLog("sizeToFit(withPadding: top:8 left:16 bottom:8 right:16) — frame: \(richLabel.frame)")
+    }
+
+    @objc private func applyTooltip() {
+        richLabel.setTooltip("这是由 setTooltip 设置的工具提示文本")
+        appendLog("setTooltip(\"...\") — 鼠标悬停查看效果")
+    }
+
+    @objc private func applyMultiAttrConfigs() {
+        richLabel.applyAttributeConfigurations([
+            (text: "Swift", attributes: [.foregroundColor: NSColor.systemRed, .font: NSFont.boldSystemFont(ofSize: 20)]),
+            (text: "API", attributes: [.foregroundColor: NSColor.systemBlue, .underlineStyle: NSUnderlineStyle.single.rawValue]),
+            (text: "macOS", attributes: [.foregroundColor: NSColor.systemGreen, .backgroundColor: NSColor.systemYellow.withAlphaComponent(0.3)]),
+        ])
+        appendLog("applyAttributeConfigurations — 批量对 Swift/API/macOS 应用不同属性")
+    }
+
     // MARK: - Actions: NSButton
 
     @objc private func toggleCheckbox() {
@@ -778,6 +1076,11 @@ final class ControlDemoViewController: NSViewController {
         appendLog("selectNextSegment → selected: \(segmentedControl.selectedSegment)")
     }
 
+    @objc private func segmentPrevious() {
+        segmentedControl.selectPreviousSegment(wrapping: true)
+        appendLog("selectPreviousSegment → selected: \(segmentedControl.selectedSegment)")
+    }
+
     @objc private func segmentDeselectAll() {
         segmentedControl.deselectAllSegments()
         appendLog("deselectAllSegments")
@@ -793,6 +1096,36 @@ final class ControlDemoViewController: NSViewController {
         appendLog("setSegmentTitles([macOS, iOS, watchOS, tvOS, visionOS])")
     }
 
+    @objc private func segmentSetImages() {
+        let names = ["swift", "terminal.fill", "cpu.fill", "memorychip.fill"]
+        let images = names.compactMap { NSImage(systemSymbolName: $0, accessibilityDescription: nil) }
+        segmentedControl.setSegmentImages(images)
+        appendLog("setSegmentImages — 为前 \(images.count) 个分段设置 SF Symbol 图标")
+    }
+
+    @objc private func segmentUniformWidth() {
+        segmentedControl.setUniformSegmentWidth(80)
+        appendLog("setUniformSegmentWidth(80) — 所有分段统一 80pt 宽")
+    }
+
+    @objc private func segmentDisableSecond() {
+        segmentedControl.setSegmentEnabled(false, forSegment: 1)
+        appendLog("setSegmentEnabled(false, forSegment: 1) — 禁用第 2 个分段")
+    }
+
+    @objc private func segmentEnableSecond() {
+        segmentedControl.setSegmentEnabled(true, forSegment: 1)
+        appendLog("setSegmentEnabled(true, forSegment: 1) — 启用第 2 个分段")
+    }
+
+    @objc private func segmentSetToolTip() {
+        for i in 0..<segmentedControl.segmentCount {
+            let title = segmentedControl.label(forSegment: i) ?? "Segment \(i)"
+            segmentedControl.setSegmentToolTip("提示: \(title)", forSegment: i)
+        }
+        appendLog("setSegmentToolTip — 为所有分段设置 ToolTip，悬停查看")
+    }
+
     // MARK: - Actions: NSSearchField
 
     @objc private func searchTrimmed() {
@@ -805,8 +1138,139 @@ final class ControlDemoViewController: NSViewController {
     }
 
     @objc private func searchSetRecent() {
-        searchField.setRecentSearches(["SwiftUI", "AppKit", "Combine", "async/await"])
-        appendLog("setRecentSearches([SwiftUI, AppKit, Combine, async/await])")
+        searchField.setRecentSearches(["SwiftUI", "AppKit", "Combine", "async/await", "Concurrency"])
+        appendLog("setRecentSearches([SwiftUI, AppKit, Combine, async/await, Concurrency])")
+    }
+
+    @objc private func searchLimitRecent() {
+        searchField.limitRecentSearches(to: 3)
+        appendLog("limitRecentSearches(to: 3) — 限制最多 3 条记录，当前: \(searchField.recentSearches)")
+    }
+
+    @objc private func searchAddRecent() {
+        let text = searchField.trimmedSearchText.isEmpty ? "TFYSwift Demo" : searchField.trimmedSearchText
+        searchField.addRecentSearch(text)
+        appendLog("addRecentSearch(\"\(text)\") — 自动去重并置顶，当前: \(searchField.recentSearches)")
+    }
+
+    // MARK: - Actions: NSSlider (New)
+
+    @objc private func sliderValueChanged() {
+        updateSliderLabel()
+    }
+
+    @objc private func sliderResetMin() {
+        slider.resetToMinimum()
+        updateSliderLabel()
+        appendLog("resetToMinimum → \(slider.doubleValue)")
+    }
+
+    @objc private func sliderResetMax() {
+        slider.resetToMaximum()
+        updateSliderLabel()
+        appendLog("resetToMaximum → \(slider.doubleValue)")
+    }
+
+    @objc private func sliderResetCenter() {
+        slider.resetToCenter()
+        updateSliderLabel()
+        appendLog("resetToCenter → \(slider.doubleValue)")
+    }
+
+    @objc private func sliderIncrement() {
+        slider.increment(by: 10)
+        updateSliderLabel()
+        appendLog("increment(by: 10) → \(slider.doubleValue)")
+    }
+
+    @objc private func sliderDecrement() {
+        slider.decrement(by: 10)
+        updateSliderLabel()
+        appendLog("decrement(by: 10) → \(slider.doubleValue)")
+    }
+
+    @objc private func sliderSetAnimated() {
+        slider.setValue(75, animated: true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.updateSliderLabel()
+        }
+        appendLog("setValue(75, animated: true)")
+    }
+
+    @objc private func sliderSetNormalized() {
+        slider.normalizedValue = 0.3
+        updateSliderLabel()
+        appendLog("normalizedValue = 0.3 → doubleValue: \(String(format: "%.1f", slider.doubleValue))")
+    }
+
+    @objc private func sliderReconfigure() {
+        slider.configure(min: 0, max: 200, current: 80)
+        updateSliderLabel()
+        appendLog("configure(min: 0, max: 200, current: 80)")
+    }
+
+    @objc private func sliderReadNormalized() {
+        appendLog("normalizedValue: \(String(format: "%.4f", slider.normalizedValue)) (doubleValue: \(String(format: "%.1f", slider.doubleValue)), range: \(slider.minValue)~\(slider.maxValue))")
+    }
+
+    private func updateSliderLabel() {
+        sliderValueLabel.stringValue = "值: \(String(format: "%.1f", slider.doubleValue)) | 归一化: \(String(format: "%.2f", slider.normalizedValue))"
+    }
+
+    // MARK: - Actions: NSDatePicker (New)
+
+    @objc private func datePickerResetNow() {
+        datePicker.resetToNow()
+        appendLog("resetToNow → \(datePicker.dateValue)")
+    }
+
+    @objc private func datePickerSetRange() {
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+        let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
+        datePicker.setDateRange(from: startOfMonth, to: endOfMonth)
+        appendLog("setDateRange — 本月范围: \(formatDate(startOfMonth)) ~ \(formatDate(endOfMonth))")
+    }
+
+    @objc private func datePickerCheckRange() {
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+        let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
+        let inRange = datePicker.isDateInRange(from: startOfMonth, to: endOfMonth)
+        appendLog("isDateInRange(本月) → \(inRange)，当前选择: \(formatDate(datePicker.dateValue))")
+    }
+
+    @objc private func datePickerClearRange() {
+        datePicker.setDateRange(from: nil, to: nil)
+        appendLog("setDateRange(nil, nil) — 清除日期范围限制")
+    }
+
+    // MARK: - Actions: NSStepper (New)
+
+    @objc private func stepperValueChanged() {
+        updateStepperLabel()
+    }
+
+    @objc private func stepperResetMin() {
+        stepper.resetToMinimum()
+        updateStepperLabel()
+        appendLog("resetToMinimum → \(stepper.doubleValue)")
+    }
+
+    @objc private func stepperReconfigure() {
+        stepper.configure(min: 0, max: 50, increment: 5, current: 25)
+        updateStepperLabel()
+        appendLog("configure(min: 0, max: 50, increment: 5, current: 25)")
+    }
+
+    @objc private func stepperReadValue() {
+        appendLog("stepper.doubleValue: \(stepper.doubleValue), range: \(stepper.minValue)~\(stepper.maxValue), increment: \(stepper.increment)")
+    }
+
+    private func updateStepperLabel() {
+        stepperValueLabel.stringValue = "步进器值: \(String(format: "%.1f", stepper.doubleValue)) (范围: \(Int(stepper.minValue))~\(Int(stepper.maxValue)), 步进: \(Int(stepper.increment)))"
     }
 
     // MARK: - Actions: Rich Text Subject
@@ -820,15 +1284,18 @@ final class ControlDemoViewController: NSViewController {
         richLabel.stringValue = "TFYSwiftMacOSAppKit 富文本演示：Swift 链式 API 让 macOS 开发更高效"
         richLabel.font = .systemFont(ofSize: 18, weight: .medium)
         richLabel.textColor = .labelColor
+        richLabel.alphaValue = 1.0
+        richLabel.isEnabled = true
+        richLabel.toolTip = nil
         richLabel.layer?.shadowOpacity = 0
         richLabel.setRoundedBorder(cornerRadius: 8, borderWidth: 0, borderColor: .clear)
         richLabel.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
-        appendLog("文本已重新载入")
+        appendLog("文本已重新载入（包括恢复透明度、启用状态、tooltip）")
     }
 
     @objc private func measureTextSize() {
         let size = richLabel.textSize(maxSize: NSSize(width: 720, height: CGFloat.greatestFiniteMagnitude))
-        appendLog("textSize: \(Int(size.width)) × \(Int(size.height)) pt")
+        appendLog("textSize: \(Int(size.width)) x \(Int(size.height)) pt")
     }
 
     @objc private func clearRichText() {
@@ -848,9 +1315,15 @@ final class ControlDemoViewController: NSViewController {
     // MARK: - Helpers
 
     private func appendLog(_ message: String) {
-        let line = "• \(message)\n"
+        let line = "\u{2022} \(message)\n"
         logTextView?.string += line
         logTextView?.scrollToEndOfDocument(nil)
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyy-MM-dd"
+        return fmt.string(from: date)
     }
 
     private func layoutButtonGrid(_ items: [(String, Selector)], in c: NSView, y: CGFloat) -> CGFloat {

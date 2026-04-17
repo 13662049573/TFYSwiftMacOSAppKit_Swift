@@ -8,10 +8,6 @@
 
 import Cocoa
 
-private enum TFYButtonAssociatedKeys {
-    static var actionHandler: UInt8 = 0
-}
-
 @MainActor public extension NSControl {
     
     // MARK: - 私有辅助方法
@@ -246,7 +242,127 @@ private enum TFYButtonAssociatedKeys {
             style.alignment = textAlignment
         }
     }
-    
+
+    /// 修改最小行高
+    /// - Parameters:
+    ///   - minimumLineHeight: 最小行高
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeMinimumLineHeight(with minimumLineHeight: CGFloat, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.minimumLineHeight = minimumLineHeight
+        }
+    }
+
+    /// 修改最大行高
+    /// - Parameters:
+    ///   - maximumLineHeight: 最大行高
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeMaximumLineHeight(with maximumLineHeight: CGFloat, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.maximumLineHeight = maximumLineHeight
+        }
+    }
+
+    /// 修改固定行高（同时设置最小和最大行高）
+    /// - Parameters:
+    ///   - lineHeight: 行高
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeFixedLineHeight(with lineHeight: CGFloat, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.minimumLineHeight = lineHeight
+            style.maximumLineHeight = lineHeight
+        }
+    }
+
+    /// 修改首行缩进
+    /// - Parameters:
+    ///   - indent: 缩进值
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeFirstLineHeadIndent(with indent: CGFloat, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.firstLineHeadIndent = indent
+        }
+    }
+
+    /// 修改整体头部缩进
+    /// - Parameters:
+    ///   - indent: 缩进值
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeHeadIndent(with indent: CGFloat, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.headIndent = indent
+        }
+    }
+
+    /// 修改尾部缩进
+    /// - Parameters:
+    ///   - indent: 缩进值（负值表示从右边距向内缩进）
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeTailIndent(with indent: CGFloat, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.tailIndent = indent
+        }
+    }
+
+    /// 修改换行模式
+    /// - Parameters:
+    ///   - lineBreakMode: 换行模式
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeLineBreakMode(with lineBreakMode: NSLineBreakMode, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.lineBreakMode = lineBreakMode
+        }
+    }
+
+    /// 修改连字符因子
+    /// - Parameters:
+    ///   - factor: 连字符因子（0.0 不连字，1.0 完全连字）
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeHyphenationFactor(with factor: Float, changeText: String? = nil) {
+        updateParagraphStyle(changeText: changeText) { style in
+            style.hyphenationFactor = factor
+        }
+    }
+
+    /// 仅修改字体大小，保持字体族不变
+    /// - Parameters:
+    ///   - size: 字体大小
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeFontSize(to size: CGFloat, changeText: String? = nil) {
+        let searchOptions = tfyDefaultMatchOptions
+        updateAttributedString { attributedString in
+            let ranges = matchingRanges(in: attributedString, changeText: changeText, options: searchOptions)
+            for range in ranges where range.length > 0 {
+                attributedString.enumerateAttribute(.font, in: range, options: []) { value, subRange, _ in
+                    let existingFont = (value as? NSFont) ?? self.tfyDefaultFont
+                    let newFont = NSFontManager.shared.convert(existingFont, toSize: size)
+                    attributedString.addAttribute(.font, value: newFont, range: subRange)
+                }
+            }
+        }
+    }
+
+    /// 修改字体粗细，保持其他属性不变
+    /// - Parameters:
+    ///   - weight: 字体粗细
+    ///   - changeText: 要修改的文本，nil 则修改全部
+    func changeFontWeight(to weight: NSFont.Weight, changeText: String? = nil) {
+        let searchOptions = tfyDefaultMatchOptions
+        updateAttributedString { attributedString in
+            let ranges = matchingRanges(in: attributedString, changeText: changeText, options: searchOptions)
+            for range in ranges where range.length > 0 {
+                attributedString.enumerateAttribute(.font, in: range, options: []) { value, subRange, _ in
+                    let existingFont = (value as? NSFont) ?? self.tfyDefaultFont
+                    let descriptor = existingFont.fontDescriptor.addingAttributes([
+                        .traits: [NSFontDescriptor.TraitKey.weight: weight]
+                    ])
+                    let newFont = NSFont(descriptor: descriptor, size: existingFont.pointSize) ?? existingFont
+                    attributedString.addAttribute(.font, value: newFont, range: subRange)
+                }
+            }
+        }
+    }
+
     /// 修改字体
     /// - Parameters:
     ///   - textFonts: 字体数组
@@ -672,10 +788,10 @@ private enum TFYButtonAssociatedKeys {
     ///   - color: 占位符颜色
     func setPlaceholder(_ placeholder: String, color: NSColor = .placeholderTextColor) {
         guard let textField = self as? NSTextField else { return }
-        
+
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.alignment = textField.alignment
-        
+
         let attributes: [NSAttributedString.Key: Any] = [
             .foregroundColor: color,
             .font: textField.font ?? .systemFont(ofSize: NSFont.systemFontSize),
@@ -683,107 +799,48 @@ private enum TFYButtonAssociatedKeys {
         ]
         textField.placeholderAttributedString = NSAttributedString(string: placeholder, attributes: attributes)
     }
-}
 
-@MainActor public extension NSButton {
-    /// 使用闭包处理按钮点击
-    /// - Parameter action: 点击回调
-    func onAction(_ action: @escaping (NSButton) -> Void) {
-        target = self
-        self.action = #selector(tfy_handleButtonAction(_:))
-        objc_setAssociatedObject(self, &TFYButtonAssociatedKeys.actionHandler, action, .OBJC_ASSOCIATION_COPY_NONATOMIC)
-    }
-
-    @objc private func tfy_handleButtonAction(_ sender: NSButton) {
-        let action = objc_getAssociatedObject(self, &TFYButtonAssociatedKeys.actionHandler) as? (NSButton) -> Void
-        action?(sender)
-    }
-
-    /// 当前是否处于选中状态
-    var isOn: Bool {
-        get { state == .on }
-        set { state = newValue ? .on : .off }
-    }
-
-    /// 切换按钮状态
-    func toggleState() {
-        state = state == .on ? .off : .on
-    }
-
-    /// 设置带图标的按钮内容
+    /// 设置启用/禁用状态，带透明度渐变动画
     /// - Parameters:
-    ///   - title: 标题
-    ///   - image: 图标
-    ///   - imagePosition: 图标位置
-    func configure(
-        title: String,
-        image: NSImage? = nil,
-        imagePosition: NSControl.ImagePosition = .imageLeading
-    ) {
-        self.title = title
-        self.image = image
-        self.imagePosition = imagePosition
-    }
-
-    /// 创建复选框按钮
-    /// - Parameters:
-    ///   - title: 标题
-    ///   - checked: 是否选中
-    /// - Returns: 创建的按钮
-    static func makeCheckbox(title: String, checked: Bool = false) -> NSButton {
-        let button = NSButton(checkboxWithTitle: title, target: nil, action: nil)
-        button.state = checked ? .on : .off
-        return button
-    }
-}
-
-@MainActor public extension NSSegmentedControl {
-    /// 所有分段标题
-    var segmentTitles: [String] {
-        (0..<segmentCount).map { label(forSegment: $0) ?? "" }
-    }
-
-    /// 批量设置标题
-    /// - Parameter titles: 标题数组
-    func setSegmentTitles(_ titles: [String]) {
-        segmentCount = titles.count
-        for (index, title) in titles.enumerated() {
-            setLabel(title, forSegment: index)
+    ///   - enabled: 是否启用
+    ///   - animated: 是否使用动画
+    ///   - duration: 动画时长
+    func setEnabled(_ enabled: Bool, animated: Bool, duration: TimeInterval = 0.2) {
+        if animated {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = duration
+                context.allowsImplicitAnimation = true
+                self.animator().alphaValue = enabled ? 1.0 : 0.4
+            } completionHandler: {
+                self.isEnabled = enabled
+            }
+        } else {
+            isEnabled = enabled
+            alphaValue = enabled ? 1.0 : 0.4
         }
     }
 
-    /// 取消全部选中状态
-    func deselectAllSegments() {
-        selectedSegment = -1
+    /// 自适应大小并添加内边距
+    /// - Parameter padding: 内边距
+    func sizeToFit(withPadding padding: NSEdgeInsets) {
+        sizeToFit()
+        setFrameSize(NSSize(
+            width: frame.width + padding.left + padding.right,
+            height: frame.height + padding.top + padding.bottom
+        ))
     }
 
-    /// 选中下一个分段
-    /// - Parameter wrapping: 是否循环
-    func selectNextSegment(wrapping: Bool = true) {
-        guard segmentCount > 0 else { return }
-        let nextIndex = selectedSegment + 1
-        if nextIndex < segmentCount {
-            selectedSegment = nextIndex
-        } else if wrapping {
-            selectedSegment = 0
+    /// 设置 tooltip（工具提示）
+    /// - Parameter text: 提示文本，nil 则清除
+    func setTooltip(_ text: String?) {
+        toolTip = text
+    }
+
+    /// 批量应用多组属性到不同文本片段
+    /// - Parameter configurations: 文本片段及其属性的配对数组
+    func applyAttributeConfigurations(_ configurations: [(text: String, attributes: [NSAttributedString.Key: Any])]) {
+        for config in configurations {
+            setAttributes(config.attributes, changeText: config.text)
         }
-    }
-}
-
-@MainActor public extension NSSearchField {
-    /// 当前搜索内容去除空白后的值
-    var trimmedSearchText: String {
-        stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    /// 清空搜索内容
-    func clearSearch() {
-        stringValue = ""
-    }
-
-    /// 设置最近搜索记录
-    /// - Parameter searches: 搜索记录数组
-    func setRecentSearches(_ searches: [String]) {
-        recentSearches = searches
     }
 }

@@ -67,7 +67,7 @@ class MainDemoViewController: NSViewController {
 
         tabView.setAccessibilityLabel("功能模块标签页")
         tabView.setAccessibilityTitle("功能模块")
-        tabView.setAccessibilityHelp("切换标签以浏览概览、组件、链式调用、分类扩展、工具、HUD、富文本控件与状态栏等演示。")
+        tabView.setAccessibilityHelp("切换标签以浏览概览、组件、链式调用、分类扩展、工具、打开/保存面板、HUD、富文本控件与状态栏等演示。")
 
         bottomInfoView.setAccessibilityLabel("版本与版权")
         bottomInfoView.setAccessibilityTitle("版本与版权")
@@ -94,6 +94,7 @@ class MainDemoViewController: NSViewController {
         createChainDemoTab()
         createExtensionsDemoTab()
         createUtilsDemoTab()
+        createOpenPanelDemoTab()
         createHUDDemoTab()
         createControlDemoTab()
         createStatusItemDemoTab()
@@ -146,6 +147,15 @@ class MainDemoViewController: NSViewController {
         tabViewItem.label = "工具类"
         let vc = UtilsDemoViewController()
         configureDemoViewController(vc, tabLabel: "工具类", accessibilitySummary: "网络、缓存、JSON、定时器、加密与拼接")
+        tabViewItem.viewController = vc
+        tabView.addTabViewItem(tabViewItem)
+    }
+
+    private func createOpenPanelDemoTab() {
+        let tabViewItem = NSTabViewItem()
+        tabViewItem.label = "打开/保存"
+        let vc = OpenPanelDemoViewController()
+        configureDemoViewController(vc, tabLabel: "打开/保存", accessibilitySummary: "TFYSwiftOpenPanel 全 API 与沙盒书签")
         tabViewItem.viewController = vc
         tabView.addTabViewItem(tabViewItem)
     }
@@ -266,7 +276,8 @@ class MainDemoViewController: NSViewController {
             "👆 手势 — NSClick / NSPan / NSRotation 等 NSGestureRecognizer 链式配置",
             "🪟 容器 — NSVisualEffectView、NSStackView、NSPopUpButton、NSGridView 等",
             "📐 布局 — TFYLayoutManager 锚点、NSScrollView 文档视图与 Demo 统一 flipped 坐标",
-            "🛠️ 工具类 — TFYSwiftUtils（网络 / WiFi / AES-GCM）、TFYSwiftCacheKit、TFYSwiftJsonUtils、OpenPanel、TFYStitchImage",
+            "🛠️ 工具类 — TFYSwiftUtils（网络 / WiFi / AES-GCM）、TFYSwiftCacheKit、TFYSwiftJsonUtils、TFYStitchImage",
+            "📂 打开/保存 — TFYSwiftOpenPanel（async、校验、书签、记忆目录、兼容 API）",
             "⏱️ 调度 — TFYSwiftTimer、TFYSwiftGCD、TFYSwiftAsync、DispatchQueue.once",
             "🗄️ 归档与 Bundle — NSKeyedUnarchiver（超时 + secureCoding）、Bundle（超时 + maxRetries）",
             "🔐 加密 — AES-GCM（CryptoKit）、密钥派生；旧 3DES 已废弃",
@@ -291,7 +302,8 @@ class MainDemoViewController: NSViewController {
             "【组件控件】TFYSwiftTextField、TFYSwiftSecureTextField、TFYSwiftButton、TFYSwiftLabel、TFYSwiftTextFieldView、图片与二维码处理",
             "【链式调用】Chain 协议全貌、NSView / NSButton / NSTextField / CALayer / CAGradientLayer / CAShapeLayer、NSVisualEffectView、NSStackView、NSPopUpButton、手势 API；新增 asyncAwait / onMainActor 链式调用演示与 @Observable 属性包装器演示",
             "【分类扩展】NSView+Dejal / NSTextField+Dejal / NSTextView+Dejal（真占位符）/ NSImage+Dejal / NotificationCenter+Dejal 交互示例",
-            "【工具类】TFYSwiftUtils (网络/WiFi/AES-GCM)、TFYSwiftCacheKit (压缩+加密)、TFYSwiftJsonUtils、TFYSwiftTimer、TFYSwiftGCD、TFYSwiftOpenPanel、TFYStitchImage；NSKeyedUnarchiver 超时、Bundle maxRetries 示例",
+            "【工具类】TFYSwiftUtils (网络/WiFi/AES-GCM)、TFYSwiftCacheKit (压缩+加密)、TFYSwiftJsonUtils、TFYSwiftTimer、TFYSwiftGCD、TFYStitchImage；NSKeyedUnarchiver 超时、Bundle maxRetries 示例",
+            "【打开/保存】TFYSwiftOpenPanel：单选/多选/目录、类型预设、Result 与校验、记忆目录、saveText/saveData、书签、代理与附件、旧版 openPanel/savePanel API",
             "【HUD】TFYProgressMacOSHUD 全类型 HUD；TFYAnimationEnhancer 弹簧阻尼；TFYThemeManager 主题；TFYLayoutManager 智能锚点；TFYProgressView / TFYProgressIndicator 直接调节",
             "【富文本控件】NSControl+Dejal：富文本/段落/装饰/动画；NSTextField、NSButton、NSSegmentedControl、NSSearchField、NSSlider、NSDatePicker、NSStepper 等扩展与操作日志",
             "【状态栏】TFYStatusItem、TFYStatusItemWindow、TFYStatusItemWindowController：创建/销毁、配置重建、过渡动画、拖拽检测、弹窗展示"

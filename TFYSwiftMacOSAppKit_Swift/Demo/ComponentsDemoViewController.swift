@@ -10,12 +10,12 @@ import Cocoa
 final class ComponentsDemoViewController: NSViewController {
     
     private var logTextView: NSTextView!
-    private var inputStateLabel: NSTextField!
-    private var imageInfoLabel: NSTextField!
+    private var inputStateLabel: TFYSwiftLabel!
+    private var imageInfoLabel: TFYSwiftLabel!
     private var customInput: TFYSwiftTextField!
     private var customSecureInput: TFYSwiftSecureTextField!
     private var passwordFieldView: TFYSwiftTextFieldView!
-    private var passwordStateLabel: NSTextField!
+    private var passwordStateLabel: TFYSwiftLabel!
     private var textActionLabel: TFYSwiftLabel!
     private var compGradientLayer: CAGradientLayer!
     private var compGradientView: NSView!
@@ -29,22 +29,24 @@ final class ComponentsDemoViewController: NSViewController {
         let scrollView = NSScrollView().chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .hasVerticalScroller(true)
+            .hasHorizontalScroller(false)
             .autohidesScrollers(true)
             .build
         view.addSubview(scrollView)
-        
-        let contentView = NSView().chain
+
+        // flipped 文档视图：与自上而下递增的 y 布局一致；默认 NSView 的 y 轴向上会导致首屏错在底部。
+        let contentView = DemoFlippedDocumentView(frame: .zero).chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
         scrollView.chain.documentView(contentView)
-        
+
+        // 高度用 equalToConstant(内容总高)，避免 height >= scroll 被解成「仅一屏高」且覆盖手动 frame，导致无法滚动。
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.heightAnchor)
         ])
         
         var yOffset: CGFloat = 20
@@ -66,8 +68,11 @@ final class ComponentsDemoViewController: NSViewController {
         yOffset = setupGradientLayerSection(in: contentView, yOffset: yOffset)
         yOffset = setupColorCreationSection(in: contentView, yOffset: yOffset)
         yOffset = setupLogSection(in: contentView, yOffset: yOffset)
-        
-        contentView.frame.size.height = yOffset + 24
+
+        let contentHeight = yOffset + 24
+        NSLayoutConstraint.activate([
+            contentView.heightAnchor.constraint(equalToConstant: contentHeight),
+        ])
     }
     
     private func setupCustomControlsSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
@@ -106,9 +111,11 @@ final class ComponentsDemoViewController: NSViewController {
             .build
         contentView.addSubview(textActionLabel)
         
-        let componentBadge = NSTextField(labelWithString: "控件均来自 macOScontainer/macOSUtils").chain
+        let componentBadge = TFYSwiftLabel().chain
+            .text("控件均来自 macOScontainer/macOSUtils")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 360, y: currentOffset + 4, width: 320, height: 20))
             .build
         contentView.addSubview(componentBadge)
@@ -221,9 +228,11 @@ final class ComponentsDemoViewController: NSViewController {
                 .build
             contentView.addSubview(imageView)
             
-            let caption = NSTextField(labelWithString: title).chain
+            let caption = TFYSwiftLabel().chain
+                .text(title)
                 .font(.systemFont(ofSize: 12, weight: .medium))
                 .alignment(.center)
+                .drawsBackground(false)
                 .frame(NSRect(x: frame.minX, y: frame.maxY + 4, width: frame.width, height: 18))
                 .build
             contentView.addSubview(caption)
@@ -368,18 +377,22 @@ final class ComponentsDemoViewController: NSViewController {
                 .build
             contentView.addSubview(swatch)
 
-            let nameLabel = NSTextField(labelWithString: name).chain
+            let nameLabel = TFYSwiftLabel().chain
+                .text(name)
                 .font(.systemFont(ofSize: 11, weight: .semibold))
                 .textColor(color.bestContrastColor())
                 .alignment(.center)
+                .drawsBackground(false)
                 .frame(NSRect(x: 4, y: 22, width: 157, height: 16))
                 .build
             swatch.addSubview(nameLabel)
 
-            let descLabel = NSTextField(labelWithString: desc).chain
+            let descLabel = TFYSwiftLabel().chain
+                .text(desc)
                 .font(.systemFont(ofSize: 10))
                 .textColor(color.bestContrastColor().withAlphaComponent(0.75))
                 .alignment(.center)
+                .drawsBackground(false)
                 .frame(NSRect(x: 4, y: 6, width: 157, height: 14))
                 .build
             swatch.addSubview(descLabel)
@@ -444,29 +457,35 @@ final class ComponentsDemoViewController: NSViewController {
         logTextView?.scrollToEndOfDocument(nil)
     }
     
-    private func makeTitleLabel(_ text: String) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeTitleLabel(_ text: String) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.boldSystemFont(ofSize: 22))
             .textColor(.labelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: 360, height: 28))
             .build
     }
     
-    private func makeSectionLabel(_ text: String) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeSectionLabel(_ text: String) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.systemFont(ofSize: 16, weight: .semibold))
             .textColor(.labelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: 320, height: 22))
             .build
     }
     
-    private func makeBodyLabel(_ text: String, width: CGFloat, height: CGFloat) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeBodyLabel(_ text: String, width: CGFloat, height: CGFloat) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
             .lineBreakMode(.byWordWrapping)
             .wraps(true)
             .maximumNumberOfLines(0)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: width, height: height))
             .build
     }

@@ -314,47 +314,111 @@ public final class TFYSwiftJsonUtils: NSObject {
     }
     
     // MARK: - 网络请求支持
+    /// - Warning: 该方法使用信号量阻塞调用线程，禁止在主线程调用，否则会导致 UI 卡死。
+    ///   推荐使用 `fromURLAsync(_:url:timeout:)` 或 `fetchAndDecode(_:url:timeout:completion:)`。
+    @available(*, deprecated, message: "Blocks the calling thread. Use fromURLAsync or fetchAndDecode instead.")
     public static func fromURL<T: Decodable>(_ type: T.Type, url: URL, timeout: TimeInterval = 30) throws -> T {
+        assert(!Thread.isMainThread, "TFYSwiftJsonUtils.fromURL must not be called on the main thread")
+
         let semaphore = DispatchSemaphore(value: 0)
         var responseData: Data?
         var requestError: Error?
-        
-        let task = URLSession.shared.dataTask(with: url) { data, response, taskError in
+
+        let task = URLSession.shared.dataTask(with: url) { data, _, taskError in
             defer { semaphore.signal() }
-            
             if let taskError = taskError {
                 requestError = taskError
                 return
             }
-            
             guard let data = data else {
                 requestError = JsonUtilsError.invalidData
                 return
             }
-            
             responseData = data
         }
-        
+
         task.resume()
-        
+
         let timeoutResult = semaphore.wait(timeout: .now() + timeout)
         if timeoutResult == .timedOut {
             task.cancel()
             throw JsonUtilsError.timeoutError
         }
-        
+
         if let requestError = requestError {
             throw JsonUtilsError.networkError(requestError)
         }
-        
+
         guard let responseData = responseData else {
             throw JsonUtilsError.invalidData
         }
-        
+
         do {
             return try makeDecoder().decode(type, from: responseData)
         } catch let decodeError {
             throw JsonUtilsError.decodingError(decodeError)
+        }
+    }
+
+    /// 非阻塞网络请求并解码，完成回调在任意线程触发。
+    public static func fetchAndDecode<T: Decodable>(
+        _ type: T.Type,
+        url: URL,
+        timeout: TimeInterval = 30,
+        completion: @escaping (Result<T, JsonUtilsError>) -> Void
+    ) -> URLSessionDataTask {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = timeout
+        config.timeoutIntervalForResource = timeout
+        let session = URLSession(configuration: config)
+
+        let task = session.dataTask(with: url) { data, _, taskError in
+            if let nsError = taskError as NSError?, nsError.code == NSURLErrorTimedOut {
+                completion(.failure(.timeoutError))
+                return
+            }
+            if let taskError = taskError {
+                completion(.failure(.networkError(taskError)))
+                return
+            }
+            guard let data = data else {
+                completion(.failure(.invalidData))
+                return
+            }
+            do {
+                let value = try makeDecoder().decode(type, from: data)
+                completion(.success(value))
+            } catch {
+                completion(.failure(.decodingError(error)))
+            }
+        }
+        task.resume()
+        return task
+    }
+
+    /// async/await 版本的网络请求并解码。
+    @available(macOS 10.15, *)
+    public static func fromURLAsync<T: Decodable>(_ type: T.Type, url: URL, timeout: TimeInterval = 30) async throws -> T {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = timeout
+        config.timeoutIntervalForResource = timeout
+        let session = URLSession(configuration: config)
+
+        do {
+            let (data, _) = try await session.data(from: url)
+            do {
+                return try makeDecoder().decode(type, from: data)
+            } catch {
+                throw JsonUtilsError.decodingError(error)
+            }
+        } catch let error as JsonUtilsError {
+            throw error
+        } catch {
+            let nsError = error as NSError
+            if nsError.code == NSURLErrorTimedOut {
+                throw JsonUtilsError.timeoutError
+            }
+            throw JsonUtilsError.networkError(error)
         }
     }
     

@@ -11,7 +11,7 @@ final class UtilsDemoViewController: NSViewController {
     
     private var resultTextView: NSTextView!
     private var previewImageView: NSImageView!
-    private var previewInfoLabel: NSTextField!
+    private var previewInfoLabel: TFYSwiftLabel!
     private var cacheManager: TFYSwiftCacheKit?
     private var compressionSwitch: NSButton!
     private var encryptionSwitch: NSButton!
@@ -36,8 +36,8 @@ final class UtilsDemoViewController: NSViewController {
     }
     
     private func setupUtilsDemo() {
-        // 创建主容器视图
-        let containerView = NSView().chain
+        // flipped：本页标题、按钮区、结果区均按「y 向下递增」摆放，默认 NSView 为 y 向上会导致标题沉底、按钮行序颠倒。
+        let containerView = DemoFlippedDocumentView(frame: .zero).chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
         view.addSubview(containerView)
@@ -51,21 +51,20 @@ final class UtilsDemoViewController: NSViewController {
         ])
         
         // 创建标题
-        let titleLabel = NSTextField().chain
+        let titleLabel = TFYSwiftLabel().chain
             .text("工具类功能演示")
             .font(.boldSystemFont(ofSize: 20))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
-            .bordered(false)
-            .editable(false)
-            .selectable(false)
+            .drawsBackground(false)
             .frame(NSRect(x: 20, y: 20, width: 300, height: 30))
             .build
         containerView.addSubview(titleLabel)
         
-        let subtitleLabel = NSTextField(labelWithString: "这一页集中验证网络、缓存、JSON、定时器、GCD、文件面板、加密与图片拼接能力；右侧会展示最近一次可视化结果。").chain
+        let subtitleLabel = TFYSwiftLabel().chain
+            .text("这一页集中验证网络、缓存、JSON、定时器、GCD、文件面板、加密与图片拼接能力；右侧会展示最近一次可视化结果。")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 20, y: 52, width: 900, height: 18))
             .build
         containerView.addSubview(subtitleLabel)
@@ -78,7 +77,7 @@ final class UtilsDemoViewController: NSViewController {
     }
     
     private func createButtonArea(in containerView: NSView) {
-        let buttonArea = NSView().chain
+        let buttonArea = DemoFlippedDocumentView(frame: .zero).chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
         containerView.addSubview(buttonArea)
@@ -227,11 +226,13 @@ final class UtilsDemoViewController: NSViewController {
             .build
         buttonArea.addSubview(onceButton)
 
-        let helperLabel = NSTextField(labelWithString: "新增演示：TFYSwiftAsync 后台任务/延迟回调/可取消任务，以及 DispatchQueue.once 只执行一次能力。").chain
+        let helperLabel = TFYSwiftLabel().chain
+            .text("新增演示：TFYSwiftAsync 后台任务/延迟回调/可取消任务，以及 DispatchQueue.once 只执行一次能力。")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
             .wraps(true)
             .maximumNumberOfLines(0)
+            .drawsBackground(false)
             .frame(NSRect(x: 270, y: 122, width: 560, height: 28))
             .build
         buttonArea.addSubview(helperLabel)
@@ -305,27 +306,26 @@ final class UtilsDemoViewController: NSViewController {
     }
     
     private func createResultArea(in containerView: NSView) {
-        let resultArea = NSView().chain
+        let resultArea = DemoFlippedDocumentView(frame: .zero).chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
         containerView.addSubview(resultArea)
         
         // 结果标题
-        let resultTitleLabel = NSTextField().chain
+        let resultTitleLabel = TFYSwiftLabel().chain
             .text("运行日志")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
-            .bordered(false)
-            .editable(false)
-            .selectable(false)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: 100, height: 20))
             .build
         resultArea.addSubview(resultTitleLabel)
         
-        let previewTitleLabel = NSTextField(labelWithString: "实时预览").chain
+        let previewTitleLabel = TFYSwiftLabel().chain
+            .text("实时预览")
             .font(.systemFont(ofSize: 16, weight: .medium))
             .textColor(.labelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 790, y: 0, width: 120, height: 20))
             .build
         resultArea.addSubview(previewTitleLabel)
@@ -349,7 +349,7 @@ final class UtilsDemoViewController: NSViewController {
             .build
         resultScrollView.chain.documentView(resultTextView)
         
-        let previewContainer = NSView().chain
+        let previewContainer = DemoFlippedDocumentView(frame: .zero).chain
             .frame(NSRect(x: 790, y: 30, width: 360, height: 360))
             .wantsLayer(true)
             .backgroundColor(.windowBackgroundColor)
@@ -368,12 +368,14 @@ final class UtilsDemoViewController: NSViewController {
             .build
         previewContainer.addSubview(previewImageView)
         
-        previewInfoLabel = NSTextField(labelWithString: "最近一次可视结果会显示在这里。\n优先展示图片缓存、拼接结果和最近保存的图片产物。").chain
+        previewInfoLabel = TFYSwiftLabel().chain
+            .text("最近一次可视结果会显示在这里。\n优先展示图片缓存、拼接结果和最近保存的图片产物。")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
             .maximumNumberOfLines(0)
             .lineBreakMode(.byWordWrapping)
             .wraps(true)
+            .drawsBackground(false)
             .frame(NSRect(x: 18, y: 18, width: 324, height: 58))
             .build
         previewContainer.addSubview(previewInfoLabel)

@@ -10,9 +10,9 @@ import Cocoa
 final class ChainDemoViewController: NSViewController {
 
     private var materialPreviewView: NSVisualEffectView!
-    private var containerStatusLabel: NSTextField!
-    private var asyncStatusLabel: NSTextField!
-    private var observableValueLabel: NSTextField!
+    private var containerStatusLabel: TFYSwiftLabel!
+    private var asyncStatusLabel: TFYSwiftLabel!
+    private var observableValueLabel: TFYSwiftLabel!
 
     // Library's Observable<Value> property wrapper used as a plain stored variable
     private var observableDemo = Observable<Int>(wrappedValue: 0)
@@ -53,15 +53,15 @@ final class ChainDemoViewController: NSViewController {
 
         // FlippedScrollContent uses isFlipped=true so y:0 is the TOP — the same y values
         // the original frame-based code used are now read top-down, which is natural for scrolling.
-        let contentView = FlippedScrollContent(frame: NSRect(x: 0, y: 0, width: 780, height: 1220))
+        let contentView = DemoFlippedDocumentView(frame: NSRect(x: 0, y: 0, width: 780, height: 1220))
         scrollView.documentView = contentView
 
         // Title
-        let titleLabel = NSTextField().chain
+        let titleLabel = TFYSwiftLabel().chain
             .text("链式调用高级演示")
             .font(.boldSystemFont(ofSize: 20))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -81,11 +81,11 @@ final class ChainDemoViewController: NSViewController {
     // MARK: - Existing Sections (unchanged)
 
     private func createButtonExamples(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("按钮链式调用示例")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -127,11 +127,11 @@ final class ChainDemoViewController: NSViewController {
     }
 
     private func createTextFieldExamples(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("文本框链式调用示例")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -176,11 +176,11 @@ final class ChainDemoViewController: NSViewController {
     }
 
     private func createLayerExamples(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("图层链式调用示例")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -241,11 +241,11 @@ final class ChainDemoViewController: NSViewController {
     }
 
     private func createGestureExamples(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("手势识别链式调用示例")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -309,12 +309,12 @@ final class ChainDemoViewController: NSViewController {
         rotationView.addGestureRecognizer(rotationGesture)
         containerView.addSubview(rotationView)
 
-        let instructionLabel = NSTextField().chain
+        let instructionLabel = TFYSwiftLabel().chain
             .frame(NSRect(x: 20, y: 500, width: 400, height: 40))
             .text("点击蓝色区域、拖拽绿色区域、旋转橙色区域来测试手势识别")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -324,11 +324,11 @@ final class ChainDemoViewController: NSViewController {
     }
 
     private func createContainerExamples(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("容器与视觉效果链式调用")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -346,18 +346,22 @@ final class ChainDemoViewController: NSViewController {
             .build
         containerView.addSubview(materialPreviewView)
 
-        let previewTitleLabel = NSTextField(labelWithString: "NSVisualEffectView").chain
+        let previewTitleLabel = TFYSwiftLabel().chain
+            .text("NSVisualEffectView")
             .font(.systemFont(ofSize: 15, weight: .semibold))
             .textColor(.labelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 18, y: 18, width: 180, height: 20))
             .build
         materialPreviewView.addSubview(previewTitleLabel)
 
-        let previewSubtitleLabel = NSTextField(labelWithString: "通过链式配置快速切换 material / state / blendingMode").chain
+        let previewSubtitleLabel = TFYSwiftLabel().chain
+            .text("通过链式配置快速切换 material / state / blendingMode")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
             .wraps(true)
             .maximumNumberOfLines(0)
+            .drawsBackground(false)
             .frame(NSRect(x: 18, y: 46, width: 220, height: 38))
             .build
         materialPreviewView.addSubview(previewSubtitleLabel)
@@ -384,12 +388,12 @@ final class ChainDemoViewController: NSViewController {
             .addArrangedSubview(makeBadgeView(title: "PopUpButton", color: .systemGreen))
         containerView.addSubview(stackView)
 
-        containerStatusLabel = NSTextField().chain
+        containerStatusLabel = TFYSwiftLabel().chain
             .frame(NSRect(x: 300, y: 636, width: 360, height: 18))
             .text("当前材质：Sidebar")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -407,10 +411,12 @@ final class ChainDemoViewController: NSViewController {
             .borderColor(color.withAlphaComponent(0.25))
             .build
 
-        let badgeLabel = NSTextField(labelWithString: title).chain
+        let badgeLabel = TFYSwiftLabel().chain
+            .text(title)
             .font(.systemFont(ofSize: 12, weight: .medium))
             .textColor(color)
             .alignment(.center)
+            .drawsBackground(false)
             .frame(NSRect(x: 8, y: 8, width: 92, height: 18))
             .build
         badgeView.addSubview(badgeLabel)
@@ -420,11 +426,11 @@ final class ChainDemoViewController: NSViewController {
     // MARK: - New: Swift Concurrency Section
 
     private func createConcurrencyExamples(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("Swift Concurrency 链式调用")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -432,7 +438,7 @@ final class ChainDemoViewController: NSViewController {
             .build
         containerView.addSubview(sectionLabel)
 
-        asyncStatusLabel = NSTextField().chain
+        asyncStatusLabel = TFYSwiftLabel().chain
             .text("点击下方按钮查看 asyncAwait / onMainActor 链式调用结果")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
@@ -465,12 +471,12 @@ final class ChainDemoViewController: NSViewController {
             .build
         containerView.addSubview(mainActorButton)
 
-        let descLabel = NSTextField().chain
+        let descLabel = TFYSwiftLabel().chain
             .frame(NSRect(x: 20, y: 890, width: 640, height: 48))
             .text("asyncAwait(_:) 通过 Task { await op(base) } 封装 async 闭包，返回 Chain<Base> 可继续链式；onMainActor(_:) 通过 Task { @MainActor in op(base) } 保证在主线程执行 UI 更新，两者均为 @available(macOS 10.15, *)。")
             .font(.systemFont(ofSize: 11))
             .textColor(.tertiaryLabelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -483,11 +489,11 @@ final class ChainDemoViewController: NSViewController {
     // MARK: - New: Observable Section
 
     private func createObservableExamples(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("Observable 属性包装器")
             .font(.systemFont(ofSize: 16))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -495,7 +501,7 @@ final class ChainDemoViewController: NSViewController {
             .build
         containerView.addSubview(sectionLabel)
 
-        observableValueLabel = NSTextField().chain
+        observableValueLabel = TFYSwiftLabel().chain
             .text("当前值: 0  (等待操作…)")
             .font(.monospacedSystemFont(ofSize: 13, weight: .regular))
             .textColor(.labelColor)
@@ -535,12 +541,12 @@ final class ChainDemoViewController: NSViewController {
             .build
         containerView.addSubview(resetButton)
 
-        let descLabel = NSTextField().chain
+        let descLabel = TFYSwiftLabel().chain
             .frame(NSRect(x: 20, y: 1072, width: 640, height: 64))
             .text("Observable<Value> 是库内置属性包装器：setOnChange(_:) 注册变化回调；setIfChanged(_:) 仅当新值与当前值不同时才赋值并触发回调（防抖）；projectedValue 返回 Observable<Value> 自身，可继续链式调用。\n通过 _observableDemo 或直接变量名访问包装器实例，调用 mutating 方法需要 var 存储属性。")
             .font(.systemFont(ofSize: 11))
             .textColor(.tertiaryLabelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -649,12 +655,4 @@ extension ChainDemoViewController: NSTextFieldDelegate {
             print("文本框内容变化: \(textField.stringValue)")
         }
     }
-}
-
-// MARK: - Private Helpers
-
-/// A flipped NSView used as the scroll view's document view.
-/// With isFlipped = true, y:0 is at the TOP, making top-down frame layout natural.
-private final class FlippedScrollContent: NSView {
-    override var isFlipped: Bool { true }
 }

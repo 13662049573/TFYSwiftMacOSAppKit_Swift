@@ -251,23 +251,26 @@ public class TFYSwiftCacheKit: NSObject {
     // MARK: - 属性
     public private(set) var config = TFYCacheConfig()
     
-    /// 内存缓存
+    /// 内存缓存 (NSCache 自带线程安全)
     private let memoryCache = NSCache<NSString, AnyObject>()
-    
+
     /// 磁盘缓存目录
     private let diskCachePath: String
-    
+
     /// 缓存队列
     private let cacheQueue = DispatchQueue(label: "com.tfy.cache", qos: .utility)
-    
-    /// 内存缓存队列（确保线程安全）
-    private let memoryCacheQueue = DispatchQueue(label: "com.tfy.memory.cache", qos: .userInitiated)
-    
+
     /// 文件管理器
     private let fileManager = FileManager.default
-    
+
     /// 缓存统计
     private var cacheStats = TFYCacheStats()
+
+    /// 上次执行磁盘过期扫描的时间戳
+    private var lastExpirationScanTime: TimeInterval = 0
+    /// 磁盘过期扫描最小间隔 (秒)，避免每次读取都触发全盘扫描
+    private let expirationScanMinInterval: TimeInterval = 60
+    private let expirationScanLock = NSLock()
     
     /// 统计信息更新队列（确保线程安全）
     private let statsQueue = DispatchQueue(label: "com.tfy.cache.stats", qos: .utility)
@@ -344,7 +347,9 @@ public class TFYSwiftCacheKit: NSObject {
     
     @objc private func handleSystemPressure() {
         print("TFYSwiftCacheKit: 系统唤醒，检查缓存状态")
-        cleanExpiredCacheIfNeeded()
+        cacheQueue.async { [weak self] in
+            self?.cleanExpiredCacheIfNeeded(force: true)
+        }
     }
     
     @objc private func handleAppStateChange() {
@@ -397,39 +402,51 @@ public class TFYSwiftCacheKit: NSObject {
             print("TFYSwiftCacheKit: 无效的缓存键: \(key)")
             return
         }
-        
-        memoryCacheQueue.async {
-            let nsKey = key as NSString
-            self.memoryCache.setObject(value as AnyObject, forKey: nsKey)
+
+        let nsKey = key as NSString
+        let cost = approximateCost(of: value)
+        if cost > 0 {
+            memoryCache.setObject(value as AnyObject, forKey: nsKey, cost: cost)
+        } else {
+            memoryCache.setObject(value as AnyObject, forKey: nsKey)
         }
     }
-    
+
     /// 获取内存缓存
     /// - Parameter key: 缓存键
     /// - Returns: 缓存值
     public func getMemoryCache<T>(forKey key: String) -> T? {
-        var result: T?
-        memoryCacheQueue.sync {
-            let nsKey = key as NSString
-            result = self.memoryCache.object(forKey: nsKey) as? T
-        }
-        return result
+        let nsKey = key as NSString
+        return memoryCache.object(forKey: nsKey) as? T
     }
-    
+
     /// 移除内存缓存
     /// - Parameter key: 缓存键
     public func removeMemoryCache(forKey key: String) {
-        memoryCacheQueue.async {
-            let nsKey = key as NSString
-            self.memoryCache.removeObject(forKey: nsKey)
-        }
+        memoryCache.removeObject(forKey: key as NSString)
     }
-    
+
     /// 清空内存缓存
     public func clearMemoryCache() {
-        memoryCacheQueue.async {
-            self.memoryCache.removeAllObjects()
+        memoryCache.removeAllObjects()
+    }
+
+    /// 估算任意值的内存开销，用于 NSCache 成本限制
+    private func approximateCost<T>(of value: T) -> Int {
+        if let data = value as? Data {
+            return data.count
         }
+        if let image = value as? NSImage {
+            let s = image.size
+            return max(1, Int(s.width * s.height * 4))
+        }
+        if let string = value as? String {
+            return string.utf8.count
+        }
+        if let array = value as? [Any] {
+            return array.count * 16
+        }
+        return 0
     }
     
     // MARK: - 磁盘缓存
@@ -789,7 +806,7 @@ public class TFYSwiftCacheKit: NSObject {
     }
     
     private func readDiskCacheSync(forKey key: String) -> Result<Data, TFYCacheError> {
-        cleanExpiredCacheIfNeeded()
+        cleanExpiredCacheIfNeeded(force: false)
         let filePath = diskCachePath(forKey: key)
         
         guard fileManager.fileExists(atPath: filePath) else {
@@ -836,7 +853,17 @@ public class TFYSwiftCacheKit: NSObject {
     }
     
     /// 自动清理过期缓存（仅内部调用，非主线程）
-    private func cleanExpiredCacheIfNeeded() {
+    /// - Parameter force: true 时忽略间隔限制，否则按 `expirationScanMinInterval` 节流
+    private func cleanExpiredCacheIfNeeded(force: Bool = false) {
+        expirationScanLock.lock()
+        let now = Date().timeIntervalSince1970
+        if !force, now - lastExpirationScanTime < expirationScanMinInterval {
+            expirationScanLock.unlock()
+            return
+        }
+        lastExpirationScanTime = now
+        expirationScanLock.unlock()
+
         do {
             let contents = try self.fileManager.contentsOfDirectory(atPath: self.diskCachePath)
             let expirationDate = Date().addingTimeInterval(-self.config.expirationInterval)

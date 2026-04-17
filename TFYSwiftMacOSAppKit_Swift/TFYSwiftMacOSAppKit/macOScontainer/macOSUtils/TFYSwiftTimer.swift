@@ -708,3 +708,60 @@ public extension TFYSwiftTimer {
         return timer
     }
 }
+
+// MARK: - AsyncStream Bridges
+@available(macOS 10.15, *)
+public extension TFYSwiftTimer {
+
+    /// Returns an AsyncStream that yields on each timer tick. Cancelling the iteration cancels the timer.
+    static func ticks(every seconds: TimeInterval, queue: DispatchQueue = .global()) -> AsyncStream<Date> {
+        AsyncStream { continuation in
+            let timer = TFYSwiftTimer.repeatingTimer(interval: .fromSeconds(seconds), queue: queue) { _ in
+                continuation.yield(Date())
+            }
+            continuation.onTermination = { _ in
+                timer.cancel()
+            }
+            try? timer.start()
+        }
+    }
+
+    /// Awaitable sleep backed by DispatchSourceTimer.
+    static func sleep(seconds: TimeInterval) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            var resumed = false
+            let lock = NSLock()
+            let timer = TFYSwiftTimer.singleTimer(interval: .fromSeconds(seconds)) { _ in
+                lock.lock()
+                let already = resumed
+                resumed = true
+                lock.unlock()
+                if !already {
+                    continuation.resume()
+                }
+            }
+            try? timer.start()
+        }
+    }
+}
+
+// MARK: - Countdown Async Stream
+@available(macOS 10.15, *)
+public extension TFYSwiftCountDownTimer {
+
+    /// Returns an AsyncStream yielding the remaining tick count on each fire. Completes when the countdown finishes.
+    static func stream(interval: DispatchTimeInterval, times: Int, queue: DispatchQueue = .main) -> AsyncStream<Int> {
+        AsyncStream { continuation in
+            let counter = TFYSwiftCountDownTimer(interval: interval, times: times, queue: queue) { _, left in
+                continuation.yield(left)
+                if left == 0 {
+                    continuation.finish()
+                }
+            }
+            continuation.onTermination = { _ in
+                counter.cancel()
+            }
+            counter.start()
+        }
+    }
+}

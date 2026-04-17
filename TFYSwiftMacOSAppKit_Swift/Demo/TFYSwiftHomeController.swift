@@ -11,13 +11,12 @@ import Cocoa
 class TFYSwiftHomeController: NSViewController {
 
     override func loadView() {
-        self.view = NSView().chain
-            .frame(NSRect(x: 0, y: 0, width: 400, height: 600))
-            .build
+        // flipped：与 frame 的 y 向下递增一致，避免标题区落在视图下方
+        self.view = DemoFlippedDocumentView(frame: NSRect(x: 0, y: 0, width: 400, height: 600))
     }
     
-    lazy var textfiled: NSTextField = {
-        NSTextField().chain
+    lazy var textfiled: TFYSwiftLabel = {
+        TFYSwiftLabel().chain
             .frame(NSRect(x: 20, y: 200, width: self.view.macos_width - 40, height: 50))
             .font(NSFont.systemFont(ofSize: 14, weight: .semibold))
             .wantsLayer(true)

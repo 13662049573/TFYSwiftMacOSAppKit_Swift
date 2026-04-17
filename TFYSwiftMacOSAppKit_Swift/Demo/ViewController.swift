@@ -29,8 +29,9 @@ class ViewController: NSViewController {
             demoView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             demoView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        
-        // 通知子控制器已添加（macOS AppKit中不需要这个方法）
-        // mainDemoViewController.didMove(toParent: self)
+
+        demoView.setAccessibilityLabel("TFYSwiftMacOSAppKit 演示内容")
+        view.setAccessibilityLabel("应用主窗口内容区域")
+        view.setAccessibilityChildren([demoView])
     }
 }

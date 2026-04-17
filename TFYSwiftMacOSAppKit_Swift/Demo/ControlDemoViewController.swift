@@ -12,16 +12,16 @@ final class ControlDemoViewController: NSViewController {
     private var logTextView: NSTextView!
 
     // Demonstration subjects
-    private var richLabel: NSTextField!
+    private var richLabel: TFYSwiftLabel!
     private var segmentedControl: NSSegmentedControl!
     private var searchField: NSSearchField!
     private var checkboxButton: NSButton!
     private var closureButton: NSButton!
     private var slider: NSSlider!
-    private var sliderValueLabel: NSTextField!
+    private var sliderValueLabel: TFYSwiftLabel!
     private var datePicker: NSDatePicker!
     private var stepper: NSStepper!
-    private var stepperValueLabel: NSTextField!
+    private var stepperValueLabel: TFYSwiftLabel!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,22 +34,26 @@ final class ControlDemoViewController: NSViewController {
         let scroll = NSScrollView().chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .hasVerticalScroller(true)
+            .hasHorizontalScroller(false)
             .autohidesScrollers(true)
             .build
         view.addSubview(scroll)
 
-        let content = NSView().chain
+        // 必须使用 flipped 文档视图：默认 NSView 的 y 轴向上，而本页按「自上而下」递增 y 布局，
+        // 否则首段标题会落在文档几何「底部」，滚动视窗初始只显示上方（实为末段日志），造成顶端内容「显示不全」。
+        let content = DemoFlippedDocumentView(frame: .zero).chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
         scroll.chain.documentView(content)
 
+        // 文档高度必须用「等于内容总高度」的约束：若用 height >= scroll.height，
+        // 引擎会取最小可行高度（通常等于可视区高度），手动改 frame 也会在下一轮 layout 被覆盖，导致无法纵向滚动。
         NSLayoutConstraint.activate([
             scroll.topAnchor.constraint(equalTo: view.topAnchor),
             scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scroll.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             content.widthAnchor.constraint(equalTo: scroll.widthAnchor),
-            content.heightAnchor.constraint(greaterThanOrEqualTo: scroll.heightAnchor),
         ])
 
         var y: CGFloat = 20
@@ -87,7 +91,10 @@ final class ControlDemoViewController: NSViewController {
         y = setupStepperSection(in: content, y: y)
         y = setupLogSection(in: content, y: y)
 
-        content.frame.size.height = y + 24
+        let contentHeight = y + 24
+        NSLayoutConstraint.activate([
+            content.heightAnchor.constraint(equalToConstant: contentHeight),
+        ])
         appendLog("NSControl+Dejal 演示页就绪，点击各按钮查看富文本效果。")
     }
 
@@ -101,13 +108,15 @@ final class ControlDemoViewController: NSViewController {
         c.addSubview(header)
         cy += 28
 
-        richLabel = NSTextField(labelWithString: "TFYSwiftMacOSAppKit 富文本演示：Swift 链式 API 让 macOS 开发更高效").chain
+        richLabel = TFYSwiftLabel().chain
+            .text("TFYSwiftMacOSAppKit 富文本演示：Swift 链式 API 让 macOS 开发更高效")
             .frame(NSRect(x: 20, y: cy, width: 720, height: 36))
             .font(.systemFont(ofSize: 18, weight: .medium))
             .textColor(.labelColor)
             .maximumNumberOfLines(0)
             .lineBreakMode(.byWordWrapping)
             .wraps(true)
+            .drawsBackground(false)
             .build
         richLabel.wantsLayer = true
         richLabel.layer?.cornerRadius = 8
@@ -585,10 +594,12 @@ final class ControlDemoViewController: NSViewController {
         slider.action = #selector(sliderValueChanged)
         c.addSubview(slider)
 
-        sliderValueLabel = NSTextField(labelWithString: "值: 50.0 | 归一化: 0.50").chain
+        sliderValueLabel = TFYSwiftLabel().chain
+            .text("值: 50.0 | 归一化: 0.50")
             .frame(NSRect(x: 340, y: cy, width: 250, height: 22))
             .font(.monospacedSystemFont(ofSize: 12, weight: .regular))
             .textColor(.secondaryLabelColor)
+            .drawsBackground(false)
             .build
         c.addSubview(sliderValueLabel)
         cy += 34
@@ -671,10 +682,12 @@ final class ControlDemoViewController: NSViewController {
         stepper.action = #selector(stepperValueChanged)
         c.addSubview(stepper)
 
-        stepperValueLabel = NSTextField(labelWithString: "步进器值: 10.0 (范围: 0~20, 步进: 2)").chain
+        stepperValueLabel = TFYSwiftLabel().chain
+            .text("步进器值: 10.0 (范围: 0~20, 步进: 2)")
             .frame(NSRect(x: 70, y: cy, width: 350, height: 22))
             .font(.monospacedSystemFont(ofSize: 12, weight: .regular))
             .textColor(.secondaryLabelColor)
+            .drawsBackground(false)
             .build
         c.addSubview(stepperValueLabel)
         cy += 34
@@ -1344,29 +1357,35 @@ final class ControlDemoViewController: NSViewController {
         return cy + 36
     }
 
-    private func makeTitle(_ text: String) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeTitle(_ text: String) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.boldSystemFont(ofSize: 22))
             .textColor(.labelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: 500, height: 28))
             .build
     }
 
-    private func makeSection(_ text: String) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeSection(_ text: String) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.systemFont(ofSize: 15, weight: .semibold))
             .textColor(.labelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: 500, height: 22))
             .build
     }
 
-    private func makeBody(_ text: String, width: CGFloat, height: CGFloat) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeBody(_ text: String, width: CGFloat, height: CGFloat) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
             .maximumNumberOfLines(0)
             .lineBreakMode(.byWordWrapping)
             .wraps(true)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: width, height: height))
             .build
     }

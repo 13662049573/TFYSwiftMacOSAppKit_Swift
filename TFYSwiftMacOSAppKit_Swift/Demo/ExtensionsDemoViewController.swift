@@ -10,12 +10,12 @@ import Cocoa
 final class ExtensionsDemoViewController: NSViewController {
     
     private var previewBox: NSView!
-    private var previewInfoLabel: NSTextField!
+    private var previewInfoLabel: TFYSwiftLabel!
     private var styledField: NSTextField!
     private var plainTextField: NSTextField!
     private var richTextView: NSTextView!
-    private var textViewStatsLabel: NSTextField!
-    private var notificationStatusLabel: NSTextField!
+    private var textViewStatsLabel: TFYSwiftLabel!
+    private var notificationStatusLabel: TFYSwiftLabel!
     private var logTextView: NSTextView!
     private var notificationToken: NSObjectProtocol?
     private var notificationCount = 0
@@ -41,22 +41,22 @@ final class ExtensionsDemoViewController: NSViewController {
         let scrollView = NSScrollView().chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .hasVerticalScroller(true)
+            .hasHorizontalScroller(false)
             .autohidesScrollers(true)
             .build
         view.addSubview(scrollView)
-        
-        let contentView = NSView().chain
+
+        let contentView = DemoFlippedDocumentView(frame: .zero).chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
         scrollView.chain.documentView(contentView)
-        
+
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.heightAnchor)
         ])
         
         var yOffset: CGFloat = 20
@@ -81,8 +81,11 @@ final class ExtensionsDemoViewController: NSViewController {
         yOffset = setupGradientLayerSection(in: contentView, yOffset: yOffset)
         yOffset = setupImageExtensionSection(in: contentView, yOffset: yOffset)
         yOffset = setupLogSection(in: contentView, yOffset: yOffset)
-        
-        contentView.frame.size.height = yOffset + 24
+
+        let contentHeight = yOffset + 24
+        NSLayoutConstraint.activate([
+            contentView.heightAnchor.constraint(equalToConstant: contentHeight),
+        ])
     }
     
     // MARK: - Existing Sections
@@ -111,10 +114,12 @@ final class ExtensionsDemoViewController: NSViewController {
         }, duration: 0.35)
         contentView.addSubview(previewBox)
         
-        let badgeLabel = NSTextField(labelWithString: "拖动、动画、阴影、圆角、点击/长按").chain
+        let badgeLabel = TFYSwiftLabel().chain
+            .text("拖动、动画、阴影、圆角、点击/长按")
             .font(.systemFont(ofSize: 11, weight: .medium))
             .textColor(.white)
             .alignment(.center)
+            .drawsBackground(false)
             .frame(NSRect(x: 16, y: 46, width: 188, height: 18))
             .build
         previewBox.addSubview(badgeLabel)
@@ -403,13 +408,15 @@ final class ExtensionsDemoViewController: NSViewController {
             contentView.addSubview(colorBox)
 
             let hexStr = color.usingColorSpace(.sRGB)?.hexString ?? "n/a"
-            let boxLabel = NSTextField(labelWithString: "\(label)\n\(hexStr)").chain
+            let boxLabel = TFYSwiftLabel().chain
+                .text("\(label)\n\(hexStr)")
                 .font(.systemFont(ofSize: 10))
                 .textColor(color.bestContrastColor())
                 .alignment(.center)
                 .lineBreakMode(.byWordWrapping)
                 .wraps(true)
                 .maximumNumberOfLines(0)
+                .drawsBackground(false)
                 .frame(NSRect(x: 4, y: 6, width: boxSize - 8, height: boxHeight - 12))
                 .build
             colorBox.addSubview(boxLabel)
@@ -538,9 +545,11 @@ final class ExtensionsDemoViewController: NSViewController {
                 .build
             contentView.addSubview(imageView)
 
-            let captionLabel = NSTextField(labelWithString: caption).chain
+            let captionLabel = TFYSwiftLabel().chain
+                .text(caption)
                 .font(.systemFont(ofSize: 11, weight: .medium))
                 .alignment(.center)
+                .drawsBackground(false)
                 .frame(NSRect(x: x, y: currentOffset + itemWidth + 4, width: itemWidth, height: 18))
                 .build
             contentView.addSubview(captionLabel)
@@ -613,29 +622,35 @@ final class ExtensionsDemoViewController: NSViewController {
         logTextView?.scrollToEndOfDocument(nil)
     }
     
-    private func makeTitleLabel(_ text: String) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeTitleLabel(_ text: String) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.boldSystemFont(ofSize: 22))
             .textColor(.labelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: 360, height: 28))
             .build
     }
     
-    private func makeSectionLabel(_ text: String) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeSectionLabel(_ text: String) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.systemFont(ofSize: 16, weight: .semibold))
             .textColor(.labelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: 400, height: 22))
             .build
     }
     
-    private func makeBodyLabel(_ text: String, width: CGFloat, height: CGFloat) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeBodyLabel(_ text: String, width: CGFloat, height: CGFloat) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
             .lineBreakMode(.byWordWrapping)
             .wraps(true)
             .maximumNumberOfLines(0)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: width, height: height))
             .build
     }

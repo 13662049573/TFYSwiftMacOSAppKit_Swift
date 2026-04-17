@@ -307,7 +307,7 @@ public class TFYSwiftGCD: NSObject {
     }
     
     // MARK: - 取消控制
-    
+
     /// 可取消的异步执行
     /// - Parameters:
     ///   - queue: 执行队列
@@ -316,17 +316,29 @@ public class TFYSwiftGCD: NSObject {
     /// - Returns: 取消令牌
     @discardableResult
     public static func asyncCancellable(in queue: DispatchQueue = .global(), execute work: @escaping () -> Void, completion: @escaping (Result<Void, TFYGCDError>) -> Void) -> DispatchWorkItem {
+        let reportLock = NSLock()
+        var reported = false
+        func reportOnce(_ result: Result<Void, TFYGCDError>) {
+            reportLock.lock()
+            let already = reported
+            reported = true
+            reportLock.unlock()
+            guard !already else { return }
+            DispatchQueue.main.async { completion(result) }
+        }
+
         let workItem = DispatchWorkItem {
             work()
-            completion(.success(()))
         }
-        
-        workItem.notify(queue: .main) {
+
+        workItem.notify(queue: .global(qos: .utility)) {
             if workItem.isCancelled {
-                completion(.failure(.cancelled))
+                reportOnce(.failure(.cancelled))
+            } else {
+                reportOnce(.success(()))
             }
         }
-        
+
         queue.async(execute: workItem)
         return workItem
     }
@@ -422,7 +434,127 @@ public extension TFYSwiftGCD {
                 }
             }
         }
-        
+
         attempt(0)
+    }
+}
+
+// MARK: - Async/Await Bridges
+@available(macOS 10.15, *)
+public extension TFYSwiftGCD {
+
+    /// Run a synchronous block on the specified queue and return asynchronously.
+    static func run<T>(on queue: DispatchQueue = .global(), _ block: @escaping () -> T) async -> T {
+        await withCheckedContinuation { cont in
+            queue.async { cont.resume(returning: block()) }
+        }
+    }
+
+    /// Run a throwing synchronous block on the specified queue and return asynchronously.
+    static func runThrowing<T>(on queue: DispatchQueue = .global(), _ block: @escaping () throws -> T) async throws -> T {
+        try await withCheckedThrowingContinuation { cont in
+            queue.async {
+                do { cont.resume(returning: try block()) }
+                catch { cont.resume(throwing: error) }
+            }
+        }
+    }
+
+    /// Execute an async operation with a timeout. Honors Swift concurrency cancellation.
+    static func withTimeout<T>(_ seconds: TimeInterval, _ operation: @escaping () async throws -> T) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask { try await operation() }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(max(0, seconds) * 1_000_000_000))
+                throw TFYGCDError.timeout
+            }
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
+        }
+    }
+
+    /// Retry an async operation with exponential backoff.
+    static func retry<T>(
+        maxAttempts: Int,
+        initialDelay: Double = 0.5,
+        multiplier: Double = 2.0,
+        operation: @escaping () async throws -> T
+    ) async throws -> T {
+        let attempts = max(1, maxAttempts)
+        var delay = initialDelay
+        var lastError: Error?
+        for attempt in 0..<attempts {
+            if Task.isCancelled { throw TFYGCDError.cancelled }
+            do {
+                return try await operation()
+            } catch {
+                lastError = error
+                if attempt + 1 < attempts {
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                    delay *= multiplier
+                }
+            }
+        }
+        throw lastError ?? TFYGCDError.taskFailed("retry exhausted")
+    }
+}
+
+// MARK: - Debounce / Throttle
+@available(macOS 10.15, *)
+public final class TFYSwiftDebouncer {
+    private let queue: DispatchQueue
+    private let interval: TimeInterval
+    private var workItem: DispatchWorkItem?
+    private let lock = NSLock()
+
+    public init(interval: TimeInterval, queue: DispatchQueue = .main) {
+        self.interval = interval
+        self.queue = queue
+    }
+
+    /// Schedule `block` to run after `interval` seconds. Subsequent calls within the interval reset the timer.
+    public func call(_ block: @escaping () -> Void) {
+        lock.lock()
+        workItem?.cancel()
+        let item = DispatchWorkItem { block() }
+        workItem = item
+        lock.unlock()
+        queue.asyncAfter(deadline: .now() + interval, execute: item)
+    }
+
+    /// Cancel any pending invocation.
+    public func cancel() {
+        lock.lock()
+        defer { lock.unlock() }
+        workItem?.cancel()
+        workItem = nil
+    }
+}
+
+@available(macOS 10.15, *)
+public final class TFYSwiftThrottler {
+    private let queue: DispatchQueue
+    private let interval: TimeInterval
+    private var lastFire: DispatchTime = .now() - .seconds(3600)
+    private let lock = NSLock()
+
+    public init(interval: TimeInterval, queue: DispatchQueue = .main) {
+        self.interval = interval
+        self.queue = queue
+    }
+
+    /// Run `block` at most once per `interval`. Subsequent calls within the window are dropped.
+    public func call(_ block: @escaping () -> Void) {
+        lock.lock()
+        let now = DispatchTime.now()
+        let elapsed = Double(now.uptimeNanoseconds &- lastFire.uptimeNanoseconds) / 1_000_000_000.0
+        if elapsed >= interval {
+            lastFire = now
+            lock.unlock()
+            queue.async(execute: block)
+        } else {
+            lock.unlock()
+        }
     }
 }

@@ -23,7 +23,7 @@ class HUDDemoViewController: NSViewController {
     private var embeddedProgressView: TFYProgressView!
     private var progressSlider: NSSlider!
     private var progressStylePopUp: NSPopUpButton!
-    private var progressValueLabel: NSTextField!
+    private var progressValueLabel: TFYSwiftLabel!
     private var progressPercentageSwitch: NSButton!
     
     override func viewDidLoad() {
@@ -40,29 +40,25 @@ class HUDDemoViewController: NSViewController {
             .build
         view.addSubview(scrollView)
         
-        let containerView = NSView().chain
+        let containerView = DemoFlippedDocumentView(frame: .zero).chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
         scrollView.chain.documentView(containerView)
-        
+
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             containerView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            containerView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.heightAnchor)
         ])
         
         // 创建标题
-        let titleLabel = NSTextField().chain
+        let titleLabel = TFYSwiftLabel().chain
             .text("TFYProgressMacOSHUD 功能演示")
             .font(.boldSystemFont(ofSize: 24))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
-            .bordered(false)
-            .editable(false)
-            .selectable(false)
+            .drawsBackground(false)
             .alignment(.center)
             .frame(NSRect(x: 20, y: 20, width: 600, height: 40))
             .build
@@ -87,20 +83,20 @@ class HUDDemoViewController: NSViewController {
         // 初始化管理器
         themeManager = TFYThemeManager()
         animationEnhancer = TFYAnimationEnhancer()
-        
-        // 设置文档视图高度以便滚动
-        containerView.frame.size.height = 860
+
+        // 最底部控件：使用说明区 y=720 height≈130 → 总高约 860；略加余量保证可滚到底
+        let documentHeight: CGFloat = 880
+        NSLayoutConstraint.activate([
+            containerView.heightAnchor.constraint(equalToConstant: documentHeight),
+        ])
     }
     
     private func createHUDTypeSection(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("HUD类型演示")
             .font(.boldSystemFont(ofSize: 18))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
-            .bordered(false)
-            .editable(false)
-            .selectable(false)
+            .drawsBackground(false)
             .frame(NSRect(x: 20, y: 80, width: 200, height: 25))
             .build
         
@@ -134,14 +130,11 @@ class HUDDemoViewController: NSViewController {
     }
     
     private func createHUDConfigSection(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("HUD配置选项")
             .font(.boldSystemFont(ofSize: 18))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
-            .bordered(false)
-            .editable(false)
-            .selectable(false)
+            .drawsBackground(false)
             .frame(NSRect(x: 20, y: 220, width: 200, height: 25))
             .build
         
@@ -232,14 +225,11 @@ class HUDDemoViewController: NSViewController {
     }
     
     private func createAdvancedSection(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("高级功能演示")
             .font(.boldSystemFont(ofSize: 18))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
-            .bordered(false)
-            .editable(false)
-            .selectable(false)
+            .drawsBackground(false)
             .frame(NSRect(x: 20, y: 350, width: 200, height: 25))
             .build
         
@@ -289,22 +279,19 @@ class HUDDemoViewController: NSViewController {
     }
     
     private func createInstructionSection(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("使用说明")
             .font(.boldSystemFont(ofSize: 18))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
-            .bordered(false)
-            .editable(false)
-            .selectable(false)
+            .drawsBackground(false)
             .frame(NSRect(x: 20, y: 690, width: 200, height: 25))
             .build
         
         containerView.addSubview(sectionLabel)
         
-        let instructionLabel = NSTextField().chain
+        let instructionLabel = TFYSwiftLabel().chain
             .frame(NSRect(x: 20, y: 720, width: 680, height: 130))
-            .stringValue("""
+            .text("""
         使用说明:
         
         1. HUD类型演示: 点击不同类型的HUD按钮查看效果
@@ -336,10 +323,7 @@ class HUDDemoViewController: NSViewController {
         """)
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
-            .backgroundColor(.clear)
-            .bordered(false)
-            .editable(false)
-            .selectable(false)
+            .drawsBackground(false)
             .alignment(.left)
             .wraps(true)
             .build
@@ -350,14 +334,11 @@ class HUDDemoViewController: NSViewController {
     }
 
     private func createDirectProgressSection(in containerView: NSView) {
-        let sectionLabel = NSTextField().chain
+        let sectionLabel = TFYSwiftLabel().chain
             .text("直接进度视图演示")
             .font(.boldSystemFont(ofSize: 18))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
-            .bordered(false)
-            .editable(false)
-            .selectable(false)
+            .drawsBackground(false)
             .frame(NSRect(x: 20, y: 530, width: 220, height: 25))
             .build
         containerView.addSubview(sectionLabel)
@@ -433,15 +414,12 @@ class HUDDemoViewController: NSViewController {
             .build
     }
     
-    private func createLabel(text: String, frame: NSRect) -> NSTextField {
-        NSTextField().chain
-            .stringValue(text)
+    private func createLabel(text: String, frame: NSRect) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.systemFont(ofSize: 12))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
-            .bordered(false)
-            .editable(false)
-            .selectable(false)
+            .drawsBackground(false)
             .frame(frame)
             .build
     }

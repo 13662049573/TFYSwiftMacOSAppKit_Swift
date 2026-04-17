@@ -19,14 +19,14 @@ final class StatusItemDemoViewController: NSViewController {
     private var dragSwitch: NSButton!
     private var pinnedSwitch: NSButton!
     private var dragZoneSlider: NSSlider!
-    private var dragZoneLabel: NSTextField!
+    private var dragZoneLabel: TFYSwiftLabel!
     private var animDurationSlider: NSSlider!
-    private var animDurationLabel: NSTextField!
+    private var animDurationLabel: TFYSwiftLabel!
     private var marginSlider: NSSlider!
-    private var marginLabel: NSTextField!
+    private var marginLabel: TFYSwiftLabel!
     
     // MARK: - State Display
-    private var stateGrid: [(String, NSTextField)] = []
+    private var stateGrid: [(String, TFYSwiftLabel)] = []
     private var statusTextView: NSTextView!
     
     // MARK: - Notification Tracking
@@ -49,22 +49,22 @@ final class StatusItemDemoViewController: NSViewController {
         let scrollView = NSScrollView().chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .hasVerticalScroller(true)
+            .hasHorizontalScroller(false)
             .autohidesScrollers(true)
             .build
         view.addSubview(scrollView)
-        
-        let content = NSView().chain
+
+        let content = DemoFlippedDocumentView(frame: .zero).chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
         scrollView.chain.documentView(content)
-        
+
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             content.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            content.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.heightAnchor)
         ])
         
         var y: CGFloat = 20
@@ -89,8 +89,11 @@ final class StatusItemDemoViewController: NSViewController {
         y = setupStatePanel(in: content, y: y)
         y = setupNotificationSection(in: content, y: y)
         y = setupLogSection(in: content, y: y)
-        
-        content.frame.size.height = y + 24
+
+        let contentHeight = y + 24
+        NSLayoutConstraint.activate([
+            content.heightAnchor.constraint(equalToConstant: contentHeight),
+        ])
         appendLog("状态栏演示页已就绪。点击「创建/重建」在系统状态栏创建项目。")
     }
     
@@ -504,10 +507,12 @@ final class StatusItemDemoViewController: NSViewController {
             .cornerRadius(11)
             .build
         
-        let lbl = NSTextField(labelWithString: "TFY").chain
+        let lbl = TFYSwiftLabel().chain
+            .text("TFY")
             .font(.systemFont(ofSize: 11, weight: .bold))
             .textColor(.white)
             .alignment(.center)
+            .drawsBackground(false)
             .frame(badge.bounds)
             .build
         badge.addSubview(lbl)
@@ -557,9 +562,11 @@ final class StatusItemDemoViewController: NSViewController {
             .build
         container.addSubview(icon)
         
-        let titleLbl = NSTextField(labelWithString: "TFYStatusItem 弹窗").chain
+        let titleLbl = TFYSwiftLabel().chain
+            .text("TFYStatusItem 弹窗")
             .font(.boldSystemFont(ofSize: 16))
             .textColor(textColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 54, y: h - 44, width: w - 70, height: 22))
             .build
         container.addSubview(titleLbl)
@@ -574,12 +581,14 @@ final class StatusItemDemoViewController: NSViewController {
             "动画: \(String(format: "%.2f", animDurationSlider.doubleValue)) s",
         ]
         
-        let infoLbl = NSTextField(labelWithString: info.joined(separator: "\n")).chain
+        let infoLbl = TFYSwiftLabel().chain
+            .text(info.joined(separator: "\n"))
             .font(.systemFont(ofSize: 12))
             .textColor(subColor)
             .maximumNumberOfLines(0)
             .lineBreakMode(.byWordWrapping)
             .wraps(true)
+            .drawsBackground(false)
             .frame(NSRect(x: 20, y: 50, width: w - 40, height: h - 100))
             .build
         container.addSubview(infoLbl)
@@ -762,29 +771,35 @@ final class StatusItemDemoViewController: NSViewController {
         statusTextView?.scrollToEndOfDocument(nil)
     }
     
-    private func makeTitle(_ text: String) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeTitle(_ text: String) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.boldSystemFont(ofSize: 22))
             .textColor(.labelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: 400, height: 28))
             .build
     }
     
-    private func makeSection(_ text: String) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeSection(_ text: String) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.systemFont(ofSize: 15, weight: .semibold))
             .textColor(.labelColor)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: 400, height: 22))
             .build
     }
     
-    private func makeBody(_ text: String, width: CGFloat, height: CGFloat) -> NSTextField {
-        NSTextField(labelWithString: text).chain
+    private func makeBody(_ text: String, width: CGFloat, height: CGFloat) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
+            .text(text)
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
             .maximumNumberOfLines(0)
             .lineBreakMode(.byWordWrapping)
             .wraps(true)
+            .drawsBackground(false)
             .frame(NSRect(x: 0, y: 0, width: width, height: height))
             .build
     }

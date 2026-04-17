@@ -10,6 +10,10 @@ import Cocoa
 class MainDemoViewController: NSViewController {
     
     private var tabView: NSTabView!
+    /// 顶栏大标题（VoiceOver 顺序：标题 → 标签页 → 底栏）
+    private var headerTitleField: TFYSwiftLabel!
+    private var mainContainerView: NSView!
+    private var bottomInfoView: NSView!
     private let releaseVersion = "1.5.0"
     
     override func viewDidLoad() {
@@ -21,6 +25,7 @@ class MainDemoViewController: NSViewController {
         let containerView = NSView().chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
+        mainContainerView = containerView
         view.addSubview(containerView)
         
         NSLayoutConstraint.activate([
@@ -30,16 +35,17 @@ class MainDemoViewController: NSViewController {
             containerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         
-        let titleLabel = NSTextField().chain
+        let titleLabel = TFYSwiftLabel().chain
             .text("TFYSwiftMacOSAppKit 功能演示")
             .font(.boldSystemFont(ofSize: 24))
             .textColor(.labelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
+        headerTitleField = titleLabel
         containerView.addSubview(titleLabel)
         
         NSLayoutConstraint.activate([
@@ -51,6 +57,23 @@ class MainDemoViewController: NSViewController {
         
         createTabView(in: containerView, below: titleLabel)
         createBottomInfoArea(in: containerView)
+        applyMainDemoShellAccessibility()
+    }
+
+    /// 顶栏标题、标签页与底栏的无障碍名称及子元素顺序（自上而下与视觉一致）。
+    private func applyMainDemoShellAccessibility() {
+        headerTitleField.setAccessibilityLabel("TFYSwiftMacOSAppKit 功能演示")
+        headerTitleField.setAccessibilityRole(.staticText)
+
+        tabView.setAccessibilityLabel("功能模块标签页")
+        tabView.setAccessibilityTitle("功能模块")
+        tabView.setAccessibilityHelp("切换标签以浏览概览、组件、链式调用、分类扩展、工具、HUD、富文本控件与状态栏等演示。")
+
+        bottomInfoView.setAccessibilityLabel("版本与版权")
+        bottomInfoView.setAccessibilityTitle("版本与版权")
+
+        mainContainerView.setAccessibilityLabel("TFYSwiftMacOSAppKit 演示主区域")
+        mainContainerView.setAccessibilityChildren([headerTitleField!, tabView!, bottomInfoView!])
     }
     
     private func createTabView(in containerView: NSView, below titleLabel: NSView) {
@@ -75,60 +98,82 @@ class MainDemoViewController: NSViewController {
         createControlDemoTab()
         createStatusItemDemoTab()
     }
+
+    /// 便于 VoiceOver / 调试：子控制器 `title` 与根视图无障碍名称与标签页一致。
+    private func configureDemoViewController(_ viewController: NSViewController, tabLabel: String, accessibilitySummary: String) {
+        viewController.title = tabLabel
+        viewController.view.setAccessibilityLabel("\(tabLabel)：\(accessibilitySummary)")
+    }
     
     private func createOverviewTab() {
         let tabViewItem = NSTabViewItem()
         tabViewItem.label = "概览"
-        tabViewItem.viewController = createOverviewViewController()
+        let overview = createOverviewViewController()
+        configureDemoViewController(overview, tabLabel: "概览", accessibilitySummary: "库介绍、功能模块与代码片段")
+        tabViewItem.viewController = overview
         tabView.addTabViewItem(tabViewItem)
     }
     
     private func createChainDemoTab() {
         let tabViewItem = NSTabViewItem()
         tabViewItem.label = "链式调用"
-        tabViewItem.viewController = ChainDemoViewController()
+        let vc = ChainDemoViewController()
+        configureDemoViewController(vc, tabLabel: "链式调用", accessibilitySummary: "Chain、手势、图层与并发链式 API")
+        tabViewItem.viewController = vc
         tabView.addTabViewItem(tabViewItem)
     }
     
     private func createComponentsDemoTab() {
         let tabViewItem = NSTabViewItem()
         tabViewItem.label = "组件控件"
-        tabViewItem.viewController = ComponentsDemoViewController()
+        let vc = ComponentsDemoViewController()
+        configureDemoViewController(vc, tabLabel: "组件控件", accessibilitySummary: "TFYSwift 输入、按钮、图片与日志")
+        tabViewItem.viewController = vc
         tabView.addTabViewItem(tabViewItem)
     }
     
     private func createExtensionsDemoTab() {
         let tabViewItem = NSTabViewItem()
         tabViewItem.label = "分类扩展"
-        tabViewItem.viewController = ExtensionsDemoViewController()
+        let vc = ExtensionsDemoViewController()
+        configureDemoViewController(vc, tabLabel: "分类扩展", accessibilitySummary: "NSView、NSTextField、NSTextView、NSImage 等扩展")
+        tabViewItem.viewController = vc
         tabView.addTabViewItem(tabViewItem)
     }
     
     private func createUtilsDemoTab() {
         let tabViewItem = NSTabViewItem()
         tabViewItem.label = "工具类"
-        tabViewItem.viewController = UtilsDemoViewController()
+        let vc = UtilsDemoViewController()
+        configureDemoViewController(vc, tabLabel: "工具类", accessibilitySummary: "网络、缓存、JSON、定时器、加密与拼接")
+        tabViewItem.viewController = vc
         tabView.addTabViewItem(tabViewItem)
     }
     
     private func createHUDDemoTab() {
         let tabViewItem = NSTabViewItem()
         tabViewItem.label = "HUD"
-        tabViewItem.viewController = HUDDemoViewController()
+        let vc = HUDDemoViewController()
+        configureDemoViewController(vc, tabLabel: "HUD", accessibilitySummary: "TFYProgressMacOSHUD 与主题、进度控件")
+        tabViewItem.viewController = vc
         tabView.addTabViewItem(tabViewItem)
     }
     
     private func createControlDemoTab() {
         let tabViewItem = NSTabViewItem()
         tabViewItem.label = "富文本控件"
-        tabViewItem.viewController = ControlDemoViewController()
+        let vc = ControlDemoViewController()
+        configureDemoViewController(vc, tabLabel: "富文本控件", accessibilitySummary: "NSControl+Dejal 富文本与控件扩展")
+        tabViewItem.viewController = vc
         tabView.addTabViewItem(tabViewItem)
     }
     
     private func createStatusItemDemoTab() {
         let tabViewItem = NSTabViewItem()
         tabViewItem.label = "状态栏"
-        tabViewItem.viewController = StatusItemDemoViewController()
+        let vc = StatusItemDemoViewController()
+        configureDemoViewController(vc, tabLabel: "状态栏", accessibilitySummary: "TFYStatusItem 与状态栏窗口")
+        tabViewItem.viewController = vc
         tabView.addTabViewItem(tabViewItem)
     }
     
@@ -162,12 +207,12 @@ class MainDemoViewController: NSViewController {
         return vc
     }
     
-    private func makeLabel(_ text: String, font: NSFont, color: NSColor = .labelColor) -> NSTextField {
-        NSTextField().chain
+    private func makeLabel(_ text: String, font: NSFont, color: NSColor = .labelColor) -> TFYSwiftLabel {
+        TFYSwiftLabel().chain
             .text(text)
             .font(font)
             .textColor(color)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -203,7 +248,7 @@ class MainDemoViewController: NSViewController {
         
         // Summary
         let summaryLabel = makeLabel(
-            "面向 macOS AppKit 的 Swift 工具库与组件集合。涵盖链式编程、Swift Concurrency、AES-GCM 加密、智能缓存压缩/加密、HUD、状态栏容器、分类扩展与属性观察包装器，适合作为接入前的功能总览与行为验证。",
+            "面向 macOS AppKit 的 Swift 工具库与组件集合。涵盖链式编程、Swift Concurrency、AES-GCM 加密、智能缓存压缩/加密、HUD、状态栏容器、分类扩展与属性观察包装器，适合作为接入前的功能总览与行为验证。提示：本页与各标签页中较长内容均可纵向滚动查看。",
             font: .systemFont(ofSize: 13),
             color: .secondaryLabelColor
         )
@@ -214,31 +259,22 @@ class MainDemoViewController: NSViewController {
         pin(featuresHeader, topSpacing: 18, height: 20)
         
         let features: [String] = [
-            "🔗 链式调用 — 流畅的链式编程，支持 async/await、@MainActor、条件执行与调试模式",
-            "⚡️ Swift Concurrency — asyncAwait(_:)、onMainActor(_:) 链式调用封装，Task 驱动",
-            "🔄 Swift 并发 - async/await 链式调用与 @MainActor 安全操作",
-            "🔭 属性观察器 — @Observable 属性包装器，setIfChanged 防抖更新，projectedValue 投影访问",
-            "🎯 属性观察 - Observable 属性包装器支持 Equatable 跳过与 projectedValue",
+            "🔗 链式调用 — Chain、asyncAwait / onMainActor、条件执行与调试模式",
+            "🔭 属性观察 — @Observable、setIfChanged、projectedValue、Equatable 跳过重复更新",
             "🧩 组件控件 — TFYSwiftTextField / SecureTextField / Button / Label / TextFieldView 等",
-            "🎨 图层动画 — CALayer / CAGradientLayer / CAShapeLayer 链式配置；AnimationEnhancer 弹簧阻尼动画",
-            "🎪 弹簧动画 - CASpringAnimation 真正使用 springDamping 与 initialSpringVelocity",
-            "👆 手势识别 — NSClickGestureRecognizer / NSPanGestureRecognizer / NSRotationGestureRecognizer",
-            "🪟 容器效果 — NSVisualEffectView / NSStackView / NSPopUpButton / NSGridView 链式容器",
-            "📐 布局管理 — LayoutManager 智能标签锚点定位，NSScrollView 自适应文档视图",
-            "🛠️ 工具类 — TFYSwiftUtils (网络/WiFi/AES-GCM 加密)、TFYSwiftCacheKit (压缩+加密)、TFYSwiftJsonUtils",
-            "⏱️ 并发调度 — TFYSwiftTimer、TFYSwiftGCD、TFYSwiftAsync、DispatchQueue.once",
-            "⏱️ 配置生效 - NSKeyedUnarchiver/Bundle 的 timeout 与 maxRetries 真正应用",
-            "🗄️ 归档解析 — NSKeyedUnarchiver (超时 + secureCoding)、Bundle (超时 + maxRetries)",
-            "🔐 加密安全 — AES-GCM (CryptoKit) 对称加密，密钥派生，Base64 载荷",
-            "🔐 现代加密 - AES-GCM (CryptoKit) 加密/解密，3DES 已标记废弃",
-            "📦 缓存增强 - LZFSE 压缩与 XOR 混淆，磁盘缓存读写真正生效",
-            "💫 HUD — TFYProgressMacOSHUD 成功/错误/信息/文本/加载/进度；TFYThemeManager 主题切换",
-            "📱 状态栏项 — TFYStatusItem / TFYStatusItemWindow / TFYStatusItemWindowController 完整管理",
-            "🧪 分类扩展 — NSView / NSTextField / NSTextView (真占位符绘制) / NSImage / NotificationCenter",
-            "🖍️ 占位文本 - NSTextView 真实 CATextLayer 占位符绘制",
-            "🌈 颜色扩展 - CMYK/Hex/HSB 创建、WCAG 对比度、色温与色彩情感",
-            "📦 图片处理 — NSImage lockFocus 迁移至 drawingHandler；TFYStitchImage 图片拼接",
-            "🔔 通知中心 — NotificationCenter+Dejal；hasObservers 已废弃（推荐使用 observe(_:) 替代）"
+            "🎨 图层与动画 — CALayer / CAGradientLayer / CAShapeLayer；CASpringAnimation、AnimationEnhancer",
+            "👆 手势 — NSClick / NSPan / NSRotation 等 NSGestureRecognizer 链式配置",
+            "🪟 容器 — NSVisualEffectView、NSStackView、NSPopUpButton、NSGridView 等",
+            "📐 布局 — TFYLayoutManager 锚点、NSScrollView 文档视图与 Demo 统一 flipped 坐标",
+            "🛠️ 工具类 — TFYSwiftUtils（网络 / WiFi / AES-GCM）、TFYSwiftCacheKit、TFYSwiftJsonUtils、OpenPanel、TFYStitchImage",
+            "⏱️ 调度 — TFYSwiftTimer、TFYSwiftGCD、TFYSwiftAsync、DispatchQueue.once",
+            "🗄️ 归档与 Bundle — NSKeyedUnarchiver（超时 + secureCoding）、Bundle（超时 + maxRetries）",
+            "🔐 加密 — AES-GCM（CryptoKit）、密钥派生；旧 3DES 已废弃",
+            "📦 缓存 — LZFSE 压缩、可选混淆、磁盘读写",
+            "💫 HUD — TFYProgressMacOSHUD、TFYThemeManager、TFYProgressView / Indicator",
+            "📱 状态栏 — TFYStatusItem、TFYStatusItemWindow、TFYStatusItemWindowController",
+            "🧪 分类扩展 — NSView、NSTextField、NSTextView（真占位符）、NSImage、NSColor、NotificationCenter",
+            "🔔 通知 — NotificationCenter+Dejal（优先使用 observe，hasObservers 已废弃）"
         ]
         
         for feature in features {
@@ -257,6 +293,7 @@ class MainDemoViewController: NSViewController {
             "【分类扩展】NSView+Dejal / NSTextField+Dejal / NSTextView+Dejal（真占位符）/ NSImage+Dejal / NotificationCenter+Dejal 交互示例",
             "【工具类】TFYSwiftUtils (网络/WiFi/AES-GCM)、TFYSwiftCacheKit (压缩+加密)、TFYSwiftJsonUtils、TFYSwiftTimer、TFYSwiftGCD、TFYSwiftOpenPanel、TFYStitchImage；NSKeyedUnarchiver 超时、Bundle maxRetries 示例",
             "【HUD】TFYProgressMacOSHUD 全类型 HUD；TFYAnimationEnhancer 弹簧阻尼；TFYThemeManager 主题；TFYLayoutManager 智能锚点；TFYProgressView / TFYProgressIndicator 直接调节",
+            "【富文本控件】NSControl+Dejal：富文本/段落/装饰/动画；NSTextField、NSButton、NSSegmentedControl、NSSearchField、NSSlider、NSDatePicker、NSStepper 等扩展与操作日志",
             "【状态栏】TFYStatusItem、TFYStatusItemWindow、TFYStatusItemWindowController：创建/销毁、配置重建、过渡动画、拖拽检测、弹窗展示"
         ]
         
@@ -270,36 +307,22 @@ class MainDemoViewController: NSViewController {
         pin(codeHeader, topSpacing: 20, height: 20)
         
         let codeSnippets: [String] = [
-            "// 链式按钮",
-            "let button = NSButton().chain",
-            "    .title(\"点击我\").font(.systemFont(ofSize: 16))",
-            "    .backgroundColor(.systemBlue).cornerRadius(8).build",
+            "// 链式",
+            "NSButton().chain.title(\"点击\").font(.systemFont(ofSize: 16)).backgroundColor(.systemBlue).cornerRadius(8).build",
             "",
-            "// async/await 链式调用",
-            "label.chain.asyncAwait { view in",
-            "    let data = try? await URLSession.shared.data(from: url).0",
-            "    await MainActor.run { view.stringValue = \"loaded\" }",
-            "}",
+            "// 异步链 · 主线程链",
+            "label.chain.asyncAwait { v in let d = try? await URLSession.shared.data(from: url).0; await MainActor.run { v.stringValue = \"loaded\" } }",
+            "label.chain.onMainActor { $0.stringValue = \"主线程更新\" }",
             "",
-            "// @MainActor 链式调用",
-            "label.chain.onMainActor { lbl in lbl.stringValue = \"主线程更新\" }",
+            "// @Observable",
+            "@Observable var count = 0",
+            "$count.setOnChange { print($0) };  $count.setIfChanged(42)  // 同值不触发",
             "",
-            "// @Observable 属性包装器",
-            "@Observable var count: Int = 0",
-            "$count.setOnChange { print(\"new:\", $0) }",
-            "$count.setIfChanged(42)  // 仅在值不同时触发",
-            "",
-            "// AES-GCM 加密 (CryptoKit)",
-            "let encrypted = TFYSwiftUtils.encryptAESGCM(data: plainData, key: key)",
-            "",
-            "// CacheKit 压缩+加密",
+            "// 加密 · 缓存 · HUD · 真占位符",
+            "TFYSwiftUtils.encryptAESGCM(data: plainData, key: key)",
             "cache.set(value, forKey: \"k\", compress: true, encrypt: true)",
-            "",
-            "// HUD",
-            "TFYProgressMacOSHUD.showSuccess(\"操作成功!\")",
-            "",
-            "// NSTextView 真占位符",
-            "textView.setPlaceholder(\"请输入内容…\", color: .placeholderTextColor)"
+            "TFYProgressMacOSHUD.showSuccess(\"操作成功\")",
+            "textView.setPlaceholder(\"请输入…\", color: .placeholderTextColor)"
         ]
         
         for code in codeSnippets {
@@ -327,13 +350,14 @@ class MainDemoViewController: NSViewController {
         let infoView = NSView().chain
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
+        bottomInfoView = infoView
         containerView.addSubview(infoView)
         
-        let versionLabel = NSTextField().chain
+        let versionLabel = TFYSwiftLabel().chain
             .text("TFYSwiftMacOSAppKit v\(releaseVersion)")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -341,11 +365,11 @@ class MainDemoViewController: NSViewController {
             .build
         infoView.addSubview(versionLabel)
         
-        let copyrightLabel = NSTextField().chain
+        let copyrightLabel = TFYSwiftLabel().chain
             .text("Demo Lab · AppKit / CocoaPods / SwiftPM")
             .font(.systemFont(ofSize: 12))
             .textColor(.secondaryLabelColor)
-            .backgroundColor(.clear)
+            .drawsBackground(false)
             .bordered(false)
             .editable(false)
             .selectable(false)
@@ -360,4 +384,11 @@ class MainDemoViewController: NSViewController {
             infoView.heightAnchor.constraint(equalToConstant: 40)
         ])
     }
+}
+
+// MARK: - DemoFlippedDocumentView（集中定义，避免独立文件未加入 target 时其它 Demo 找不到类型）
+
+/// `NSScrollView` 文档视图：`y` 向下递增，与 Demo 页自上而下 frame 布局一致。
+final class DemoFlippedDocumentView: NSView {
+    override var isFlipped: Bool { true }
 }

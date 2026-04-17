@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/admin/Desktop/my/TFYSwiftMacOSAppKit_Swift/**)",
+      "Bash(xcodebuild -project TFYSwiftMacOSAppKit_Swift.xcodeproj -scheme TFYSwiftMacOSAppKit_Swift -destination 'platform=macOS' build)"
+    ]
+  }
+}

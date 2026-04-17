@@ -46,11 +46,13 @@ public class TFYSwiftButton: NSButton {
     
     public var titleTextColor: NSColor {
         get {
-            attributedTitle.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor ?? .labelColor
+            guard attributedTitle.length > 0 else { return .labelColor }
+            return attributedTitle.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor ?? .labelColor
         }
         set {
             let attrTitle = NSMutableAttributedString(attributedString: attributedTitle)
-            attrTitle.addAttribute(.foregroundColor, value: newValue, range: NSRange(location: 0, length: title.count))
+            guard attrTitle.length > 0 else { return }
+            attrTitle.addAttribute(.foregroundColor, value: newValue, range: NSRange(location: 0, length: attrTitle.length))
             self.attributedTitle = attrTitle
         }
     }
@@ -76,17 +78,22 @@ public class TFYSwiftButton: NSButton {
         isBordered = false
         bezelStyle = .texturedSquare
         wantsLayer = true
-        
-        setupTrackingArea()
     }
-    
-    private func setupTrackingArea() {
-        let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeAlways]
+
+    private var currentTrackingArea: NSTrackingArea?
+
+    public override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let existing = currentTrackingArea {
+            removeTrackingArea(existing)
+        }
+        let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeAlways, .inVisibleRect]
         let trackingArea = NSTrackingArea(rect: bounds,
                                         options: options,
                                         owner: self,
                                         userInfo: nil)
         addTrackingArea(trackingArea)
+        currentTrackingArea = trackingArea
     }
     
     // MARK: - Drawing

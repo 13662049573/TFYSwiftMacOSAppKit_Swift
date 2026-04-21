@@ -59,7 +59,7 @@ platform :osx, '13.5'
 use_frameworks!
 
 target 'YourApp' do
-  pod 'TFYSwiftMacOSAppKit', '1.4.3'
+  pod 'TFYSwiftMacOSAppKit', '1.4.4'
 end
 ```
 
@@ -67,7 +67,7 @@ end
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", from: "1.4.3")
+    .package(url: "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift.git", from: "1.4.4")
 ]
 ```
 

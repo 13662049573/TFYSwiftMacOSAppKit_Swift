@@ -38,7 +38,18 @@ public class TFYSwiftButton: NSButton {
     }
     
     @IBInspectable public var hoverBackgroundColor: NSColor = .black
-    
+
+    /// 按下时的背景色；若为 nil 则不改变背景色。
+    public var pressedBackgroundColor: NSColor?
+
+    /// 禁用时的背景色；若为 nil 则沿用 originalBackgroundColor。
+    public var disabledBackgroundColor: NSColor?
+
+    // 当前鼠标是否悬停
+    private var isHovered: Bool = false
+    // 当前是否按下
+    private var isPressed: Bool = false
+
     // MARK: - Computed Properties
     private var currentPadding: Padding {
         Padding(vertical: verticalImageInset, horizontal: horizontalImageInset)
@@ -116,14 +127,42 @@ public class TFYSwiftButton: NSButton {
     
     // MARK: - Mouse Events
     public override func mouseEntered(with event: NSEvent) {
-        updateBackgroundColor(hoverBackgroundColor)
+        isHovered = true
+        refreshBackgroundColor()
     }
-    
+
     public override func mouseExited(with event: NSEvent) {
-        updateBackgroundColor(originalBackgroundColor)
+        isHovered = false
+        refreshBackgroundColor()
     }
-    
+
+    public override func mouseDown(with event: NSEvent) {
+        isPressed = true
+        refreshBackgroundColor()
+        super.mouseDown(with: event)
+        isPressed = false
+        refreshBackgroundColor()
+    }
+
+    public override var isEnabled: Bool {
+        didSet { refreshBackgroundColor() }
+    }
+
     // MARK: - Helper Methods
+    private func refreshBackgroundColor() {
+        let color: NSColor
+        if !isEnabled, let disabled = disabledBackgroundColor {
+            color = disabled
+        } else if isPressed, let pressed = pressedBackgroundColor {
+            color = pressed
+        } else if isHovered {
+            color = hoverBackgroundColor
+        } else {
+            color = originalBackgroundColor
+        }
+        updateBackgroundColor(color)
+    }
+
     private func updateBackgroundColor(_ color: NSColor) {
         wantsLayer = true
         layer?.backgroundColor = color.cgColor

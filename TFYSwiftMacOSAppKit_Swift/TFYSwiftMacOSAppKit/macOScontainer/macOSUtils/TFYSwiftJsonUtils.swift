@@ -372,6 +372,16 @@ public final class TFYSwiftJsonUtils: NSObject {
         config.timeoutIntervalForResource = timeout
         let session = URLSession(configuration: config)
 
+        // Perform decoding off the URLSession callback via a local decode closure
+        // that captures only Data-in / Result-out, avoiding T.Type capture in @Sendable closures.
+        let decode: (Data) -> Result<T, JsonUtilsError> = { data in
+            do {
+                return .success(try makeDecoder().decode(type, from: data))
+            } catch {
+                return .failure(.decodingError(error))
+            }
+        }
+
         let task = session.dataTask(with: url) { data, _, taskError in
             if let nsError = taskError as NSError?, nsError.code == NSURLErrorTimedOut {
                 completion(.failure(.timeoutError))
@@ -385,12 +395,7 @@ public final class TFYSwiftJsonUtils: NSObject {
                 completion(.failure(.invalidData))
                 return
             }
-            do {
-                let value = try makeDecoder().decode(type, from: data)
-                completion(.success(value))
-            } catch {
-                completion(.failure(.decodingError(error)))
-            }
+            completion(decode(data))
         }
         task.resume()
         return task

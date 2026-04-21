@@ -197,15 +197,37 @@ public class TFYSwiftTextFieldView: NSView {
             accessibilityDescription: nil
         )
 
+        // 记录切换前焦点控件的光标/选区，以便新控件继承
+        let savedRange = currentEditorSelectedRange()
+
         secureTextField.isHidden = isPasswordVisible
         plainTextField.isHidden = !isPasswordVisible
 
         guard makeFirstResponder else { return }
-        if isPasswordVisible {
-            window?.makeFirstResponder(plainTextField)
-        } else {
-            window?.makeFirstResponder(secureTextField)
+        let target: NSTextField = isPasswordVisible ? plainTextField : secureTextField
+        window?.makeFirstResponder(target)
+
+        // 新控件上恢复选区（若原无则保持默认，不做强制光标移动）
+        if let range = savedRange,
+           let editor = target.currentEditor() {
+            let length = (target.stringValue as NSString).length
+            let clamped = NSRange(
+                location: min(range.location, length),
+                length: min(range.length, max(0, length - min(range.location, length)))
+            )
+            editor.selectedRange = clamped
         }
+    }
+
+    /// 读取当前正在编辑控件的选区（若无编辑中控件则返回 nil）。
+    private func currentEditorSelectedRange() -> NSRange? {
+        if let editor = plainTextField.currentEditor() {
+            return editor.selectedRange
+        }
+        if let editor = secureTextField.currentEditor() {
+            return editor.selectedRange
+        }
+        return nil
     }
 
     public func setPasswordVisible(_ visible: Bool) {

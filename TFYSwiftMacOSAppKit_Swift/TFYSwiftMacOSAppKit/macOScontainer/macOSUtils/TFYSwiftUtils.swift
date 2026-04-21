@@ -302,9 +302,11 @@ public final class TFYSwiftUtils: NSObject {
                         // 可选：如果不需要 IPv6 地址，可以注释掉这行
                         addresses["\(name)-IPv6"] = ip
                     }
-                    
-                    // 打印调试信息
+
+                    #if DEBUG
+                    // 调试信息只在 Debug 构建中输出，避免生产环境刷日志
                     print("Interface: \(name), IP: \(ip)")
+                    #endif
                 }
             }
         }
@@ -577,6 +579,117 @@ extension TFYSwiftUtils {
             MAC Address: \(info.macAddress ?? "Unknown")
             """)
         }
+    }
+}
+
+// MARK: - Hash Helpers
+@available(macOS 10.15, *)
+public extension TFYSwiftUtils {
+
+    /// Compute SHA-256 hex digest of a string (UTF-8).
+    static func sha256Hex(_ string: String) -> String {
+        guard let data = string.data(using: .utf8) else { return "" }
+        return sha256Hex(data)
+    }
+
+    /// Compute SHA-256 hex digest of data.
+    static func sha256Hex(_ data: Data) -> String {
+        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Compute MD5 hex digest of a string (UTF-8). Note: MD5 is not cryptographically secure,
+    /// use only for checksums / cache keys.
+    static func md5Hex(_ string: String) -> String {
+        guard let data = string.data(using: .utf8) else { return "" }
+        return md5Hex(data)
+    }
+
+    static func md5Hex(_ data: Data) -> String {
+        Insecure.MD5.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+// MARK: - Network Reachability
+@available(macOS 10.14, *)
+public final class TFYNetworkReachability {
+    public enum Status: Equatable {
+        case unknown
+        case unavailable
+        case wifi
+        case ethernet
+        case cellular
+        case other
+    }
+
+    public static let shared = TFYNetworkReachability()
+
+    private let monitor = NWPathMonitor()
+    private let queue = DispatchQueue(label: "com.tfy.network.reachability")
+    private var handlers: [UUID: (Status) -> Void] = [:]
+    private let handlersLock = NSLock()
+    private var started = false
+    private var lastStatus: Status = .unknown
+
+    private init() {
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard let self = self else { return }
+            let status = Self.mapStatus(path: path)
+            self.handlersLock.lock()
+            self.lastStatus = status
+            let snapshot = Array(self.handlers.values)
+            self.handlersLock.unlock()
+            DispatchQueue.main.async {
+                snapshot.forEach { $0(status) }
+            }
+        }
+    }
+
+    public func start() {
+        handlersLock.lock()
+        let already = started
+        started = true
+        handlersLock.unlock()
+        guard !already else { return }
+        monitor.start(queue: queue)
+    }
+
+    public func stop() {
+        monitor.cancel()
+        handlersLock.lock()
+        started = false
+        handlers.removeAll()
+        handlersLock.unlock()
+    }
+
+    public var status: Status {
+        handlersLock.lock()
+        defer { handlersLock.unlock() }
+        return lastStatus
+    }
+
+    /// Register a handler; returns a token you can pass to `remove(token:)`.
+    @discardableResult
+    public func addListener(_ handler: @escaping (Status) -> Void) -> UUID {
+        let token = UUID()
+        handlersLock.lock()
+        handlers[token] = handler
+        handlersLock.unlock()
+        start()
+        return token
+    }
+
+    public func remove(token: UUID) {
+        handlersLock.lock()
+        handlers[token] = nil
+        handlersLock.unlock()
+    }
+
+    private static func mapStatus(path: Network.NWPath) -> Status {
+        guard path.status == .satisfied else { return .unavailable }
+        if path.usesInterfaceType(Network.NWInterface.InterfaceType.wifi) { return .wifi }
+        if path.usesInterfaceType(Network.NWInterface.InterfaceType.wiredEthernet) { return .ethernet }
+        if path.usesInterfaceType(Network.NWInterface.InterfaceType.cellular) { return .cellular }
+        return .other
     }
 }
 

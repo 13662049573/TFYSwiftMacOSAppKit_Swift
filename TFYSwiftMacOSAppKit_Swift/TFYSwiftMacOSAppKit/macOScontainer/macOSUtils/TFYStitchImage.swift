@@ -219,12 +219,24 @@ public class TFYStitchImage: NSObject {
     
     // MARK: - 私有属性
     
-    /// 图片缓存
-    private static let imageCache = NSCache<NSString, NSImage>()
+    /// 图片缓存（带默认容量限制，避免无界增长）
+    private static let imageCache: NSCache<NSString, NSImage> = {
+        let cache = NSCache<NSString, NSImage>()
+        // 默认 128MB 的 cost 上限，按像素字节计算
+        cache.totalCostLimit = 128 * 1024 * 1024
+        cache.countLimit = 128
+        return cache
+    }()
     /// 缓存队列
     private static let cacheQueue = DispatchQueue(label: "com.tfy.stitchimage.cache", qos: .utility)
     /// 处理队列
     private static let processingQueue = DispatchQueue(label: "com.tfy.stitchimage.processing", qos: .userInitiated)
+
+    /// 估算 NSImage 在内存中的字节成本
+    private static func imageCost(_ image: NSImage) -> Int {
+        let s = image.size
+        return max(1, Int(s.width * s.height * 4))
+    }
     
     // MARK: - 公共方法
     
@@ -340,10 +352,10 @@ public class TFYStitchImage: NSObject {
     /// 缓存图片
     private class func cacheImage(_ image: NSImage, for key: String, expirationTime: TimeInterval) {
         cacheQueue.async {
-            imageCache.setObject(image, forKey: key as NSString)
-            
-            // 设置过期时间
-            DispatchQueue.main.asyncAfter(deadline: .now() + expirationTime) {
+            imageCache.setObject(image, forKey: key as NSString, cost: imageCost(image))
+
+            // 过期清理改到 cacheQueue，避免在主线程持有定时器
+            cacheQueue.asyncAfter(deadline: .now() + expirationTime) {
                 imageCache.removeObject(forKey: key as NSString)
             }
         }
@@ -1103,15 +1115,26 @@ public extension TFYStitchImage {
     class func clearCache() {
         imageCache.removeAllObjects()
     }
-    
-    /// 获取缓存大小
+
+    /// 获取缓存容量上限（字节）
+    class func getCacheSizeLimit() -> Int {
+        return imageCache.totalCostLimit
+    }
+
+    /// 兼容旧名：返回缓存容量上限
+    @available(*, deprecated, renamed: "getCacheSizeLimit")
     class func getCacheSize() -> Int {
         return imageCache.totalCostLimit
     }
-    
+
     /// 设置缓存大小限制
     class func setCacheSizeLimit(_ limit: Int) {
-        imageCache.totalCostLimit = limit
+        imageCache.totalCostLimit = max(0, limit)
+    }
+
+    /// 设置缓存最大条目数
+    class func setCacheCountLimit(_ limit: Int) {
+        imageCache.countLimit = max(0, limit)
     }
 }
 

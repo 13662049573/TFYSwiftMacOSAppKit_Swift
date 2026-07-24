@@ -276,7 +276,9 @@ class MainDemoViewController: NSViewController {
             "👆 手势 — NSClick / NSPan / NSRotation 等 NSGestureRecognizer 链式配置",
             "🪟 容器 — NSVisualEffectView、NSStackView、NSPopUpButton、NSGridView 等",
             "📐 布局 — TFYLayoutManager 锚点、NSScrollView 文档视图与 Demo 统一 flipped 坐标",
-            "🛠️ 工具类 — TFYSwiftUtils（网络 / WiFi / AES-GCM）、TFYSwiftCacheKit、TFYSwiftJsonUtils、TFYStitchImage",
+            "🧪 分类扩展 — NSView、NSTextField、NSTextView、NSImage、NSColor、NSMenu、NSPopover、NSWindow、NSSplitView、NSCollectionView、NotificationCenter",
+            "🛠️ 工具类 — TFYSwiftUtils（网络 / WiFi / AES-GCM）、TFYNetworkReachability、TFYLogger、TFYSwiftCacheKit、TFYSwiftJsonUtils、TFYStitchImage",
+            "🎛️ 链式控件 — NSSwitch / NSColorWell / NSProgressIndicator 等 Chain 包装",
             "📂 打开/保存 — TFYSwiftOpenPanel（async、校验、书签、记忆目录、兼容 API）",
             "⏱️ 调度 — TFYSwiftTimer、TFYSwiftGCD、TFYSwiftAsync、DispatchQueue.once",
             "🗄️ 归档与 Bundle — NSKeyedUnarchiver（超时 + secureCoding）、Bundle（超时 + maxRetries）",
@@ -284,7 +286,6 @@ class MainDemoViewController: NSViewController {
             "📦 缓存 — LZFSE 压缩、可选混淆、磁盘读写",
             "💫 HUD — TFYProgressMacOSHUD、TFYThemeManager、TFYProgressView / Indicator",
             "📱 状态栏 — TFYStatusItem、TFYStatusItemWindow、TFYStatusItemWindowController",
-            "🧪 分类扩展 — NSView、NSTextField、NSTextView（真占位符）、NSImage、NSColor、NotificationCenter",
             "🔔 通知 — NotificationCenter+Dejal（优先使用 observe，hasObservers 已废弃）"
         ]
         
@@ -300,9 +301,9 @@ class MainDemoViewController: NSViewController {
         let mappingItems: [String] = [
             "【概览】本页：库介绍与功能一览",
             "【组件控件】TFYSwiftTextField、TFYSwiftSecureTextField、TFYSwiftButton、TFYSwiftLabel、TFYSwiftTextFieldView、图片与二维码处理",
-            "【链式调用】Chain 协议全貌、NSView / NSButton / NSTextField / CALayer / CAGradientLayer / CAShapeLayer、NSVisualEffectView、NSStackView、NSPopUpButton、手势 API；新增 asyncAwait / onMainActor 链式调用演示与 @Observable 属性包装器演示",
-            "【分类扩展】NSView+Dejal / NSTextField+Dejal / NSTextView+Dejal（真占位符）/ NSImage+Dejal / NotificationCenter+Dejal 交互示例",
-            "【工具类】TFYSwiftUtils (网络/WiFi/AES-GCM)、TFYSwiftCacheKit (压缩+加密)、TFYSwiftJsonUtils、TFYSwiftTimer、TFYSwiftGCD、TFYStitchImage；NSKeyedUnarchiver 超时、Bundle maxRetries 示例",
+            "【链式调用】Chain 协议全貌、NSView / NSButton / NSTextField / CALayer / CAGradientLayer / CAShapeLayer、NSVisualEffectView、NSStackView、NSPopUpButton、手势 API；NSSwitch / NSColorWell / NSProgressIndicator；asyncAwait / onMainActor 与 Observable",
+            "【分类扩展】NSView / NSTextField / NSTextView / NSImage / NotificationCenter；新增 Menu / Popover / Window / SplitView / CollectionView",
+            "【工具类】TFYSwiftUtils、TFYNetworkReachability、TFYLogger、TFYSwiftCacheKit（压缩+混淆）、JSON、Timer、GCD、StitchImage",
             "【打开/保存】TFYSwiftOpenPanel：单选/多选/目录、类型预设、Result 与校验、记忆目录、saveText/saveData、书签、代理与附件、旧版 openPanel/savePanel API",
             "【HUD】TFYProgressMacOSHUD 全类型 HUD；TFYAnimationEnhancer 弹簧阻尼；TFYThemeManager 主题；TFYLayoutManager 智能锚点；TFYProgressView / TFYProgressIndicator 直接调节",
             "【富文本控件】NSControl+Dejal：富文本/段落/装饰/动画；NSTextField、NSButton、NSSegmentedControl、NSSearchField、NSSlider、NSDatePicker、NSStepper 等扩展与操作日志",

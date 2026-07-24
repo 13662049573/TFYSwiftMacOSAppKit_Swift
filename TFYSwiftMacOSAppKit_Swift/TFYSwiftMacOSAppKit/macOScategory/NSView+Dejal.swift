@@ -287,20 +287,16 @@ public extension NSView {
                     self.timer?.cancel()
                 } else {
                     self.timeInterval -= 1
-                    DispatchQueue.main.async {
-                        self.stopTime = 1
-                        block(String(format: format, Int(self.timeInterval)), 0)
-                    }
+                    self.stopTime = 1
+                    block(String(format: format, Int(self.timeInterval)), 0)
                 }
             }
             timer?.setCancelHandler { [weak self] in
                 guard let self = self else { return }
-                DispatchQueue.main.async {
-                    self.stopTime = 0
-                    block(retainButtonTitle, 1)
-                    self.timeInterval = self.userTimeInterval > 0 ? self.userTimeInterval : defaultTimeInterval
-                    self.timer = nil
-                }
+                self.stopTime = 0
+                block(retainButtonTitle, 1)
+                self.timeInterval = self.userTimeInterval > 0 ? self.userTimeInterval : defaultTimeInterval
+                self.timer = nil
             }
             timer?.resume()
         } else {

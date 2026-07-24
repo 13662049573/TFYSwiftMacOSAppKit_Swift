@@ -18,7 +18,8 @@ class ViewController: NSViewController {
             .translatesAutoresizingMaskIntoConstraints(false)
             .build
         
-        // 将主Demo控制器添加为子控制器
+        // 将主Demo控制器添加为子控制器（AppKit 的 NSViewController 没有 UIKit 那样的 didMove(toParent:) 回调，
+        // addChild(_:) + addSubview(_:) 即完成容器关系建立）
         addChild(mainDemoViewController)
         view.addSubview(demoView)
         

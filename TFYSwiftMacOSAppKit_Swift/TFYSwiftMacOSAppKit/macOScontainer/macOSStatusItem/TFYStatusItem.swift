@@ -33,7 +33,7 @@ public typealias TFYStatusItemShouldShowHandler = (TFYStatusItem) -> Bool
 
 // MARK: - 主类
 
-/// 状态栏项管理类
+/// 状态栏项管理类（AppKit：请在主线程使用）
 public class TFYStatusItem: NSObject, NSWindowDelegate {
     
     // MARK: - 公开属性
@@ -41,9 +41,14 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     /// 共享实例
     public static let shared = TFYStatusItem()
     
+    private func assertMainThread(_ function: String = #function) {
+        assert(Thread.isMainThread, "TFYStatusItem.\(function) must be called on the main thread")
+    }
+    
     /// 窗口配置
     public var windowConfiguration: TFYStatusItemWindowConfiguration? {
         didSet {
+            assertMainThread()
             setupPinnedObserver()
         }
     }
@@ -138,6 +143,7 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     /// - Parameter config: 状态栏项配置
     /// - Throws: TFYStatusItemError
     public func configure(with config: StatusItemConfiguration) throws {
+        assertMainThread()
         // 检查初始化状态
         guard _presentationMode == .undefined else {
             throw TFYStatusItemError.alreadyInitialized
@@ -329,23 +335,27 @@ public class TFYStatusItem: NSObject, NSWindowDelegate {
     
     /// 显示状态栏窗口
     public func showStatusItemWindow() {
+        assertMainThread()
         statusItemWindowController?.showStatusItemWindow()
         isStatusItemWindowVisible = true
     }
     
     /// 关闭状态栏窗口
     public func dismissStatusItemWindow() {
+        assertMainThread()
         statusItemWindowController?.dismissStatusItemWindow()
         isStatusItemWindowVisible = false
     }
     
     /// 获取状态栏项的frame
     public func getStatusItemFrame() -> NSRect? {
+        assertMainThread()
         return statusItem?.button?.window?.frame
     }
     
     /// 重置状态栏项
     public func reset() {
+        assertMainThread()
         // 清理现有状态
         statusItemWindowController?.dismissStatusItemWindow()
         statusItemWindowController = nil

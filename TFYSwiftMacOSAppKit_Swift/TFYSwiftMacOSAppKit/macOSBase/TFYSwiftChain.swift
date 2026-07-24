@@ -92,12 +92,14 @@ public struct Chain<Base> {
         return custom(operation)
     }
     
-    /// 异步执行
-    /// - Parameter operation: 异步操作闭包
+    /// 异步执行（主线程）
+    /// - Note: AppKit 对象必须在主线程访问。后台计算请用 `asyncAwait` 或自行切到全局队列，
+    ///   UI 更新用 `onMain` / `onMainActor`。
+    /// - Parameter operation: 异步操作闭包（始终在主队列执行）
     /// - Returns: 链式调用对象
     @discardableResult
     public func async(_ operation: @escaping (Base) -> Void) -> Self {
-        DispatchQueue.global().async {
+        DispatchQueue.main.async {
             operation(self.base)
         }
         return self
@@ -247,54 +249,3 @@ public extension Observable where Value: Equatable {
     }
 }
 
-/**
- // 1. 基本使用
- class MyView: NSView {
-     @Observable var title: String = ""
- }
-
- extension Chain where Base: MyView {
-     @discardableResult
-     func setTitle(_ title: String) -> Self {
-         base.title = title
-         return self
-     }
- }
-
- let myView = MyView()
- myView.chain
-     .enableDebug()
-     .setErrorHandler { error in
-         print("Error occurred: \(error)")
-     }
-     .setTitle("Hello")
-     .debug("Title set")
-     .custom { view in
-         // 自定义操作
-         view.title = view.title.uppercased()
-     }
-     .if(true) { view in
-         print("Current title: \(view.title)")
-     }
-
- // 2. 异步操作
- myView.chain
-     .async { view in
-         // 后台线程操作
-         Thread.sleep(forTimeInterval: 1)
-     }
-     .onMain { view in
-         // 主线程更新 UI
-         view.title = "Updated"
-     }
-     .delay(2.0) { view in
-         // 延迟执行
-         view.title = "Delayed"
-     }
-
- // 3. 属性观察
- var observation: Observable<String> = Observable(wrappedValue: "")
- observation.setOnChange { newValue in
-     print("Value changed to: \(newValue)")
- }
- */

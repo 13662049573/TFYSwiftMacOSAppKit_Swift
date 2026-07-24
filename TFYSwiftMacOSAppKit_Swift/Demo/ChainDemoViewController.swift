@@ -13,6 +13,8 @@ final class ChainDemoViewController: NSViewController {
     private var containerStatusLabel: TFYSwiftLabel!
     private var asyncStatusLabel: TFYSwiftLabel!
     private var observableValueLabel: TFYSwiftLabel!
+    private var emitterHostView: NSView!
+    private var emitterLayer: CAEmitterLayer?
 
     // Library's Observable<Value> property wrapper used as a plain stored variable
     private var observableDemo = Observable<Int>(wrappedValue: 0)
@@ -53,7 +55,7 @@ final class ChainDemoViewController: NSViewController {
 
         // FlippedScrollContent uses isFlipped=true so y:0 is the TOP — the same y values
         // the original frame-based code used are now read top-down, which is natural for scrolling.
-        let contentView = DemoFlippedDocumentView(frame: NSRect(x: 0, y: 0, width: 780, height: 1220))
+        let contentView = DemoFlippedDocumentView(frame: NSRect(x: 0, y: 0, width: 780, height: 1560))
         scrollView.documentView = contentView
 
         // Title
@@ -76,6 +78,8 @@ final class ChainDemoViewController: NSViewController {
         createContainerExamples(in: contentView)
         createConcurrencyExamples(in: contentView)
         createObservableExamples(in: contentView)
+        createControlChainExamples(in: contentView)
+        createEmitterExamples(in: contentView)
     }
 
     // MARK: - Existing Sections (unchanged)
@@ -554,6 +558,176 @@ final class ChainDemoViewController: NSViewController {
             .maximumNumberOfLines(0)
             .build
         containerView.addSubview(descLabel)
+    }
+    
+    private func createControlChainExamples(in containerView: NSView) {
+        let sectionLabel = TFYSwiftLabel().chain
+            .frame(NSRect(x: 20, y: 1150, width: 320, height: 20))
+            .text("NSSwitch / NSColorWell / NSProgressIndicator")
+            .font(.boldSystemFont(ofSize: 14))
+            .textColor(.labelColor)
+            .drawsBackground(false)
+            .build
+        containerView.addSubview(sectionLabel)
+        
+        let toggle = NSSwitch().chain
+            .frame(NSRect(x: 20, y: 1185, width: 50, height: 28))
+            .state(.on)
+            .build
+        containerView.addSubview(toggle)
+        
+        let toggleHint = TFYSwiftLabel().chain
+            .frame(NSRect(x: 80, y: 1188, width: 160, height: 20))
+            .text("NSSwitch.chain.state(.on)")
+            .font(.systemFont(ofSize: 11))
+            .textColor(.secondaryLabelColor)
+            .drawsBackground(false)
+            .build
+        containerView.addSubview(toggleHint)
+        
+        let colorWell = NSColorWell().chain
+            .frame(NSRect(x: 260, y: 1182, width: 44, height: 28))
+            .color(.systemOrange)
+            .colorWellStyle(.minimal)
+            .build
+        containerView.addSubview(colorWell)
+        
+        let colorHint = TFYSwiftLabel().chain
+            .frame(NSRect(x: 314, y: 1188, width: 200, height: 20))
+            .text("NSColorWell.chain.color / style")
+            .font(.systemFont(ofSize: 11))
+            .textColor(.secondaryLabelColor)
+            .drawsBackground(false)
+            .build
+        containerView.addSubview(colorHint)
+        
+        let spinner = NSProgressIndicator().chain
+            .frame(NSRect(x: 20, y: 1230, width: 24, height: 24))
+            .style(.spinning)
+            .indeterminate(true)
+            .displayedWhenStopped(true)
+            .startAnimation(self)
+            .build
+        containerView.addSubview(spinner)
+        
+        let bar = NSProgressIndicator().chain
+            .frame(NSRect(x: 60, y: 1234, width: 220, height: 16))
+            .style(.bar)
+            .indeterminate(false)
+            .minValue(0)
+            .maxValue(100)
+            .doubleValue(62)
+            .build
+        containerView.addSubview(bar)
+        
+        let progressHint = TFYSwiftLabel().chain
+            .frame(NSRect(x: 300, y: 1232, width: 360, height: 20))
+            .text("ProgressIndicator：spinning + determinate bar (62%)")
+            .font(.systemFont(ofSize: 11))
+            .textColor(.secondaryLabelColor)
+            .drawsBackground(false)
+            .build
+        containerView.addSubview(progressHint)
+        
+        let tip = TFYSwiftLabel().chain
+            .frame(NSRect(x: 20, y: 1270, width: 640, height: 40))
+            .text("这些控件此前只有薄链式包装、无 Demo；此处验证 Chain where Base: NSSwitch / NSColorWell / NSProgressIndicator 的常用 setter。")
+            .font(.systemFont(ofSize: 11))
+            .textColor(.tertiaryLabelColor)
+            .drawsBackground(false)
+            .wraps(true)
+            .maximumNumberOfLines(0)
+            .build
+        containerView.addSubview(tip)
+    }
+
+    // MARK: - New: CAEmitterLayer Section
+    // Migrated from the now-removed (orphaned, unreferenced in pbxproj) TFYSwiftHomeController.swift demo.
+
+    private func createEmitterExamples(in containerView: NSView) {
+        let sectionLabel = TFYSwiftLabel().chain
+            .frame(NSRect(x: 20, y: 1330, width: 320, height: 20))
+            .text("CAEmitterLayer 粒子发射器")
+            .font(.boldSystemFont(ofSize: 14))
+            .textColor(.labelColor)
+            .drawsBackground(false)
+            .build
+        containerView.addSubview(sectionLabel)
+
+        emitterHostView = NSView().chain
+            .frame(NSRect(x: 20, y: 1360, width: 300, height: 150))
+            .wantsLayer(true)
+            .backgroundColor(.black.withAlphaComponent(0.85))
+            .cornerRadius(12)
+            .build
+        containerView.addSubview(emitterHostView)
+
+        let restartButton = NSButton().chain
+            .frame(NSRect(x: 340, y: 1420, width: 120, height: 30))
+            .title("重启发射器")
+            .font(.systemFont(ofSize: 13))
+            .bezelStyle(.rounded)
+            .addTarget(self, action: #selector(restartEmitter))
+            .build
+        containerView.addSubview(restartButton)
+
+        let descLabel = TFYSwiftLabel().chain
+            .frame(NSRect(x: 340, y: 1360, width: 420, height: 50))
+            .text("CAEmitterLayer.chain 配置 emitterCells / birthRate / lifetime / emitterShape / renderMode 等属性快速搭建粒子效果。")
+            .font(.systemFont(ofSize: 11))
+            .textColor(.tertiaryLabelColor)
+            .drawsBackground(false)
+            .wraps(true)
+            .maximumNumberOfLines(0)
+            .build
+        containerView.addSubview(descLabel)
+
+        startEmitter()
+    }
+
+    private func startEmitter() {
+        emitterLayer?.removeFromSuperlayer()
+
+        let emitterLayer = CAEmitterLayer()
+        let cell = CAEmitterCell()
+        // Use a system symbol image as the emitter particle; avoids a missing-asset crash
+        let particleImage: NSImage
+        if let sym = NSImage(systemSymbolName: "sparkle", accessibilityDescription: nil) {
+            particleImage = sym
+        } else {
+            particleImage = NSImage(size: NSSize(width: 8, height: 8), flipped: false) { rect in
+                NSColor.systemYellow.setFill()
+                NSBezierPath(ovalIn: rect).fill()
+                return true
+            }
+        }
+        cell.contents = particleImage.cgImage(forProposedRect: nil, context: nil, hints: nil)
+        cell.birthRate = 10
+        cell.lifetime = 5
+        cell.velocity = 100
+        cell.scale = 0.5
+        cell.color = NSColor.systemYellow.cgColor
+
+        emitterLayer.chain
+            .emitterCells([cell])
+            .birthRate(1.0)
+            .lifetime(2.0)
+            .emitterPosition(NSPoint(x: 150, y: 20))
+            .emitterSize(NSSize(width: 260, height: 10))
+            .emitterShape(.line)
+            .emitterMode(.surface)
+            .renderMode(.additive)
+            .velocity(100.0)
+            .scale(1.0)
+            .spin(2.0)
+            .preservesDepth(true)
+
+        emitterHostView.layer?.addSublayer(emitterLayer)
+        self.emitterLayer = emitterLayer
+    }
+
+    @objc private func restartEmitter() {
+        startEmitter()
     }
 
     // MARK: - Action Methods (existing)

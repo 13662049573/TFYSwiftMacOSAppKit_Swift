@@ -264,11 +264,22 @@ public class TFYProgressMacOSHUD: NSView {
         return view.subviews.compactMap { $0 as? TFYProgressMacOSHUD }
     }
     
+    /// 解析可用于附着 HUD 的内容视图：mainWindow → keyWindow → 任意可见窗口。
+    private static func preferredContentView() -> NSView? {
+        if let contentView = NSApp.mainWindow?.contentView { return contentView }
+        if let contentView = NSApp.keyWindow?.contentView { return contentView }
+        return NSApp.windows.first(where: { $0.isVisible })?.contentView
+    }
+    
     /// 在主窗口显示HUD
     private static func showHUDInMainWindow(_ configure: @escaping (TFYProgressMacOSHUD) -> Void) {
         DispatchQueue.main.async {
-            guard let window = NSApp.mainWindow,
-                  let contentView = window.contentView else { return }
+            guard let contentView = preferredContentView() else {
+                #if DEBUG
+                print("TFYProgressMacOSHUD: 无可附着窗口，HUD 未显示")
+                #endif
+                return
+            }
             let hud = showHUD(addedTo: contentView)
             configure(hud)
         }
@@ -320,7 +331,7 @@ public class TFYProgressMacOSHUD: NSView {
     // MARK: - Convenience Methods
     public static func showSuccess(_ status: String, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
-            let hud = shared
+            let hud = ensureSharedHUDAttached()
             hud.mode = .customView
             hud.position = position
             hud.customImageView.image = createSuccessImage()
@@ -335,7 +346,7 @@ public class TFYProgressMacOSHUD: NSView {
     
     public static func showError(_ status: String, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
-            let hud = shared
+            let hud = ensureSharedHUDAttached()
             hud.mode = .customView
             hud.position = position
             hud.customImageView.image = createErrorImage()
@@ -351,7 +362,7 @@ public class TFYProgressMacOSHUD: NSView {
     
     public static func showInfo(_ status: String, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
-            let hud = shared
+            let hud = ensureSharedHUDAttached()
             hud.mode = .customView
             hud.position = position
             hud.customImageView.image = createInfoImage()
@@ -366,7 +377,7 @@ public class TFYProgressMacOSHUD: NSView {
     
     public static func showMessage(_ status: String, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
-            let hud = shared
+            let hud = ensureSharedHUDAttached()
             hud.mode = .text
             hud.position = position
             hud.statusLabel.stringValue = status
@@ -380,7 +391,7 @@ public class TFYProgressMacOSHUD: NSView {
     
     public static func showLoading(_ status: String, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
-            let hud = shared
+            let hud = ensureSharedHUDAttached()
             hud.mode = .loading
             hud.position = position
             hud.statusLabel.stringValue = status
@@ -391,7 +402,7 @@ public class TFYProgressMacOSHUD: NSView {
     
     public static func showProgress(_ progress: Float, status: String?, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
-            let hud = shared
+            let hud = ensureSharedHUDAttached()
             hud.mode = .determinate
             hud.position = position
             hud.progressView.progress = CGFloat(progress)
@@ -403,7 +414,7 @@ public class TFYProgressMacOSHUD: NSView {
     
     public static func showImage(_ image: NSImage, status: String?, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
-            let hud = shared
+            let hud = ensureSharedHUDAttached()
             hud.mode = .customView
             hud.position = position
             hud.customImageView.image = image
@@ -491,7 +502,7 @@ public class TFYProgressMacOSHUD: NSView {
     /// 显示带进度的HUD
     public static func showProgressHUD(_ progress: CGFloat, status: String?, style: TFYProgressViewStyle = .ring, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
-            let hud = shared
+            let hud = ensureSharedHUDAttached()
             hud.mode = .determinate
             hud.position = position
             hud.progressView.style = style
@@ -505,7 +516,7 @@ public class TFYProgressMacOSHUD: NSView {
     /// 显示带百分比的进度HUD
     public static func showProgressWithPercentage(_ progress: CGFloat, status: String?, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
-            let hud = shared
+            let hud = ensureSharedHUDAttached()
             hud.mode = .determinate
             hud.position = position
             hud.progressView.showPercentage = true
@@ -519,7 +530,7 @@ public class TFYProgressMacOSHUD: NSView {
     /// 显示不同样式的进度HUD
     public static func showProgressWithStyle(_ progress: CGFloat, style: TFYProgressViewStyle, status: String?, position: TFYHUDPosition = .center) {
         DispatchQueue.main.async {
-            let hud = shared
+            let hud = ensureSharedHUDAttached()
             hud.mode = .determinate
             hud.position = position
             hud.progressView.style = style
@@ -628,27 +639,38 @@ public class TFYProgressMacOSHUD: NSView {
     }
 
     // MARK: - Singleton
+    /// 惰性共享实例；每次取用时确保已附着到可用窗口（避免启动早期 mainWindow 为空导致永久无显示）。
     private static var shared: TFYProgressMacOSHUD = {
         let hud = TFYProgressMacOSHUD(frame: .zero)
         hud.isHidden = true
-
-        if let window = NSApplication.shared.mainWindow,
-           let contentView = window.contentView {
-            contentView.wantsLayer = true
-            hud.frame = contentView.bounds
-            hud.autoresizingMask = [.width, .height]
-            contentView.addSubview(hud)
-            hud.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                hud.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-                hud.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-                hud.topAnchor.constraint(equalTo: contentView.topAnchor),
-                hud.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
-            ])
-        }
-
         return hud
     }()
+    
+    /// 确保共享 HUD 已加到当前可用窗口的 contentView 上。
+    private static func ensureSharedHUDAttached() -> TFYProgressMacOSHUD {
+        let hud = shared
+        if hud.superview != nil { return hud }
+        
+        guard let contentView = preferredContentView() else {
+            #if DEBUG
+            print("TFYProgressMacOSHUD: 共享 HUD 暂无可附着窗口")
+            #endif
+            return hud
+        }
+        
+        contentView.wantsLayer = true
+        hud.frame = contentView.bounds
+        hud.autoresizingMask = [.width, .height]
+        contentView.addSubview(hud)
+        hud.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            hud.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            hud.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            hud.topAnchor.constraint(equalTo: contentView.topAnchor),
+            hud.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+        ])
+        return hud
+    }
 }
 
 // MARK: - Helper Methods for Creating Images

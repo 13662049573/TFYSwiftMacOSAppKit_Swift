@@ -17,6 +17,7 @@ final class UtilsDemoViewController: NSViewController {
     private var encryptionSwitch: NSButton!
     private var activeTimer: TFYSwiftTimer?
     private var countDownTimer: TFYSwiftCountDownTimer?
+    private var reachabilityToken: UUID?
     private var onceExecutionCount = 0
     private lazy var logDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -27,6 +28,10 @@ final class UtilsDemoViewController: NSViewController {
     deinit {
         activeTimer?.cancel()
         countDownTimer?.cancel()
+        if let reachabilityToken {
+            TFYNetworkReachability.shared.remove(token: reachabilityToken)
+        }
+        TFYNetworkReachability.shared.stop()
     }
     
     override func viewDidLoad() {
@@ -278,6 +283,22 @@ final class UtilsDemoViewController: NSViewController {
             .build
         buttonArea.addSubview(stringExtButton)
 
+        let reachabilityButton = NSButton().chain
+            .frame(NSRect(x: 0, y: 200, width: 120, height: 30))
+            .title("网络可达性")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testNetworkReachability))
+            .build
+        buttonArea.addSubview(reachabilityButton)
+
+        let loggerButton = NSButton().chain
+            .frame(NSRect(x: 130, y: 200, width: 120, height: 30))
+            .title("TFYLogger")
+            .font(.systemFont(ofSize: 12))
+            .addTarget(self, action: #selector(testLogger))
+            .build
+        buttonArea.addSubview(loggerButton)
+
         compressionSwitch = NSButton().chain
             .frame(NSRect(x: 660, y: 163, width: 130, height: 24))
             .setButtonType(.switch)
@@ -290,7 +311,7 @@ final class UtilsDemoViewController: NSViewController {
         encryptionSwitch = NSButton().chain
             .frame(NSRect(x: 800, y: 163, width: 130, height: 24))
             .setButtonType(.switch)
-            .title("加密缓存")
+            .title("混淆缓存")
             .state(.off)
             .font(.systemFont(ofSize: 12))
             .build
@@ -301,7 +322,7 @@ final class UtilsDemoViewController: NSViewController {
             buttonArea.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 86),
             buttonArea.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             buttonArea.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            buttonArea.heightAnchor.constraint(equalToConstant: 200)
+            buttonArea.heightAnchor.constraint(equalToConstant: 240)
         ])
     }
     
@@ -472,9 +493,9 @@ final class UtilsDemoViewController: NSViewController {
         let encryptionOn = encryptionSwitch?.state == .on
         var newConfig = cacheManager.getCurrentConfig()
         newConfig.enableCompression = compressionOn
-        newConfig.enableEncryption = encryptionOn
+        newConfig.enableObfuscation = encryptionOn
         cacheManager.updateConfig(newConfig)
-        appendResult("缓存配置：压缩=\(compressionOn ? "开" : "关")，加密=\(encryptionOn ? "开" : "关")")
+        appendResult("缓存配置：压缩=\(compressionOn ? "开" : "关")，XOR混淆=\(encryptionOn ? "开" : "关")")
         
         // 测试字符串缓存
         let testString = "测试字符串数据"
@@ -1162,5 +1183,25 @@ final class UtilsDemoViewController: NSViewController {
             title: "字符串扩展演示完成",
             details: "已展示 sha256/sha1/base64/url编码/时间获取/编辑距离等 String+Dejal 能力。"
         )
+    }
+
+    @objc private func testNetworkReachability() {
+        appendResult("=== TFYNetworkReachability 测试 ===")
+        if let reachabilityToken {
+            TFYNetworkReachability.shared.remove(token: reachabilityToken)
+            self.reachabilityToken = nil
+        }
+        let token = TFYNetworkReachability.shared.addListener { [weak self] status in
+            self?.appendResult("网络状态更新: \(status)")
+        }
+        reachabilityToken = token
+        appendResult("已 start + addListener，当前 status: \(TFYNetworkReachability.shared.status)")
+        appendResult("再次点击可重新注册监听；离开页面时会 stop。")
+    }
+
+    @objc private func testLogger() {
+        appendResult("=== TFYLogger 测试 ===")
+        TFYLogger.log("UtilsDemo TFYLogger sample", "status=ok")
+        appendResult("已调用 TFYLogger.log（DEBUG 下输出到控制台）")
     }
 }

@@ -132,8 +132,14 @@ public struct TFYCacheConfig {
     public var expirationInterval: TimeInterval = 7 * 24 * 60 * 60 // 7天
     /// 是否启用压缩
     public var enableCompression: Bool = true
-    /// 是否启用加密
-    public var enableEncryption: Bool = false
+    /// 是否启用磁盘数据 XOR 混淆（非加密，仅防明文落盘）
+    public var enableObfuscation: Bool = false
+    /// 兼容旧名；实际为 XOR 混淆，非安全加密
+    @available(*, deprecated, renamed: "enableObfuscation", message: "XOR obfuscation is not encryption")
+    public var enableEncryption: Bool {
+        get { enableObfuscation }
+        set { enableObfuscation = newValue }
+    }
     /// 是否启用统计
     public var enableStatistics: Bool = true
     /// 是否启用自动清理
@@ -229,7 +235,7 @@ public struct TFYCacheItem<T> {
         self.value = value
         self.timestamp = Date()
         self.size = size
-        self.expirationInterval = expirationInterval ?? TFYSwiftCacheKit.shared.config.expirationInterval
+        self.expirationInterval = expirationInterval ?? TFYSwiftCacheKit.shared.getCurrentConfig().expirationInterval
         self.metadata = metadata
     }
     
@@ -259,6 +265,8 @@ public class TFYSwiftCacheKit: NSObject {
 
     /// 缓存队列
     private let cacheQueue = DispatchQueue(label: "com.tfy.cache", qos: .utility)
+    private static let cacheQueueKey = DispatchSpecificKey<UInt8>()
+    private static let cacheQueueContext: UInt8 = 1
 
     /// 文件管理器
     private let fileManager = FileManager.default
@@ -275,11 +283,34 @@ public class TFYSwiftCacheKit: NSObject {
     /// 统计信息更新队列（确保线程安全）
     private let statsQueue = DispatchQueue(label: "com.tfy.cache.stats", qos: .utility)
     
+    /// 配置读写锁（config 可被任意线程读取，updateConfig 写入）
+    private let configLock = NSLock()
+    
     /// 缓存键哈希映射
     private var keyHashMapping: [String: String] = [:]
     
     /// 缓存键映射队列
     private let keyMappingQueue = DispatchQueue(label: "com.tfy.cache.keys", qos: .utility)
+    
+    /// 在 cacheQueue 上同步执行，避免同队列 re-entrant sync 死锁
+    private func syncOnCacheQueue<T>(_ work: () -> T) -> T {
+        if DispatchQueue.getSpecific(key: Self.cacheQueueKey) != nil {
+            return work()
+        }
+        return cacheQueue.sync(execute: work)
+    }
+    
+    private func currentConfig() -> TFYCacheConfig {
+        configLock.lock()
+        defer { configLock.unlock() }
+        return config
+    }
+    
+    private func debugLog(_ message: String) {
+        #if DEBUG
+        print("TFYSwiftCacheKit: \(message)")
+        #endif
+    }
     
     // MARK: - 初始化
     private override init() {
@@ -297,15 +328,18 @@ public class TFYSwiftCacheKit: NSObject {
         diskCachePath = baseDirectoryURL.appendingPathComponent("TFYCache", isDirectory: true).path
         
         super.init()
+        cacheQueue.setSpecific(key: Self.cacheQueueKey, value: Self.cacheQueueContext)
         
         setupMemoryCache()
         setupDiskCache()
         setupNotifications()
+        scheduleAutoCleanIfNeeded()
     }
     
     // MARK: - 设置
     private func setupMemoryCache() {
-        memoryCache.totalCostLimit = config.memoryCacheSize * 1024 * 1024
+        let cfg = currentConfig()
+        memoryCache.totalCostLimit = cfg.memoryCacheSize * 1024 * 1024
         memoryCache.countLimit = 200
         memoryCache.delegate = self
     }
@@ -314,13 +348,13 @@ public class TFYSwiftCacheKit: NSObject {
         do {
             try ensureDiskCacheDirectoryExists()
         } catch {
-            print("TFYSwiftCacheKit: 创建缓存目录失败: \(error.localizedDescription)")
+            debugLog("创建缓存目录失败: \(error.localizedDescription)")
         }
     }
     
     private func setupNotifications() {
         // macOS 没有内存警告通知，使用系统资源监控
-        if config.enableMemoryWarningListener {
+        if currentConfig().enableMemoryWarningListener {
             NotificationCenter.default.addObserver(
                 self,
                 selector: #selector(handleSystemPressure),
@@ -345,20 +379,26 @@ public class TFYSwiftCacheKit: NSObject {
         }
     }
     
+    private func scheduleAutoCleanIfNeeded() {
+        guard currentConfig().enableAutoClean else { return }
+        cacheQueue.async { [weak self] in
+            self?.cleanExpiredCacheIfNeeded(force: true)
+            self?.cleanDiskIfNeeded()
+        }
+    }
+    
     @objc private func handleSystemPressure() {
-        print("TFYSwiftCacheKit: 系统唤醒，检查缓存状态")
+        debugLog("系统唤醒，检查缓存状态")
         cacheQueue.async { [weak self] in
             self?.cleanExpiredCacheIfNeeded(force: true)
         }
     }
     
     @objc private func handleAppStateChange() {
-        print("TFYSwiftCacheKit: 应用状态变化，优化缓存")
+        debugLog("应用状态变化，优化缓存")
         if NSApplication.shared.isActive {
-            // 应用激活时，可以预加载一些缓存
             preloadFrequentlyUsedCache()
         } else {
-            // 应用失活时，清理一些内存缓存
             cleanMemoryCacheIfNeeded()
         }
     }
@@ -376,19 +416,22 @@ public class TFYSwiftCacheKit: NSObject {
     public func updateConfig(_ newConfig: TFYCacheConfig) -> Bool {
         let errors = newConfig.validate()
         guard errors.isEmpty else {
-            print("TFYSwiftCacheKit: 配置验证失败: \(errors.joined(separator: ", "))")
+            debugLog("配置验证失败: \(errors.joined(separator: ", "))")
             return false
         }
         
+        configLock.lock()
         config = newConfig
+        configLock.unlock()
         setupMemoryCache()
         setupDiskCache()
+        scheduleAutoCleanIfNeeded()
         return true
     }
     
     /// 获取当前配置
     public func getCurrentConfig() -> TFYCacheConfig {
-        return config
+        return currentConfig()
     }
     
     // MARK: - 内存缓存
@@ -399,7 +442,7 @@ public class TFYSwiftCacheKit: NSObject {
     ///   - key: 缓存键
     public func setMemoryCache<T>(_ value: T, forKey key: String) {
         guard validateCacheKey(key) else {
-            print("TFYSwiftCacheKit: 无效的缓存键: \(key)")
+            debugLog("无效的缓存键: \(key)")
             return
         }
 
@@ -529,6 +572,9 @@ public class TFYSwiftCacheKit: NSObject {
                     let filePath = (self.diskCachePath as NSString).appendingPathComponent(file)
                     try self.fileManager.removeItem(atPath: filePath)
                 }
+                self.keyMappingQueue.async {
+                    self.keyHashMapping.removeAll()
+                }
                 self.dispatchToMain {
                     completion(.success(()))
                 }
@@ -556,7 +602,10 @@ public class TFYSwiftCacheKit: NSObject {
             let data = try JSONEncoder().encode(value)
             setDiskCache(data, forKey: key, completion: completion)
         } catch {
-            completion(.failure(.saveFailed(error)))
+            removeMemoryCache(forKey: key)
+            dispatchToMain {
+                completion(.failure(.saveFailed(error)))
+            }
         }
     }
     
@@ -564,9 +613,7 @@ public class TFYSwiftCacheKit: NSObject {
     public func getCache<T: Codable>(_ type: T.Type, forKey key: String, completion: @escaping (Result<T, TFYCacheError>) -> Void) {
         // 先尝试从内存缓存获取
         if let memoryValue: T = getMemoryCache(forKey: key) {
-            statsQueue.async {
-                self.cacheStats.recordHit(source: .memory)
-            }
+            recordHitIfEnabled(source: .memory)
             DispatchQueue.main.async { completion(.success(memoryValue)) }
             return
         }
@@ -578,21 +625,15 @@ public class TFYSwiftCacheKit: NSObject {
                     let value = try JSONDecoder().decode(type, from: data)
                     // 设置到内存缓存
                     self.setMemoryCache(value, forKey: key)
-                    self.statsQueue.async {
-                        self.cacheStats.recordHit(source: .disk)
-                    }
-                    completion(.success(value))
+                    self.recordHitIfEnabled(source: .disk)
+                    self.dispatchToMain { completion(.success(value)) }
                 } catch {
-                    self.statsQueue.async {
-                        self.cacheStats.recordMiss()
-                    }
-                    completion(.failure(.loadFailed(error)))
+                    self.recordMissIfEnabled()
+                    self.dispatchToMain { completion(.failure(.loadFailed(error))) }
                 }
             case .failure(let error):
-                self.statsQueue.async {
-                    self.cacheStats.recordMiss()
-                }
-                completion(.failure(error))
+                self.recordMissIfEnabled()
+                self.dispatchToMain { completion(.failure(error)) }
             }
         }
     }
@@ -613,7 +654,8 @@ public class TFYSwiftCacheKit: NSObject {
             guard let tiffData = image.tiffRepresentation,
                   let bitmapRep = NSBitmapImageRep(data: tiffData),
                   let data = bitmapRep.representation(using: .jpeg, properties: [:]) else {
-                DispatchQueue.main.async { completion(.failure(.invalidData)) }
+                self.removeMemoryCache(forKey: key)
+                self.dispatchToMain { completion(.failure(.invalidData)) }
                 return
             }
             
@@ -628,7 +670,7 @@ public class TFYSwiftCacheKit: NSObject {
     public func getCachedImage(forKey key: String, completion: @escaping (Result<NSImage, TFYCacheError>) -> Void) {
         // 先尝试从内存缓存获取
         if let image: NSImage = getMemoryCache(forKey: key) {
-            completion(.success(image))
+            dispatchToMain { completion(.success(image)) }
             return
         }
         
@@ -639,12 +681,12 @@ public class TFYSwiftCacheKit: NSObject {
                 if let image = NSImage(data: data) {
                     // 设置到内存缓存
                     self.setMemoryCache(image, forKey: key)
-                    completion(.success(image))
+                    self.dispatchToMain { completion(.success(image)) }
                 } else {
-                    completion(.failure(.invalidData))
+                    self.dispatchToMain { completion(.failure(.invalidData)) }
                 }
             case .failure(let error):
-                completion(.failure(error))
+                self.dispatchToMain { completion(.failure(error)) }
             }
         }
     }
@@ -686,7 +728,7 @@ public class TFYSwiftCacheKit: NSObject {
             do {
                 try self.ensureDiskCacheDirectoryExists()
                 let contents = try self.fileManager.contentsOfDirectory(atPath: self.diskCachePath)
-                let expirationDate = Date().addingTimeInterval(-self.config.expirationInterval)
+                let expirationDate = Date().addingTimeInterval(-self.currentConfig().expirationInterval)
                 
                 for file in contents {
                     let filePath = (self.diskCachePath as NSString).appendingPathComponent(file)
@@ -695,6 +737,7 @@ public class TFYSwiftCacheKit: NSObject {
                     if let modificationDate = attributes[.modificationDate] as? Date,
                        modificationDate < expirationDate {
                         try self.fileManager.removeItem(atPath: filePath)
+                        self.pruneKeyHashMapping(forHashedFileName: file)
                     }
                 }
                 
@@ -710,6 +753,20 @@ public class TFYSwiftCacheKit: NSObject {
     }
     
     // MARK: - 私有方法
+    
+    private func recordHitIfEnabled(source: CacheSource) {
+        guard currentConfig().enableStatistics else { return }
+        statsQueue.async {
+            self.cacheStats.recordHit(source: source)
+        }
+    }
+    
+    private func recordMissIfEnabled() {
+        guard currentConfig().enableStatistics else { return }
+        statsQueue.async {
+            self.cacheStats.recordMiss()
+        }
+    }
     
     /// 验证缓存键的有效性
     private func validateCacheKey(_ key: String) -> Bool {
@@ -740,7 +797,7 @@ public class TFYSwiftCacheKit: NSObject {
     
     /// 生成缓存键哈希
     private func hashCacheKey(_ key: String) -> String {
-        if !config.enableKeyHashing {
+        if !currentConfig().enableKeyHashing {
             return sanitizeCacheKey(key)
         }
         
@@ -752,6 +809,13 @@ public class TFYSwiftCacheKit: NSObject {
             let hashedKey = fileSystemSafeHash(for: key)
             keyHashMapping[key] = hashedKey
             return hashedKey
+        }
+    }
+    
+    private func pruneKeyHashMapping(forHashedFileName fileName: String) {
+        let hashedKey = (fileName as NSString).deletingPathExtension
+        keyMappingQueue.async {
+            self.keyHashMapping = self.keyHashMapping.filter { $0.value != hashedKey }
         }
     }
     
@@ -768,7 +832,7 @@ public class TFYSwiftCacheKit: NSObject {
     
     private func diskCachePath(forKey key: String) -> String {
         let hashedKey = hashCacheKey(key)
-        let fileName = "\(hashedKey).\(config.fileExtension)"
+        let fileName = "\(hashedKey).\(currentConfig().fileExtension)"
         return (diskCachePath as NSString).appendingPathComponent(fileName)
     }
     
@@ -786,14 +850,15 @@ public class TFYSwiftCacheKit: NSObject {
         do {
             try ensureDiskCacheDirectoryExists()
             cleanDiskIfNeeded()
+            let cfg = currentConfig()
             let filePath = diskCachePath(forKey: key)
             var dataToWrite = data
-            if config.enableCompression {
+            if cfg.enableCompression {
                 if let compressed = try? (dataToWrite as NSData).compressed(using: .lzfse) as Data {
                     dataToWrite = compressed
                 }
             }
-            if config.enableEncryption {
+            if cfg.enableObfuscation {
                 dataToWrite = xorObfuscate(dataToWrite)
             }
             try dataToWrite.write(to: URL(fileURLWithPath: filePath), options: .atomic)
@@ -806,7 +871,10 @@ public class TFYSwiftCacheKit: NSObject {
     }
     
     private func readDiskCacheSync(forKey key: String) -> Result<Data, TFYCacheError> {
-        cleanExpiredCacheIfNeeded(force: false)
+        let cfg = currentConfig()
+        if cfg.enableAutoClean {
+            cleanExpiredCacheIfNeeded(force: false)
+        }
         let filePath = diskCachePath(forKey: key)
         
         guard fileManager.fileExists(atPath: filePath) else {
@@ -815,10 +883,10 @@ public class TFYSwiftCacheKit: NSObject {
         
         do {
             var data = try Data(contentsOf: URL(fileURLWithPath: filePath))
-            if config.enableEncryption {
+            if cfg.enableObfuscation {
                 data = xorObfuscate(data)
             }
-            if config.enableCompression {
+            if cfg.enableCompression {
                 if let decompressed = try? (data as NSData).decompressed(using: .lzfse) as Data {
                     data = decompressed
                 }
@@ -866,13 +934,14 @@ public class TFYSwiftCacheKit: NSObject {
 
         do {
             let contents = try self.fileManager.contentsOfDirectory(atPath: self.diskCachePath)
-            let expirationDate = Date().addingTimeInterval(-self.config.expirationInterval)
+            let expirationDate = Date().addingTimeInterval(-self.currentConfig().expirationInterval)
             for file in contents {
                 let filePath = (self.diskCachePath as NSString).appendingPathComponent(file)
                 let attributes = try self.fileManager.attributesOfItem(atPath: filePath)
                 if let modificationDate = attributes[.modificationDate] as? Date,
                    modificationDate < expirationDate {
                     try? self.fileManager.removeItem(atPath: filePath)
+                    self.pruneKeyHashMapping(forHashedFileName: file)
                 }
             }
         } catch {
@@ -884,23 +953,24 @@ public class TFYSwiftCacheKit: NSObject {
     private func cleanDiskIfNeeded() {
         do {
             let contents = try self.fileManager.contentsOfDirectory(atPath: self.diskCachePath)
-            var fileInfos: [(path: String, date: Date, size: Int)] = []
+            var fileInfos: [(path: String, date: Date, size: Int, name: String)] = []
             var totalSize = 0
             for file in contents {
                 let filePath = (self.diskCachePath as NSString).appendingPathComponent(file)
                 let attributes = try self.fileManager.attributesOfItem(atPath: filePath)
                 let size = attributes[.size] as? Int ?? 0
                 let date = attributes[.modificationDate] as? Date ?? Date.distantPast
-                fileInfos.append((filePath, date, size))
+                fileInfos.append((filePath, date, size, file))
                 totalSize += size
             }
-            let maxSize = self.config.diskCacheSize * 1024 * 1024
+            let maxSize = self.currentConfig().diskCacheSize * 1024 * 1024
             if totalSize > maxSize {
                 // 按最早时间排序，依次删除
                 let sorted = fileInfos.sorted { $0.date < $1.date }
                 var sizeToFree = totalSize - maxSize
                 for info in sorted {
                     try? self.fileManager.removeItem(atPath: info.path)
+                    pruneKeyHashMapping(forHashedFileName: info.name)
                     sizeToFree -= info.size
                     if sizeToFree <= 0 { break }
                 }
@@ -926,8 +996,7 @@ public class TFYSwiftCacheKit: NSObject {
 // MARK: - NSCacheDelegate
 extension TFYSwiftCacheKit: NSCacheDelegate {
     public func cache(_ cache: NSCache<AnyObject, AnyObject>, willEvictObject obj: Any) {
-        // 当内存缓存被清理时记录日志
-        print("TFYSwiftCacheKit: Memory cache item evicted")
+        debugLog("Memory cache item evicted")
     }
 }
 
@@ -980,10 +1049,15 @@ public extension TFYSwiftCacheKit {
         
         do {
             let data = try JSONEncoder().encode(value)
-            return cacheQueue.sync {
+            let result = syncOnCacheQueue {
                 writeDiskCacheSync(data, forKey: key)
             }
+            if case .failure = result {
+                removeMemoryCache(forKey: key)
+            }
+            return result
         } catch {
+            removeMemoryCache(forKey: key)
             return .failure(.saveFailed(error))
         }
     }
@@ -995,13 +1069,11 @@ public extension TFYSwiftCacheKit {
         }
         
         if let memoryValue: T = getMemoryCache(forKey: key) {
-            statsQueue.async {
-                self.cacheStats.recordHit(source: .memory)
-            }
+            recordHitIfEnabled(source: .memory)
             return .success(memoryValue)
         }
         
-        let diskResult: Result<Data, TFYCacheError> = cacheQueue.sync {
+        let diskResult: Result<Data, TFYCacheError> = syncOnCacheQueue {
             readDiskCacheSync(forKey: key)
         }
         
@@ -1010,20 +1082,14 @@ public extension TFYSwiftCacheKit {
             do {
                 let value = try JSONDecoder().decode(type, from: data)
                 setMemoryCache(value, forKey: key)
-                statsQueue.async {
-                    self.cacheStats.recordHit(source: .disk)
-                }
+                recordHitIfEnabled(source: .disk)
                 return .success(value)
             } catch {
-                statsQueue.async {
-                    self.cacheStats.recordMiss()
-                }
+                recordMissIfEnabled()
                 return .failure(.loadFailed(error))
             }
         case .failure(let error):
-            statsQueue.async {
-                self.cacheStats.recordMiss()
-            }
+            recordMissIfEnabled()
             return .failure(error)
         }
     }
@@ -1104,110 +1170,3 @@ public extension TFYSwiftCacheKit {
         }
     }
 }
-
-// MARK: - 缓存工具用法示例
-/*
-// 1. 基础缓存操作
-TFYSwiftCacheKit.shared.setCache("Hello, Cache!", forKey: "stringKey") { result in
-    switch result {
-    case .success:
-        print("字符串缓存成功")
-    case .failure(let error):
-        print("缓存失败: \(error.localizedDescription)")
-    }
-}
-
-TFYSwiftCacheKit.shared.getCache(String.self, forKey: "stringKey") { result in
-    switch result {
-    case .success(let value):
-        print("获取到字符串缓存: \(value)")
-    case .failure(let error):
-        print("获取失败: \(error.localizedDescription)")
-    }
-}
-
-// 2. 缓存自定义模型
-struct User: Codable {
-    let id: Int
-    let name: String
-}
-let user = User(id: 1, name: "张三")
-TFYSwiftCacheKit.shared.setCache(user, forKey: "userKey") { result in
-    if case .success = result {
-        print("模型缓存成功")
-    }
-}
-TFYSwiftCacheKit.shared.getCache(User.self, forKey: "userKey") { result in
-    if case .success(let user) = result {
-        print("获取到模型: \(user)")
-    }
-}
-
-// 3. 缓存图片 (macOS)
-if let image = NSImage(named: "AppIcon") {
-    TFYSwiftCacheKit.shared.cacheImage(image, forKey: "icon") { result in
-        if case .success = result {
-            print("图片缓存成功")
-        }
-    }
-    TFYSwiftCacheKit.shared.getCachedImage(forKey: "icon") { result in
-        if case .success(let img) = result {
-            print("获取到图片，尺寸: \(img.size)")
-        }
-    }
-}
-
-// 4. 同步缓存用法（已修复死锁问题）
-let syncResult = TFYSwiftCacheKit.shared.setCacheSync(user, forKey: "userSyncKey")
-if case .success = syncResult {
-    print("同步缓存成功")
-}
-let syncGet = TFYSwiftCacheKit.shared.getCacheSync(User.self, forKey: "userSyncKey")
-if case .success(let user) = syncGet {
-    print("同步获取到模型: \(user)")
-}
-
-// 5. 缓存统计功能
-print(TFYSwiftCacheKit.shared.getCacheReport())
-let stats = TFYSwiftCacheKit.shared.statistics
-print("缓存命中率: \(String(format: "%.2f%%", stats.hitRate * 100))")
-
-// 6. 配置管理
-var newConfig = TFYCacheConfig.smallMemory()
-newConfig.expirationInterval = 24 * 60 * 60 // 1天
-if TFYSwiftCacheKit.shared.updateConfig(newConfig) {
-    print("配置更新成功")
-}
-
-// 7. 缓存键验证
-TFYSwiftCacheKit.shared.setCache("test", forKey: "invalid/key") // 会被拒绝
-TFYSwiftCacheKit.shared.setCache("test", forKey: "validKey") // 正常缓存
-
-// 8. 清理与管理
-TFYSwiftCacheKit.shared.clearMemoryCache()
-TFYSwiftCacheKit.shared.clearDiskCache { _ in print("磁盘缓存已清空") }
-TFYSwiftCacheKit.shared.cleanExpiredCache { _ in print("过期缓存已清理") }
-TFYSwiftCacheKit.shared.getCacheSize { result in
-    if case .success(let size) = result {
-        print("当前缓存大小: \(size) 字节")
-    }
-}
-
-// 9. 重置统计
-TFYSwiftCacheKit.shared.resetStatistics()
-
-// 10. 批量操作
-let users = [User(id: 1, name: "张三"), User(id: 2, name: "李四")]
-let items = users.enumerated().map { (key: "user_\($0)", value: $1) }
-TFYSwiftCacheKit.shared.setCacheBatch(items) { result in
-    if case .success = result {
-        print("批量缓存成功")
-    }
-}
-
-TFYSwiftCacheKit.shared.getCacheBatch(User.self, keys: ["user_0", "user_1"]) { result in
-    if case .success(let users) = result {
-        print("批量获取成功: \(users)")
-    }
-}
-*/ 

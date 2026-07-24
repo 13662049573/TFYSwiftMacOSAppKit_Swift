@@ -30,7 +30,7 @@
 		36EC0CA02CDA4AE3003EBAD5 /* TFYSwiftButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0C9F2CDA4AE3003EBAD5 /* TFYSwiftButton.swift */; };
 		36EC0CA72CDA5812003EBAD5 /* TFYSwiftUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CA62CDA5812003EBAD5 /* TFYSwiftUtils.swift */; };
 		36EC0CA92CDA62D4003EBAD5 /* TFYSwiftJsonUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CA82CDA62D4003EBAD5 /* TFYSwiftJsonUtils.swift */; };
-		36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsynce.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsynce.swift */; };
+		36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsync.swift */; };
 		36EC0CAD2CDA6513003EBAD5 /* TFYSwiftGCD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAC2CDA6513003EBAD5 /* TFYSwiftGCD.swift */; };
 		36EC0CAF2CDA6600003EBAD5 /* TFYSwiftTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CAE2CDA6600003EBAD5 /* TFYSwiftTimer.swift */; };
 		36EC0CB62CDB9EA4003EBAD5 /* NSView+Dejal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */; };
@@ -155,7 +155,7 @@
 		36EC0C9F2CDA4AE3003EBAD5 /* TFYSwiftButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftButton.swift; sourceTree = "<group>"; };
 		36EC0CA62CDA5812003EBAD5 /* TFYSwiftUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftUtils.swift; sourceTree = "<group>"; };
 		36EC0CA82CDA62D4003EBAD5 /* TFYSwiftJsonUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftJsonUtils.swift; sourceTree = "<group>"; };
-		36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsynce.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftAsynce.swift; sourceTree = "<group>"; };
+		36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftAsync.swift; sourceTree = "<group>"; };
 		36EC0CAC2CDA6513003EBAD5 /* TFYSwiftGCD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftGCD.swift; sourceTree = "<group>"; };
 		36EC0CAE2CDA6600003EBAD5 /* TFYSwiftTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFYSwiftTimer.swift; sourceTree = "<group>"; };
 		36EC0CB52CDB9EA4003EBAD5 /* NSView+Dejal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSView+Dejal.swift"; sourceTree = "<group>"; };
@@ -317,6 +317,8 @@
 				8496ACB22F91BF5A0052E441 /* NSSegmentedControl+Dejal.swift */,
 				8496ACB42F91BF890052E441 /* NSSearchField+Dejal.swift */,
 				8496ACB62F91BFB10052E441 /* NSSlider+Dejal.swift */,
+				8496ACB82F91BFE10052E441 /* NSDatePicker+Dejal.swift */,
+				8496ACBA2F91C00F0052E441 /* NSStepper+Dejal.swift */,
 			);
 			path = macOScategory;
 			sourceTree = "<group>";
@@ -380,7 +382,7 @@
 				36EC0C9D2CDA4627003EBAD5 /* TFYSwiftLabel.swift */,
 				36EC0C9F2CDA4AE3003EBAD5 /* TFYSwiftButton.swift */,
 				36EC0CA82CDA62D4003EBAD5 /* TFYSwiftJsonUtils.swift */,
-				36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsynce.swift */,
+				36EC0CAA2CDA6385003EBAD5 /* TFYSwiftAsync.swift */,
 				1891C9322CF086E7002DAD89 /* TFYSwiftTextFieldView.swift */,
 			);
 			path = macOSUtils;
@@ -422,8 +424,6 @@
 				18C7EDA02CEDAF5D00914927 /* Timer+Dejal.swift */,
 				18C7EDA22CEDB04800914927 /* NotificationCenter+Dejal.swift */,
 				18C7EDA42CEDB13200914927 /* Bundle+Dejal.swift */,
-				8496ACB82F91BFE10052E441 /* NSDatePicker+Dejal.swift */,
-				8496ACBA2F91C00F0052E441 /* NSStepper+Dejal.swift */,
 			);
 			path = macOSfoundation;
 			sourceTree = "<group>";
@@ -711,7 +711,7 @@
 				36EC0C9E2CDA4627003EBAD5 /* TFYSwiftLabel.swift in Sources */,
 				8496ACB92F91BFE10052E441 /* NSDatePicker+Dejal.swift in Sources */,
 				3D04F8462CDCB048009493BF /* TFYSwiftCAScrollLayer.swift in Sources */,
-				36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsynce.swift in Sources */,
+				36EC0CAB2CDA6385003EBAD5 /* TFYSwiftAsync.swift in Sources */,
 				36EC0CA92CDA62D4003EBAD5 /* TFYSwiftJsonUtils.swift in Sources */,
 				3D04F8A62CDEEF4E009493BF /* NSSplitView+Dejal.swift in Sources */,
 			);

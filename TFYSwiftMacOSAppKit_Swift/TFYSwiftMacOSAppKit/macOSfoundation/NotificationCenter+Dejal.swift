@@ -168,34 +168,32 @@ public extension NotificationCenter {
 }
 // MARK: - 便利的通知名称定义
 public extension Notification.Name {
-    // 示例通知名称
-    static let exampleNotification = Notification.Name("ExampleNotification")
+    /// Demo / 自定义业务可用的示例通知名（非系统事件）。
+    static let exampleNotification = Notification.Name("TFYSwiftMacOSAppKit.ExampleNotification")
     
-    // 应用生命周期通知
+    // MARK: Deprecated — 请使用系统 NSApplication 通知，勿依赖这些自定义字符串名
+    
+    @available(*, deprecated, message: "Use NSApplication.didBecomeActiveNotification instead")
     static let applicationDidBecomeActive = Notification.Name("ApplicationDidBecomeActive")
+    @available(*, deprecated, message: "Use NSApplication.willResignActiveNotification instead")
     static let applicationWillResignActive = Notification.Name("ApplicationWillResignActive")
+    @available(*, deprecated, message: "macOS has no applicationDidEnterBackground; use didResignActiveNotification")
     static let applicationDidEnterBackground = Notification.Name("ApplicationDidEnterBackground")
+    @available(*, deprecated, message: "macOS has no applicationWillEnterForeground; use didBecomeActiveNotification")
     static let applicationWillEnterForeground = Notification.Name("ApplicationWillEnterForeground")
     
-    // 网络状态通知
-    static let networkStatusChanged = Notification.Name("NetworkStatusChanged")
-    static let networkReachable = Notification.Name("NetworkReachable")
-    static let networkUnreachable = Notification.Name("NetworkUnreachable")
+    /// 网络状态变化（由业务方自行 post；与 TFYNetworkReachability 配合使用）
+    static let networkStatusChanged = Notification.Name("TFYSwiftMacOSAppKit.NetworkStatusChanged")
+    static let networkReachable = Notification.Name("TFYSwiftMacOSAppKit.NetworkReachable")
+    static let networkUnreachable = Notification.Name("TFYSwiftMacOSAppKit.NetworkUnreachable")
     
-    // 数据更新通知
-    static let dataDidUpdate = Notification.Name("DataDidUpdate")
-    static let dataDidRefresh = Notification.Name("DataDidRefresh")
-    static let dataDidError = Notification.Name("DataDidError")
+    static let dataDidUpdate = Notification.Name("TFYSwiftMacOSAppKit.DataDidUpdate")
+    static let dataDidRefresh = Notification.Name("TFYSwiftMacOSAppKit.DataDidRefresh")
+    static let dataDidError = Notification.Name("TFYSwiftMacOSAppKit.DataDidError")
     
-    // 用户操作通知
-    static let userDidLogin = Notification.Name("UserDidLogin")
-    static let userDidLogout = Notification.Name("UserDidLogout")
-    static let userDidUpdateProfile = Notification.Name("UserDidUpdateProfile")
-    
-    // 系统通知
-    static let systemMemoryWarning = Notification.Name("SystemMemoryWarning")
-    static let systemBatteryLevelChanged = Notification.Name("SystemBatteryLevelChanged")
-    static let systemVolumeChanged = Notification.Name("SystemVolumeChanged")
+    static let userDidLogin = Notification.Name("TFYSwiftMacOSAppKit.UserDidLogin")
+    static let userDidLogout = Notification.Name("TFYSwiftMacOSAppKit.UserDidLogout")
+    static let userDidUpdateProfile = Notification.Name("TFYSwiftMacOSAppKit.UserDidUpdateProfile")
 }
 
 // MARK: - 通知错误类型
@@ -325,10 +323,9 @@ public extension NotificationCenter {
         removeObserver(observer, name: name, object: object)
     }
     
-    /// 获取通知统计信息
-    /// - Returns: 统计信息字典
+    /// 获取通知统计信息（已废弃：无法真实统计系统 NotificationCenter）
+    @available(*, deprecated, message: "Always returned stub zeros; track observers via NotificationObserverManager instead")
     func getNotificationStatistics() -> [String: Any] {
-        // 这是一个示例实现，实际统计需要更复杂的逻辑
         return [
             "totalNotifications": 0,
             "activeObservers": 0,

@@ -1,4 +1,5 @@
 // swift-tools-version: 5.9
+// TFYSwiftMacOSAppKit 1.5.0 — version is published via git tag; keep aligned with podspec / README.
 
 import PackageDescription
 

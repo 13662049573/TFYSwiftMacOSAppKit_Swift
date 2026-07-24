@@ -23,8 +23,10 @@ public final class TFYSwiftUtils: NSObject {
     private static let keySize = kCCKeySize3DES
     private static let blockSize = kCCBlockSize3DES
     static let MACOS_CELLULAR = "pdp_ip0"
-    static let MACOS_WIFI = "en1"
-    static let MACOS_VPN = "utun1"
+    static let MACOS_WIFI = "en0"
+    static let MACOS_WIFI_ALT = "en1"
+    static let MACOS_VPN = "utun0"
+    static let MACOS_VPN_ALT = "utun1"
     static let IP_ADDR_IPv4 = "ipv4"
     static let IP_ADDR_IPv6 = "ipv6"
     
@@ -64,7 +66,9 @@ public final class TFYSwiftUtils: NSObject {
     
     public static func getWiFiName() -> String? {
         guard let interface = CWWiFiClient.shared().interface() else {
+            #if DEBUG
             print("无法获取 WiFi 接口")
+            #endif
             return nil
         }
         return interface.ssid()
@@ -74,7 +78,9 @@ public final class TFYSwiftUtils: NSObject {
     public static func getWiFiInfo() -> [String: Any] {
         var wifiInfo: [String: Any] = [:]
         guard let interface = CWWiFiClient.shared().interface() else {
+            #if DEBUG
             print("无法获取 WiFi 接口")
+            #endif
             return wifiInfo
         }
         // SSID (网络名称)
@@ -204,9 +210,15 @@ public final class TFYSwiftUtils: NSObject {
     
     // MARK: - Get Device Current Network IP Address
         public static func getIPAddress(preferIPv4: Bool) -> String {
-            let searchArray = preferIPv4 ?
-                [MACOS_VPN + "/" + IP_ADDR_IPv4, MACOS_VPN + "/" + IP_ADDR_IPv6, MACOS_WIFI + "/" + IP_ADDR_IPv4, MACOS_WIFI + "/" + IP_ADDR_IPv6, MACOS_CELLULAR + "/" + IP_ADDR_IPv4, MACOS_CELLULAR + "/" + IP_ADDR_IPv6] :
-                [MACOS_VPN + "/" + IP_ADDR_IPv6, MACOS_VPN + "/" + IP_ADDR_IPv4, MACOS_WIFI + "/" + IP_ADDR_IPv6, MACOS_WIFI + "/" + IP_ADDR_IPv4, MACOS_CELLULAR + "/" + IP_ADDR_IPv6, MACOS_CELLULAR + "/" + IP_ADDR_IPv4]
+            let wifiCandidates = [MACOS_WIFI, MACOS_WIFI_ALT]
+            let vpnCandidates = [MACOS_VPN, MACOS_VPN_ALT]
+            var searchArray: [String] = []
+            let families = preferIPv4 ? [IP_ADDR_IPv4, IP_ADDR_IPv6] : [IP_ADDR_IPv6, IP_ADDR_IPv4]
+            for family in families {
+                for iface in vpnCandidates { searchArray.append("\(iface)/\(family)") }
+                for iface in wifiCandidates { searchArray.append("\(iface)/\(family)") }
+                searchArray.append("\(MACOS_CELLULAR)/\(family)")
+            }
 
             let addresses = getAllIPAddresses()
             for key in searchArray {
@@ -214,7 +226,14 @@ public final class TFYSwiftUtils: NSObject {
                     return address
                 }
             }
-            return ""
+            // 回退：返回任意有效 IPv4/IPv6
+            for (key, address) in addresses {
+                let preferSuffix = preferIPv4 ? IP_ADDR_IPv4 : IP_ADDR_IPv6
+                if key.hasSuffix(preferSuffix), isValidIP(ipAddress: address) || (preferIPv4 == false && !address.isEmpty) {
+                    return address
+                }
+            }
+            return addresses.values.first(where: { !$0.isEmpty && $0 != "127.0.0.1" }) ?? ""
         }
 
         @available(*, deprecated, renamed: "isValidIP(ipAddress:)")

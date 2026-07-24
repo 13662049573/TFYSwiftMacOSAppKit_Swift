@@ -6,7 +6,6 @@
 //
 
 import Cocoa
-import Combine
 
 final class StatusItemDemoViewController: NSViewController {
     
@@ -31,10 +30,14 @@ final class StatusItemDemoViewController: NSViewController {
     
     // MARK: - Notification Tracking
     private var notificationTokens: [NSObjectProtocol] = []
-    private var cancellables = Set<AnyCancellable>()
     
     deinit {
         notificationTokens.forEach { NotificationCenter.default.removeObserver($0) }
+        if Thread.isMainThread {
+            statusItem.reset()
+        } else {
+            DispatchQueue.main.sync { statusItem.reset() }
+        }
     }
     
     override func viewDidLoad() {

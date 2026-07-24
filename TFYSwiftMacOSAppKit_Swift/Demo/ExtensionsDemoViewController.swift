@@ -24,6 +24,17 @@ final class ExtensionsDemoViewController: NSViewController {
     private var gradientLayerView: NSView!
     private var gradientLayer: CAGradientLayer?
     private var gradientDirectionIndex: Int = 0
+    private var menuStatusLabel: TFYSwiftLabel!
+    private var activePopover: NSPopover?
+    private var demoSplitView: NSSplitView!
+    private var splitViewStatusLabel: TFYSwiftLabel!
+    private var demoCollectionView: NSCollectionView!
+    private var collectionStatusLabel: TFYSwiftLabel!
+    private let collectionDemoItems: [(NSColor, String)] = [
+        (.systemBlue, "蓝"), (.systemGreen, "绿"), (.systemOrange, "橙"),
+        (.systemPurple, "紫"), (.systemPink, "粉"), (.systemTeal, "青")
+    ]
+    private static let collectionItemIdentifier = NSUserInterfaceItemIdentifier("ExtensionsDemoCollectionItem")
 
     deinit {
         if let notificationToken {
@@ -66,7 +77,7 @@ final class ExtensionsDemoViewController: NSViewController {
         contentView.addSubview(titleLabel)
         yOffset += 38
         
-        let subtitleLabel = makeBodyLabel("这里专门演示 NSView / NSControl / NSTextField / NSTextView / NotificationCenter 相关扩展能力，适合验证交互细节和辅助 API 的成熟度。", width: 780, height: 34)
+        let subtitleLabel = makeBodyLabel("演示 NSView / NSControl / NSTextField / NSTextView / NotificationCenter / Menu / Popover / Window / SplitView / CollectionView 等分类扩展。", width: 780, height: 34)
         subtitleLabel.frame.origin = NSPoint(x: 20, y: yOffset)
         contentView.addSubview(subtitleLabel)
         yOffset += 56
@@ -80,6 +91,8 @@ final class ExtensionsDemoViewController: NSViewController {
         yOffset = setupColorExtensionSection(in: contentView, yOffset: yOffset)
         yOffset = setupGradientLayerSection(in: contentView, yOffset: yOffset)
         yOffset = setupImageExtensionSection(in: contentView, yOffset: yOffset)
+        yOffset = setupMenuPopoverWindowSection(in: contentView, yOffset: yOffset)
+        yOffset = setupSplitAndCollectionSection(in: contentView, yOffset: yOffset)
         yOffset = setupLogSection(in: contentView, yOffset: yOffset)
 
         let contentHeight = yOffset + 24
@@ -573,6 +586,126 @@ final class ExtensionsDemoViewController: NSViewController {
         return currentOffset
     }
 
+    private func setupMenuPopoverWindowSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
+        var currentOffset = yOffset
+
+        let sectionLabel = makeSectionLabel("NSMenu / NSPopover / NSWindow + Dejal")
+        sectionLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(sectionLabel)
+        currentOffset += 30
+
+        let descLabel = makeBodyLabel("NSMenu 用 addItem(title:icon:action:) / addSubmenu 快速建菜单；NSPopover 用 createInfoPopover / createConfirmPopover 快速建弹窗；NSWindow 演示居中、抖动与淡出淡入。", width: 780, height: 34)
+        descLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(descLabel)
+        currentOffset += 42
+
+        let menuButton = makeActionButton(title: "弹出菜单", frame: NSRect(x: 20, y: currentOffset, width: 100, height: 30), action: #selector(showDemoMenu))
+        contentView.addSubview(menuButton)
+
+        let infoPopoverButton = makeActionButton(title: "信息弹窗", frame: NSRect(x: 130, y: currentOffset, width: 100, height: 30), action: #selector(showInfoPopover))
+        contentView.addSubview(infoPopoverButton)
+
+        let confirmPopoverButton = makeActionButton(title: "确认弹窗", frame: NSRect(x: 240, y: currentOffset, width: 100, height: 30), action: #selector(showConfirmPopover))
+        contentView.addSubview(confirmPopoverButton)
+
+        let centerWindowButton = makeActionButton(title: "窗口居中", frame: NSRect(x: 350, y: currentOffset, width: 100, height: 30), action: #selector(centerCurrentWindow))
+        contentView.addSubview(centerWindowButton)
+
+        let shakeWindowButton = makeActionButton(title: "窗口抖动", frame: NSRect(x: 460, y: currentOffset, width: 100, height: 30), action: #selector(shakeCurrentWindow))
+        contentView.addSubview(shakeWindowButton)
+
+        let fadeWindowButton = makeActionButton(title: "淡出再淡入", frame: NSRect(x: 570, y: currentOffset, width: 110, height: 30), action: #selector(fadeCurrentWindow))
+        contentView.addSubview(fadeWindowButton)
+
+        menuStatusLabel = makeBodyLabel("尚未选择菜单项", width: 700, height: 22)
+        menuStatusLabel.frame.origin = NSPoint(x: 20, y: currentOffset + 38)
+        contentView.addSubview(menuStatusLabel)
+
+        return currentOffset + 74
+    }
+
+    private func setupSplitAndCollectionSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
+        var currentOffset = yOffset
+
+        let sectionLabel = makeSectionLabel("NSSplitView / NSCollectionView + Dejal")
+        sectionLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(sectionLabel)
+        currentOffset += 30
+
+        let descLabel = makeBodyLabel("左侧 NSSplitView 演示 toggleSubview / distributeSubviewsEqually / swapSubviews；右侧 NSCollectionView 演示注册 item、批量选中与滚动。", width: 780, height: 22)
+        descLabel.frame.origin = NSPoint(x: 20, y: currentOffset)
+        contentView.addSubview(descLabel)
+        currentOffset += 28
+
+        // NSSplitView demo
+        let leftPane = NSView().chain
+            .frame(NSRect(x: 0, y: 0, width: 180, height: 140))
+            .backgroundColor(.systemBlue.withAlphaComponent(0.25))
+            .build
+        let rightPane = NSView().chain
+            .frame(NSRect(x: 189, y: 0, width: 180, height: 140))
+            .backgroundColor(.systemOrange.withAlphaComponent(0.25))
+            .build
+        demoSplitView = NSSplitView.createVerticalSplitView(with: [leftPane, rightPane])
+        demoSplitView.frame = NSRect(x: 20, y: currentOffset, width: 370, height: 140)
+        contentView.addSubview(demoSplitView)
+
+        let toggleSplitButton = makeActionButton(title: "折叠/展开左侧", frame: NSRect(x: 20, y: currentOffset + 150, width: 120, height: 28), action: #selector(toggleSplitLeftPane))
+        contentView.addSubview(toggleSplitButton)
+
+        let distributeButton = makeActionButton(title: "平均分配", frame: NSRect(x: 148, y: currentOffset + 150, width: 90, height: 28), action: #selector(distributeSplitPanes))
+        contentView.addSubview(distributeButton)
+
+        let swapButton = makeActionButton(title: "交换面板", frame: NSRect(x: 246, y: currentOffset + 150, width: 90, height: 28), action: #selector(swapSplitPanes))
+        contentView.addSubview(swapButton)
+
+        splitViewStatusLabel = makeBodyLabel("NSSplitView 就绪", width: 350, height: 18)
+        splitViewStatusLabel.frame.origin = NSPoint(x: 20, y: currentOffset + 182)
+        contentView.addSubview(splitViewStatusLabel)
+
+        // NSCollectionView demo
+        let collectionScrollView = NSScrollView().chain
+            .frame(NSRect(x: 420, y: currentOffset, width: 360, height: 140))
+            .hasVerticalScroller(true)
+            .borderType(.bezelBorder)
+            .autohidesScrollers(true)
+            .build
+        contentView.addSubview(collectionScrollView)
+
+        let flowLayout = NSCollectionViewFlowLayout()
+        flowLayout.itemSize = NSSize(width: 84, height: 84)
+        flowLayout.minimumInteritemSpacing = 8
+        flowLayout.minimumLineSpacing = 8
+        flowLayout.sectionInset = NSEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
+
+        demoCollectionView = NSCollectionView().chain
+            .frame(NSRect(x: 0, y: 0, width: 360, height: 140))
+            .collectionViewLayout(flowLayout)
+            .selectable(true)
+            .allowsMultipleSelection(true)
+            .dataSource(self)
+            .delegate(self)
+            .backgroundColors([.clear])
+            .build
+        demoCollectionView.registerItemClass(ExtensionsDemoCollectionItem.self, forItemWithIdentifier: Self.collectionItemIdentifier)
+        collectionScrollView.chain.documentView(demoCollectionView)
+
+        let selectAllButton = makeActionButton(title: "全选", frame: NSRect(x: 420, y: currentOffset + 150, width: 70, height: 28), action: #selector(selectAllCollectionItems))
+        contentView.addSubview(selectAllButton)
+
+        let deselectButton = makeActionButton(title: "取消选中", frame: NSRect(x: 498, y: currentOffset + 150, width: 90, height: 28), action: #selector(deselectAllCollectionItems))
+        contentView.addSubview(deselectButton)
+
+        let scrollLastButton = makeActionButton(title: "滚动到末尾", frame: NSRect(x: 596, y: currentOffset + 150, width: 100, height: 28), action: #selector(scrollCollectionToLast))
+        contentView.addSubview(scrollLastButton)
+
+        collectionStatusLabel = makeBodyLabel("NSCollectionView 就绪，共 \(collectionDemoItems.count) 项", width: 360, height: 18)
+        collectionStatusLabel.frame.origin = NSPoint(x: 420, y: currentOffset + 182)
+        contentView.addSubview(collectionStatusLabel)
+
+        return currentOffset + 210
+    }
+
     private func setupLogSection(in contentView: NSView, yOffset: CGFloat) -> CGFloat {
         var currentOffset = yOffset
         
@@ -886,4 +1019,186 @@ final class ExtensionsDemoViewController: NSViewController {
     @objc private func clearLog() {
         logTextView.string = ""
     }
+
+    // MARK: - NSMenu Actions
+
+    @objc private func showDemoMenu(_ sender: NSButton) {
+        let menu = NSMenu(title: "演示菜单")
+        menu.addItem(title: "普通操作", icon: NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: nil)) { [weak self] item in
+            self?.menuStatusLabel.stringValue = "已选择: \(item.title)"
+            self?.appendLog("NSMenu 点击: \(item.title)")
+        }
+        menu.addSeparatorItemSwift()
+        let submenu = menu.addSubmenu(title: "更多选项", icon: NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: nil))
+        submenu.addItems(titles: ["选项 A", "选项 B", "选项 C"]) { [weak self] item in
+            self?.menuStatusLabel.stringValue = "已选择: \(item.title)"
+            self?.appendLog("NSMenu 子菜单点击: \(item.title)")
+        }
+        menu.updateItem(title: "普通操作", enabled: true, state: .off)
+        appendLog("NSMenu 当前项: \(menu.itemTitles.joined(separator: ", "))")
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height), in: sender)
+    }
+
+    // MARK: - NSPopover Actions
+
+    @objc private func showInfoPopover(_ sender: NSButton) {
+        let popover = NSPopover.createInfoPopover(
+            message: "这是一条提示信息",
+            informativeText: "NSPopover+Dejal 的 createInfoPopover 会自动布局标题与说明文字。"
+        )
+        activePopover = popover
+        popover.show(in: sender, preferredEdge: .maxY)
+        appendLog("已展示 NSPopover 信息弹窗")
+    }
+
+    @objc private func showConfirmPopover(_ sender: NSButton) {
+        let popover = NSPopover.createConfirmPopover(
+            message: "确认要执行该操作吗？",
+            confirmAction: { [weak self] in
+                self?.appendLog("NSPopover 确认弹窗: 用户点击了确认")
+                self?.activePopover?.closeIfNeeded()
+            },
+            cancelAction: { [weak self] in
+                self?.appendLog("NSPopover 确认弹窗: 用户点击了取消")
+                self?.activePopover?.closeIfNeeded()
+            }
+        )
+        activePopover = popover
+        popover.show(in: sender, preferredEdge: .maxY)
+        appendLog("已展示 NSPopover 确认弹窗")
+    }
+
+    // MARK: - NSWindow Actions
+
+    @objc private func centerCurrentWindow() {
+        guard let window = view.window else {
+            appendLog("未获取到当前窗口")
+            return
+        }
+        window.centerOnCurrentScreen()
+        appendLog("NSWindow 已居中到当前屏幕")
+    }
+
+    @objc private func shakeCurrentWindow() {
+        guard let window = view.window else { return }
+        window.shake()
+        appendLog("NSWindow 已执行抖动动画")
+    }
+
+    @objc private func fadeCurrentWindow() {
+        guard let window = view.window else { return }
+        window.fadeOut(duration: 0.25) {
+            window.fadeIn(duration: 0.25)
+        }
+        appendLog("NSWindow 已执行淡出后淡入动画")
+    }
+
+    // MARK: - NSSplitView Actions
+
+    @objc private func toggleSplitLeftPane() {
+        demoSplitView.toggleSubview(atIndex: 0)
+        splitViewStatusLabel.stringValue = demoSplitView.isSubviewCollapsed(atIndex: 0) ? "左侧面板已折叠" : "左侧面板已展开"
+        appendLog("NSSplitView toggleSubview(atIndex: 0) 已触发")
+    }
+
+    @objc private func distributeSplitPanes() {
+        demoSplitView.distributeSubviewsEqually()
+        splitViewStatusLabel.stringValue = "已调用 distributeSubviewsEqually() 平均分配"
+        appendLog("NSSplitView 已平均分配子视图尺寸")
+    }
+
+    @objc private func swapSplitPanes() {
+        demoSplitView.swapSubviews(at: 0, and: 1)
+        splitViewStatusLabel.stringValue = "已调用 swapSubviews(at:and:) 交换面板"
+        appendLog("NSSplitView 已交换两个面板位置")
+    }
+
+    // MARK: - NSCollectionView Actions
+
+    @objc private func selectAllCollectionItems() {
+        let allPaths = Set((0..<collectionDemoItems.count).map { IndexPath(item: $0, section: 0) })
+        demoCollectionView.selectItemsSafely(at: allPaths)
+        collectionStatusLabel.stringValue = "已全选 \(allPaths.count) 项"
+        appendLog("NSCollectionView selectItemsSafely(at:) 已全选")
+    }
+
+    @objc private func deselectAllCollectionItems() {
+        demoCollectionView.deselectAllItems()
+        collectionStatusLabel.stringValue = "已取消所有选中"
+        appendLog("NSCollectionView deselectAllItems() 已触发")
+    }
+
+    @objc private func scrollCollectionToLast() {
+        demoCollectionView.scrollToLastItem()
+        collectionStatusLabel.stringValue = "已滚动到最后一项"
+        appendLog("NSCollectionView scrollToLastItem() 已触发")
+    }
 }
+
+// MARK: - NSCollectionViewDataSource / Delegate
+
+extension ExtensionsDemoViewController: NSCollectionViewDataSource, NSCollectionViewDelegate {
+    func numberOfSections(in collectionView: NSCollectionView) -> Int { 1 }
+
+    func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int) -> Int {
+        collectionDemoItems.count
+    }
+
+    func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath) -> NSCollectionViewItem {
+        guard let item = collectionView.makeItem(withIdentifier: Self.collectionItemIdentifier, for: indexPath) as? ExtensionsDemoCollectionItem else {
+            return NSCollectionViewItem()
+        }
+        let (color, title) = collectionDemoItems[indexPath.item]
+        item.configure(color: color, title: title)
+        return item
+    }
+
+    func collectionView(_ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>) {
+        let titles = indexPaths.compactMap { collectionDemoItems.object(atSafeIndex: $0.item)?.1 }
+        collectionStatusLabel.stringValue = "已选中: \(titles.joined(separator: ", "))"
+        appendLog("NSCollectionView 已选中: \(titles.joined(separator: ", "))")
+    }
+
+    func collectionView(_ collectionView: NSCollectionView, didDeselectItemsAt indexPaths: Set<IndexPath>) {
+        appendLog("NSCollectionView 已取消选中 \(indexPaths.count) 项")
+    }
+}
+
+// MARK: - Demo Collection Item
+
+private final class ExtensionsDemoCollectionItem: NSCollectionViewItem {
+    private let colorBox = NSView()
+    private let captionLabel = NSTextField(labelWithString: "")
+
+    override func loadView() {
+        view = NSView(frame: NSRect(x: 0, y: 0, width: 84, height: 84))
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        colorBox.wantsLayer = true
+        colorBox.layer?.cornerRadius = 10
+        colorBox.frame = NSRect(x: 4, y: 20, width: 76, height: 56)
+        view.addSubview(colorBox)
+
+        captionLabel.frame = NSRect(x: 0, y: 2, width: 84, height: 16)
+        captionLabel.alignment = .center
+        captionLabel.font = .systemFont(ofSize: 11, weight: .medium)
+        captionLabel.isBordered = false
+        captionLabel.drawsBackground = false
+        view.addSubview(captionLabel)
+    }
+
+    func configure(color: NSColor, title: String) {
+        colorBox.layer?.backgroundColor = color.cgColor
+        captionLabel.stringValue = title
+    }
+
+    override var isSelected: Bool {
+        didSet {
+            colorBox.layer?.borderWidth = isSelected ? 3 : 0
+            colorBox.layer?.borderColor = NSColor.labelColor.cgColor
+        }
+    }
+}
+

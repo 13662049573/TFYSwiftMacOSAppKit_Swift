@@ -2,7 +2,7 @@ Pod::Spec.new do |spec|
 
   spec.name         = "TFYSwiftMacOSAppKit"
 
-  spec.version      = "1.4.5"
+  spec.version      = "1.5.0"
   
   spec.summary      = "AppKit-focused macOS Swift toolkit with chain APIs, custom controls, HUD, status item, and utilities."
 
@@ -10,7 +10,8 @@ Pod::Spec.new do |spec|
                         TFYSwiftMacOSAppKit is a macOS AppKit toolkit written in Swift.
                         It provides chain-style APIs, custom controls, category extensions,
                         status item presentation, HUD components, cache/JSON/timer/GCD utilities,
-                        and a fully upgraded demo app for real-world integration and verification.
+                        thread-safe cache and HUD attachment improvements, and a demo app
+                        covering Menu/Popover/Window/SplitView/CollectionView and more.
                    DESC
 
   spec.homepage     = "https://github.com/13662049573/TFYSwiftMacOSAppKit_Swift"

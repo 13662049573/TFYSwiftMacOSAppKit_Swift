@@ -1,5 +1,5 @@
 //
-//  TFYSwiftAsynce.swift
+//  TFYSwiftAsync.swift
 //  TFYSwiftMacOSAppKit_Swift
 //
 //  Created by 田风有 on 2024/11/5.
